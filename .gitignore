@@ -23,6 +23,14 @@
 /public/storage
 /storage/*.key
 /storage/pail
+/storage/framework/views/*
+!/storage/framework/views/.gitignore
+/storage/framework/sessions/*
+!/storage/framework/sessions/.gitignore
+/storage/framework/cache/*
+!/storage/framework/cache/.gitignore
+/storage/logs/*
+!/storage/logs/.gitignore
 /vendor
 _ide_helper.php
 Homestead.json
