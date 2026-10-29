@@ -291,19 +291,19 @@ class TenantIsolationTest extends TestCase
             ->assertExitCode(0);
 
         // 2. Fails if a table with tenant_id is created without the helper (lacking forced RLS)
-        DB::connection('pgsql_owner')->statement("
+        DB::connection('pgsql_owner')->statement('
             CREATE TABLE IF NOT EXISTS rogue_unshielded_table (
                 id UUID PRIMARY KEY,
                 tenant_id UUID NOT NULL,
                 data TEXT
             )
-        ");
+        ');
 
         try {
             $this->artisan('db:check-rls', ['--connection' => 'pgsql_owner'])
                 ->assertExitCode(1);
         } finally {
-            DB::connection('pgsql_owner')->statement("DROP TABLE IF EXISTS rogue_unshielded_table");
+            DB::connection('pgsql_owner')->statement('DROP TABLE IF EXISTS rogue_unshielded_table');
         }
     }
 }
