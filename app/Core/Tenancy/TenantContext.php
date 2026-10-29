@@ -17,6 +17,10 @@ class TenantContext
         self::$currentTenant = $tenant;
         $tenantId = $tenant !== null ? $tenant->id : '';
 
+        if (function_exists('setPermissionsTeamId')) {
+            setPermissionsTeamId($tenant !== null ? $tenant->id : null);
+        }
+
         DB::connection($connection)->statement(
             "SELECT set_config('app.current_tenant_id', :tenant_id, false)",
             ['tenant_id' => $tenantId]
@@ -36,6 +40,10 @@ class TenantContext
 
         $tenant = Tenant::find($tenantId);
         self::$currentTenant = $tenant;
+
+        if (function_exists('setPermissionsTeamId')) {
+            setPermissionsTeamId($tenantId);
+        }
 
         DB::connection($connection)->statement(
             "SELECT set_config('app.current_tenant_id', :tenant_id, false)",
@@ -65,6 +73,10 @@ class TenantContext
     public static function clear(string $connection = 'pgsql'): void
     {
         self::$currentTenant = null;
+
+        if (function_exists('setPermissionsTeamId')) {
+            setPermissionsTeamId(null);
+        }
 
         DB::connection($connection)->statement(
             "SELECT set_config('app.current_tenant_id', '', false)"
