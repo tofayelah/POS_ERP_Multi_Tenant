@@ -15,6 +15,7 @@ use App\Providers\HorizonServiceProvider;
 return [
     AppServiceProvider::class,
     AdminPanelProvider::class,
+    \App\Providers\Filament\PlatformPanelProvider::class,
     HorizonServiceProvider::class,
 
     // Core Modular Architecture Providers

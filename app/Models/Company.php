@@ -40,4 +40,14 @@ class Company extends Model
     {
         return $this->belongsTo(Tenant::class, 'tenant_id');
     }
+
+    /**
+     * Get the branches belonging to this company.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany<\App\Models\Branch, $this>
+     */
+    public function branches(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Branch::class, 'company_id');
+    }
 }

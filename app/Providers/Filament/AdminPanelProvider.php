@@ -27,7 +27,13 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
+            ->authGuard('web')
             ->login()
+            ->tenant(\App\Models\Tenant::class, slugAttribute: 'subdomain')
+            ->tenantMiddleware([
+                \App\Core\Http\Middleware\FilamentTenantContextMiddleware::class,
+                \App\Core\Http\Middleware\VerifySupportAccessActive::class,
+            ])
             ->brandName('KC ERP')
             ->colors([
                 'primary' => Color::Sky,
