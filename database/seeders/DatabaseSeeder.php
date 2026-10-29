@@ -2,16 +2,16 @@
 
 namespace Database\Seeders;
 
-use App\Models\Tenant;
-use App\Models\Company;
 use App\Models\Branch;
-use App\Models\Warehouse;
-use App\Models\Supplier;
-use App\Models\UnitOfMeasure;
 use App\Models\Brand;
 use App\Models\Category;
+use App\Models\Company;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Models\Supplier;
+use App\Models\Tenant;
+use App\Models\UnitOfMeasure;
+use App\Models\Warehouse;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder

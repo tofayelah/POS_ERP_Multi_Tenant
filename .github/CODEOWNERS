@@ -1,0 +1,6 @@
+# Database rules and money code need the tech lead's review
+/database/                 @your-org/tech-lead
+/app/Core/                 @your-org/tech-lead
+/app/Modules/Accounting/   @your-org/tech-lead
+/app/Modules/Tax/          @your-org/tech-lead
+/bridge/                   @your-org/pos-lead

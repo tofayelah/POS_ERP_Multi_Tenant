@@ -3,39 +3,41 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property string $id
+ * @property string $tenant_id
+ * @property string $legal_name
+ * @property string|null $bin_number
+ * @property string $base_currency
+ * @property int $fiscal_year_start_month
+ * @property string $tax_regime
+ * @property Carbon $created_at
+ * @property Carbon $updated_at
+ */
 class Company extends Model
 {
-    use HasFactory, HasUuids;
+    use HasUuids;
 
-    protected $guarded = [];
-
-    protected $casts = [
-        'is_active' => 'boolean',
-        'fiscal_year_start_month' => 'integer',
+    protected $fillable = [
+        'tenant_id',
+        'legal_name',
+        'bin_number',
+        'base_currency',
+        'fiscal_year_start_month',
+        'tax_regime',
     ];
 
+    /**
+     * Get the tenant that owns the company.
+     *
+     * @return BelongsTo<Tenant, $this>
+     */
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class, 'tenant_id');
-    }
-
-    public function branches(): HasMany
-    {
-        return $this->hasMany(Branch::class, 'company_id');
-    }
-
-    public function warehouses(): HasMany
-    {
-        return $this->hasMany(Warehouse::class, 'company_id');
-    }
-
-    public function suppliers(): HasMany
-    {
-        return $this->hasMany(Supplier::class, 'company_id');
     }
 }
