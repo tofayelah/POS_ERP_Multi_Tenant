@@ -11,7 +11,6 @@ use App\Filament\Pages\SalesPage;
 use App\Models\Tenant;
 use App\Models\User;
 use Database\Seeders\DemoTenantSeeder;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Auth;
 use Tests\TestCase;
 
@@ -27,7 +26,7 @@ class PermissionMatrixTest extends TestCase
 
         $tenant = Tenant::where('subdomain', 'acme')->firstOrFail();
         $this->tenant = $tenant;
-        TenantContext::set($tenant->id);
+        TenantContext::set($tenant);
     }
 
     protected function tearDown(): void
