@@ -6,7 +6,6 @@ use App\Models\PlatformUser;
 use App\Models\Tenant;
 use App\Models\TenantSupportAccess;
 use App\Models\User;
-use Illuminate\Validation\ValidationException;
 use Ramsey\Uuid\Uuid;
 
 class SupportAccessService

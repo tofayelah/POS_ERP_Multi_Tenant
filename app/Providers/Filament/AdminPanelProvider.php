@@ -2,6 +2,9 @@
 
 namespace App\Providers\Filament;
 
+use App\Core\Http\Middleware\FilamentTenantContextMiddleware;
+use App\Core\Http\Middleware\VerifySupportAccessActive;
+use App\Models\Tenant;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -29,10 +32,10 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->authGuard('web')
             ->login()
-            ->tenant(\App\Models\Tenant::class, slugAttribute: 'subdomain')
+            ->tenant(Tenant::class, slugAttribute: 'subdomain')
             ->tenantMiddleware([
-                \App\Core\Http\Middleware\FilamentTenantContextMiddleware::class,
-                \App\Core\Http\Middleware\VerifySupportAccessActive::class,
+                FilamentTenantContextMiddleware::class,
+                VerifySupportAccessActive::class,
             ])
             ->brandName('KC ERP')
             ->colors([

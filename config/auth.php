@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\PlatformUser;
 use App\Models\User;
 
 return [
@@ -72,7 +73,7 @@ return [
         ],
         'platform_users' => [
             'driver' => 'eloquent',
-            'model' => \App\Models\PlatformUser::class,
+            'model' => PlatformUser::class,
         ],
     ],
 

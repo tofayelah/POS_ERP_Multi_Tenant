@@ -10,12 +10,13 @@ use App\Modules\Sales\Providers\SalesServiceProvider;
 use App\Modules\Tax\Providers\TaxServiceProvider;
 use App\Providers\AppServiceProvider;
 use App\Providers\Filament\AdminPanelProvider;
+use App\Providers\Filament\PlatformPanelProvider;
 use App\Providers\HorizonServiceProvider;
 
 return [
     AppServiceProvider::class,
     AdminPanelProvider::class,
-    \App\Providers\Filament\PlatformPanelProvider::class,
+    PlatformPanelProvider::class,
     HorizonServiceProvider::class,
 
     // Core Modular Architecture Providers

@@ -20,7 +20,8 @@ class VerifySupportAccessActive
             return $next($request);
         }
 
-        $access = TenantSupportAccess::find($accessId);
+        /** @var TenantSupportAccess|null $access */
+        $access = TenantSupportAccess::where('id', $accessId)->first();
 
         if (! $access || ! $access->isValid()) {
             session()->forget('active_support_access_id');
