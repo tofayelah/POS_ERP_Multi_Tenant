@@ -30,3 +30,8 @@ foreach ($modules as $module) {
             ]);
     }
 }
+
+test('application modules may not use pgsql_owner connection')
+    ->expect('App\Modules')
+    ->not->toUse('pgsql_owner');
+
