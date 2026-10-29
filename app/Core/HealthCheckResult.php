@@ -5,7 +5,7 @@ namespace App\Core;
 class HealthCheckResult
 {
     /**
-     * @param array<string, mixed> $details
+     * @param  array<string, mixed>  $details
      */
     public function __construct(
         public bool $isHealthy,
@@ -14,7 +14,7 @@ class HealthCheckResult
     ) {}
 
     /**
-     * @param array<string, mixed> $details
+     * @param  array<string, mixed>  $details
      */
     public static function healthy(string $message = 'Healthy', array $details = []): self
     {
@@ -22,7 +22,7 @@ class HealthCheckResult
     }
 
     /**
-     * @param array<string, mixed> $details
+     * @param  array<string, mixed>  $details
      */
     public static function unhealthy(string $message = 'Unhealthy', array $details = []): self
     {
