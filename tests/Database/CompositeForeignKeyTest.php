@@ -41,7 +41,7 @@ class CompositeForeignKeyTest extends TestCase
             BEGIN
                 IF NOT EXISTS (SELECT FROM pg_policy WHERE polname = 'tenant_isolation_policy' AND polrelid = 'test_branches'::regclass) THEN
                     CREATE POLICY tenant_isolation_policy ON test_branches
-                        AS RESTRICTIVE FOR ALL TO app_rw, reporting_ro
+                        FOR ALL TO app_rw, reporting_ro
                         USING (tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid)
                         WITH CHECK (tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid);
                 END IF;

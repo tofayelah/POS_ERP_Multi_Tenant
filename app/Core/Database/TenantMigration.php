@@ -48,7 +48,6 @@ abstract class TenantMigration extends Migration
 
         DB::connection($connection)->statement("
             CREATE POLICY tenant_isolation_policy ON {$table}
-                AS RESTRICTIVE
                 FOR ALL
                 TO app_rw, reporting_ro
                 USING (tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid)
