@@ -5,7 +5,21 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property string $id
+ * @property string $tenant_id
+ * @property string $platform_user_id
+ * @property string $granted_by_user_id
+ * @property string $ticket_reference
+ * @property Carbon $granted_at
+ * @property Carbon $expires_at
+ * @property bool $is_read_only
+ * @property Carbon|null $revoked_at
+ * @property Carbon $created_at
+ * @property Carbon $updated_at
+ */
 class TenantSupportAccess extends Model
 {
     use HasUuids;

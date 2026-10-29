@@ -5,7 +5,17 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property string $id
+ * @property string $tenant_id
+ * @property string $membership_id
+ * @property string $company_id
+ * @property string|null $branch_id
+ * @property Carbon $created_at
+ * @property Carbon $updated_at
+ */
 class UserLocationScope extends Model
 {
     use HasUuids;

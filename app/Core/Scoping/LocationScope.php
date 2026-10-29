@@ -8,10 +8,15 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Scope;
 use Illuminate\Support\Facades\Auth;
 
+/**
+ * @implements Scope<Model>
+ */
 class LocationScope implements Scope
 {
     /**
      * Apply the location scope to a given Eloquent query builder.
+     *
+     * @param  Builder<Model>  $builder
      */
     public function apply(Builder $builder, Model $model): void
     {

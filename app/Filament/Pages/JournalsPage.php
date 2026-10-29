@@ -20,7 +20,7 @@ class JournalsPage extends Page
     public static function canAccess(): bool
     {
         $user = Auth::user();
-        if (! $user) {
+        if (! $user instanceof \App\Models\User) {
             return false;
         }
 
