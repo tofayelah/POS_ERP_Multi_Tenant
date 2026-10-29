@@ -280,7 +280,7 @@ class TenantIsolationTest extends TestCase
     public function test_db_check_rls_command_detects_rls_compliance(): void
     {
         // Run db:check-rls using pgsql_owner catalog connection
-        $exitCode = $this->artisan('db:check-rls', ['--connection' => 'pgsql_owner']);
-        $this->assertSame(0, $exitCode);
+        $this->artisan('db:check-rls', ['--connection' => 'pgsql_owner'])
+            ->assertExitCode(0);
     }
 }
