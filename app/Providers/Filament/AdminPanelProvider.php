@@ -28,9 +28,26 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
+            ->brandName('KC ERP')
             ->colors([
-                'primary' => Color::Amber,
+                'primary' => Color::Sky,
             ])
+            ->navigationGroups([
+                'POS',
+                'Product Master',
+                'Procurement',
+                'Inventory Management',
+                'CRM & Sales',
+                'E-Commerce',
+                'HRM & Workforce',
+                'Finance Accounting',
+                'Tax & VAT Compliance',
+                'Executive BI & Management Intelligence',
+                'Organization Company',
+                'Administration',
+                'System Settings',
+            ])
+            ->sidebarCollapsibleOnDesktop()
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
             ->pages([
