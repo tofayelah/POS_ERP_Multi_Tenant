@@ -38,6 +38,7 @@ Homestead.yaml
 Thumbs.db
 
 # Local settings and secrets
+CLAUDE.md
 .env.*
 !.env.example
 .mcp.json

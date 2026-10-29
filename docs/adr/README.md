@@ -30,4 +30,5 @@ Each record uses the following standardized structure:
 - [ADR-012: OpenTelemetry and Sentry Unified Telemetry Fabric](ADR-012-telemetry-fabric.md)
 - [ADR-013: Pre-Scaling and Transaction Pooling for Eid Surge Workloads](ADR-013-eid-surge-pooling.md)
 - [ADR-014: Staged Stream Gates and Ramadan-Aware Data Migration Protocol](ADR-014-staged-stream-gates.md)
-- [ADR-015: In-House Proxmox Private Cloud Containerization for Development and Staging](ADR-015-proxmox-staging-containerization.md)
+- [ADR-015: Identity, Multi-Tenant Memberships, Platform Separation and Authoritative Context](ADR-015-identity-and-tenancy.md)
+- [ADR-015 (Infrastructure): In-House Proxmox Private Cloud Containerization for Development and Staging](ADR-015-proxmox-staging-containerization.md)

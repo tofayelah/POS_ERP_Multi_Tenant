@@ -1,0 +1,20 @@
+# ADR-015: Identity, Multi-Tenant Memberships, Platform Separation and Authoritative Context
+
+- **Status:** Accepted
+- **Context:** The ERP platform requires support for users who operate across multiple legal entities and tenants (such as business owners, group financial controllers, outsourced accountants, and statutory auditors) without credential duplication. In design review finding `TEN-10`, the initial design draft in §6.5 placed an `is_platform_admin` boolean flag on the shared `users` table, which directly contradicted §1.2's architectural mandate for a separate authentication guard and control plane for platform operators. Furthermore, role assignments were ambiguously split between `tenant_memberships.role` and `spatie/laravel-permission`, and the relationship between Filament's built-in multi-tenancy and the lower-level PostgreSQL RLS `TenantContext` required authoritative definition.
+- **Alternatives Considered:**
+  1. *Per-Tenant Users Table (Isolated database or tenant-partitioned users):* Rejected because users operating across multiple legal entities or client tenants (e.g., outsourced accountants or group executives) would need separate email addresses and passwords for each tenant. This introduces severe credential fatigue, password synchronization issues, and fragmented audit trails.
+  2. *Single User Model with `is_platform_admin` Boolean Flag (§6.5 initial draft):* Rejected because mixing platform operators and tenant users in the same table and auth guard violates the principle of least privilege. Any privilege escalation vulnerability or token leak in the tenant application could compromise platform-wide super-admin access.
+  3. *Filament Tenancy as Primary Context Driver:* Rejected because relying exclusively on Filament panel URL parameters (`/admin/{tenant}`) without an authoritative lower-level `TenantContext` leaves background queue workers, scheduled tasks, console commands, and REST APIs without guaranteed PostgreSQL RLS configuration.
+- **Decision:**
+  1. **Global Users & Tenant Memberships:** Tenant personnel authenticate via a global `users` table storing primary credentials, Argon2id password hashes, and TOTP 2FA secrets. Tenant associations are modeled via a `tenant_memberships` pivot table (`id`, `tenant_id`, `user_id`, `is_active`) with a composite unique index on `(tenant_id, user_id)`.
+  2. **Dedicated Platform Staff Table & Guard (`platform_users`):** Platform super-admins and support staff are stored in a physically separate `platform_users` table with its own authentication guard (`platform`) and a dedicated Super-Admin panel (`/platform`). The `is_platform_admin` flag on the `users` table is eliminated.
+  3. **Authoritative `TenantContext` & Filament Tenancy Integration:** `TenantContext` is the authoritative singleton driving PostgreSQL session RLS via `SELECT set_config('app.current_tenant_id', :id, false)`. Filament's Tenant Admin panel tenancy reads authorized tenants from `$user->memberships`, and tenant switching synchronizes with `TenantContext::set($tenant)`.
+  4. **Sub-Tenant Scoping (`user_location_scopes`):** Sub-tenant organizational access (Company, Branch, Warehouse) is governed by `user_location_scopes` linked to memberships.
+  5. **Unified Role Engine:** All roles and permissions are managed exclusively via `spatie/laravel-permission` in `teams` mode with `tenant_id` as the team key, deprecating the redundant role column in `tenant_memberships`.
+- **Consequences:**
+  - Enables seamless multi-tenant switching for accountants and owners using a single set of credentials.
+  - Enforces physical separation between platform operators and tenant personnel, eliminating privilege escalation attack surfaces.
+  - Aligns Filament panel multi-tenancy with PostgreSQL RLS engine enforcement.
+  - Requires comprehensive `LocationScope` enforcement across tables, global search, relation managers, exports, and APIs to prevent intra-tenant cross-branch data leakage.
+- **Review IDs Closed:** TEN-10, SEC-01, SEC-02, SEC-09
