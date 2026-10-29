@@ -1603,7 +1603,11 @@ To prevent production lockups during deployment:
 - **Dedicated Proxmox Staging Infrastructure (`dev.kcerp.com`):**
   - Staging runs within an isolated LXC container (VMID 104) on a dedicated Proxmox VE 9.2.0 server (`tofa-prox.hprbd.com`).
   - **Hardware Allocation:** 4 vCPU cores, 40GB RAM, and 80GB NVMe storage, running Ubuntu 24.04.5 LTS.
-  - **Network & Reverse Proxy Ingress:** Container IP `192.168.100.104` on bridge `vmbr1`. External SSL is terminated at the edge/host reverse proxy, which forwards HTTP traffic for `dev.kcerp.com` directly to `http://192.168.100.104:8080`.
+  - **Network & Reverse Proxy Ingress:** 
+    - Public Traffic: The dedicated external IPv4 `51.79.191.13` (NAT forwarded on ports 80/443/8443) routes to the gateway reverse proxy LXC container (VMID 201, `192.168.100.201`).
+    - SSL Termination: Container 201 terminates TLS 1.3 / HTTP/2 for `dev.kcerp.com` using certificate `/etc/nginx/ssl-certificates/dev.kcerp.com.crt`.
+    - Internal Upstream: Container 201 forwards traffic via HTTP to the application container (VMID 104) at `http://192.168.100.104:8080`.
+    - DNS Resolution: An external DNS A-Record for `dev.kcerp.com` pointing to `51.79.191.13` (or local workstation `hosts` mapping `51.79.191.13 dev.kcerp.com`) directs client traffic to the ingress.
   - **Container Service Topology:**
     - **Web Server:** Nginx listening on `0.0.0.0:8080`, proxying PHP requests to PHP 8.4-FPM and serving PWA static assets.
     - **Application Runtime:** PHP 8.4-FPM with JIT and OPcache enabled.
