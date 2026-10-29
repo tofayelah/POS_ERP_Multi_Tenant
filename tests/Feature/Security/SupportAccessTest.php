@@ -35,7 +35,7 @@ class SupportAccessTest extends TestCase
         $this->tenant = Tenant::create([
             'id' => (string) Uuid::uuid7(),
             'name' => 'Support Access Test Tenant',
-            'subdomain' => 'support-'.substr((string) Uuid::uuid7(), 0, 8),
+            'subdomain' => 'support-'.uniqid(),
             'subscription_plan' => 'enterprise',
             'status' => 'active',
             'data_residency_region' => 'dhaka-1',

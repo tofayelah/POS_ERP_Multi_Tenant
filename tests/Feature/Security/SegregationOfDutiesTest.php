@@ -36,7 +36,7 @@ class SegregationOfDutiesTest extends TestCase
         $this->tenant = Tenant::create([
             'id' => (string) Uuid::uuid7(),
             'name' => 'SoD Test Tenant',
-            'subdomain' => 'sod-'.substr((string) Uuid::uuid7(), 0, 8),
+            'subdomain' => 'sod-'.uniqid(),
             'subscription_plan' => 'enterprise',
             'status' => 'active',
             'data_residency_region' => 'dhaka-1',
