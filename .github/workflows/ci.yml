@@ -35,7 +35,7 @@ jobs:
       DB_HOST: 127.0.0.1
       DB_PORT: 5432
       DB_DATABASE: erp_test
-      DB_USERNAME: erp_owner            # Step 2: change to app_rw
+      DB_USERNAME: app_rw
       DB_PASSWORD: secret
       DB_OWNER_USERNAME: erp_owner
       DB_OWNER_PASSWORD: secret
@@ -52,11 +52,9 @@ jobs:
       - run: cp .env.example .env && php artisan key:generate
       - run: vendor/bin/pint --test
       - run: vendor/bin/phpstan analyse --no-progress
-      # Step 2: create the roles, then migrate as the owner and check RLS
-      # - run: psql -v ON_ERROR_STOP=1 -v app_password=secret -h 127.0.0.1 -U erp_owner -d erp_test -f database/sql/roles.sql
-      # - run: php artisan migrate --database=pgsql_owner --force
-      # - run: php artisan db:check-rls
-      - run: php artisan migrate --force   # Step 2: delete this line
+      - run: psql -v ON_ERROR_STOP=1 -v app_password=secret -h 127.0.0.1 -U erp_owner -d erp_test -f database/sql/roles.sql
+      - run: php artisan migrate --database=pgsql_owner --force
+      - run: php artisan db:check-rls
       - run: php artisan test
       - run: composer audit
 
