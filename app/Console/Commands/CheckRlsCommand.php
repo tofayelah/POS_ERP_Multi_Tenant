@@ -22,6 +22,20 @@ class CheckRlsCommand extends Command
     protected $description = 'Verify that every tenant-scoped table enforces forced Row-Level Security with active policies for app_rw and reporting_ro';
 
     /**
+     * Tables exempt from RLS per design review (TEN-03, TEN-09, TEN-10):
+     * - tenant_memberships: global membership directory linking global users to tenants before context is set
+     * - roles, model_has_roles, model_has_permissions: Spatie permission tables kept outside RLS for safe cache operation
+     *
+     * @var array<int, string>
+     */
+    protected array $exemptTables = [
+        'tenant_memberships',
+        'roles',
+        'model_has_roles',
+        'model_has_permissions',
+    ];
+
+    /**
      * Execute the console command.
      */
     public function handle(): int
@@ -62,6 +76,10 @@ class CheckRlsCommand extends Command
 
         foreach ($tenantTables as $row) {
             $table = $row->table_name;
+
+            if (in_array($table, $this->exemptTables, true)) {
+                continue;
+            }
 
             // Check pg_class for relrowsecurity and relforcerowsecurity
             $pgClass = $db->selectOne("

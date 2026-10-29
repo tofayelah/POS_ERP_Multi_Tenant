@@ -141,7 +141,7 @@ class SupportAccessTest extends TestCase
 
         $middleware = new VerifySupportAccessActive;
         $request = Request::create('/admin/acme/dashboard', 'GET');
-        $request->setLaravelSession(session());
+        $request->setLaravelSession(session()->driver());
 
         $this->expectException(HttpException::class);
         $this->expectExceptionMessage('Support access session has expired or been revoked.');
@@ -169,13 +169,13 @@ class SupportAccessTest extends TestCase
 
         // 1. GET requests are permitted
         $getRequest = Request::create('/admin/acme/settings', 'GET');
-        $getRequest->setLaravelSession(session());
+        $getRequest->setLaravelSession(session()->driver());
         $response = $middleware->handle($getRequest, fn () => response('OK'));
         $this->assertEquals(200, $response->getStatusCode());
 
         // 2. POST write requests are rejected with 403 Forbidden
         $postRequest = Request::create('/admin/acme/settings', 'POST');
-        $postRequest->setLaravelSession(session());
+        $postRequest->setLaravelSession(session()->driver());
 
         $this->expectException(HttpException::class);
         $this->expectExceptionMessage('Support access elevation is strictly read-only.');
