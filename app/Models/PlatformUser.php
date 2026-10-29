@@ -5,13 +5,12 @@ namespace App\Models;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
 class PlatformUser extends Authenticatable implements FilamentUser
 {
-    use HasFactory, HasUuids, Notifiable;
+    use HasUuids, Notifiable;
 
     protected $table = 'platform_users';
 

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Models\User;
 use Filament\Pages\Page;
 use Illuminate\Support\Facades\Auth;
 
@@ -20,7 +21,7 @@ class MushakReportsPage extends Page
     public static function canAccess(): bool
     {
         $user = Auth::user();
-        if (! $user instanceof \App\Models\User) {
+        if (! $user instanceof User) {
             return false;
         }
 

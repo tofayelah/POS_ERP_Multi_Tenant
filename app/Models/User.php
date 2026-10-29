@@ -18,6 +18,7 @@ use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable implements FilamentUser, HasTenants
 {
+    /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, HasRoles, HasUuids, Notifiable;
 
     protected $table = 'users';
@@ -53,11 +54,17 @@ class User extends Authenticatable implements FilamentUser, HasTenants
         ];
     }
 
+    /**
+     * @return HasMany<TenantMembership, $this>
+     */
     public function memberships(): HasMany
     {
         return $this->hasMany(TenantMembership::class, 'user_id');
     }
 
+    /**
+     * @return BelongsToMany<Tenant, $this>
+     */
     public function tenants(): BelongsToMany
     {
         return $this->belongsToMany(Tenant::class, 'tenant_memberships', 'user_id', 'tenant_id')
@@ -77,6 +84,7 @@ class User extends Authenticatable implements FilamentUser, HasTenants
             return new Collection;
         }
 
+        /** @var TenantMembership|null $membership */
         $membership = $this->memberships()
             ->where('tenant_id', $tenantId)
             ->where('is_active', true)
@@ -126,7 +134,7 @@ class User extends Authenticatable implements FilamentUser, HasTenants
     }
 
     /**
-     * @return array<Model>|Collection
+     * @return array<Model>|Collection<int, Tenant>
      */
     public function getTenants(Panel $panel): array|Collection
     {

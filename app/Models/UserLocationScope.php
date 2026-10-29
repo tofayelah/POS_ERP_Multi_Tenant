@@ -34,16 +34,25 @@ class UserLocationScope extends Model
         'branch_id',
     ];
 
+    /**
+     * @return BelongsTo<TenantMembership, $this>
+     */
     public function membership(): BelongsTo
     {
         return $this->belongsTo(TenantMembership::class, 'membership_id');
     }
 
+    /**
+     * @return BelongsTo<Company, $this>
+     */
     public function company(): BelongsTo
     {
         return $this->belongsTo(Company::class);
     }
 
+    /**
+     * @return BelongsTo<Branch, $this>
+     */
     public function branch(): BelongsTo
     {
         return $this->belongsTo(Branch::class);

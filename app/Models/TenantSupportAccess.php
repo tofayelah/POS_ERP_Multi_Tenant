@@ -52,16 +52,25 @@ class TenantSupportAccess extends Model
         ];
     }
 
+    /**
+     * @return BelongsTo<Tenant, $this>
+     */
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class);
     }
 
+    /**
+     * @return BelongsTo<PlatformUser, $this>
+     */
     public function platformUser(): BelongsTo
     {
         return $this->belongsTo(PlatformUser::class);
     }
 
+    /**
+     * @return BelongsTo<User, $this>
+     */
     public function grantedByUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'granted_by_user_id');
