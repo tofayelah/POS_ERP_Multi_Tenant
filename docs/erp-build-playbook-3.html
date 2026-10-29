@@ -1,0 +1,2030 @@
+<title>Retail ERP Build Playbook</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a sticky step index on the left, one reading column on the right; each build step reads as a numbered work order */
+:root{
+  --bg:#f4f7f5; --surface:#ffffff; --surface-2:#e8eeeb; --fg:#15201b; --muted:#53625b; --line:#d2dcd7;
+  --accent:#006a4e; --accent-strong:#004f3a; --accent-soft:#d8ede4; --on-accent:#ffffff;
+  --gate:#b0202d; --gate-soft:#fae4e6; --warn:#835500; --warn-soft:#faeed4; --ok:#1b7443;
+  --code-bg:#edf2ef; --code-fg:#15221c; --bar:#7fb8a3; --bar-fg:#082a1f;
+  --font-display:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
+  --font-body:"Atkinson Hyperlegible","Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,"Noto Sans Bengali",sans-serif;
+  --font-mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  --radius:10px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0c1311; --surface:#121b18; --surface-2:#192521; --fg:#e1eae5; --muted:#9bafa6; --line:#283833;
+    --accent:#45c295; --accent-strong:#79d9b3; --accent-soft:#14352a; --on-accent:#04231a;
+    --gate:#ff7d89; --gate-soft:#3a191e; --warn:#e8b758; --warn-soft:#32270e; --ok:#62d293;
+    --code-bg:#09100e; --code-fg:#d4e2db; --bar:#2f7a5f; --bar-fg:#e6f6ef;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0c1311; --surface:#121b18; --surface-2:#192521; --fg:#e1eae5; --muted:#9bafa6; --line:#283833;
+  --accent:#45c295; --accent-strong:#79d9b3; --accent-soft:#14352a; --on-accent:#04231a;
+  --gate:#ff7d89; --gate-soft:#3a191e; --warn:#e8b758; --warn-soft:#32270e; --ok:#62d293;
+  --code-bg:#09100e; --code-fg:#d4e2db; --bar:#2f7a5f; --bar-fg:#e6f6ef;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none !important}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion: reduce){html{scroll-behavior:auto}}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:1.0625rem;line-height:1.6;-webkit-font-smoothing:antialiased}
+a{color:var(--accent-strong);text-underline-offset:.18em}
+a:hover{color:var(--accent)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-radius:4px}
+.page{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 4rem;max-width:1240px;margin:0 auto}
+h1,h2,h3,h4{font-family:var(--font-display);line-height:1.15;text-wrap:balance;margin:0}
+h1{font-size:clamp(2.1rem,3.6vw + 1rem,3.3rem);font-weight:780;letter-spacing:-.02em}
+h2{font-size:clamp(1.55rem,1.4vw + 1rem,2.05rem);font-weight:720;letter-spacing:-.01em}
+h3{font-size:1.22rem;font-weight:680}
+h4{font-size:1rem;font-weight:680}
+p{margin:0;max-width:68ch}
+ul,ol{margin:0;padding-left:1.25rem;max-width:68ch}
+li+li{margin-top:.3rem}
+code{font-family:var(--font-mono);font-size:.86em;background:var(--surface-2);padding:.08em .32em;border-radius:4px;overflow-wrap:anywhere}
+.eyebrow{font-family:var(--font-mono);font-size:.74rem;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.muted{color:var(--muted)}
+.small{font-size:.9rem}
+
+/* Hero */
+.hero{padding-block:2.4rem 1.6rem;display:grid;grid-template-columns:minmax(0,1fr);gap:1.1rem;border-bottom:1px solid var(--line)}
+.hero > *{min-width:0}
+.hero .lede{font-size:1.18rem;max-width:62ch}
+.chips{display:flex;flex-wrap:wrap;gap:.45rem}
+.chip{font-family:var(--font-mono);font-size:.76rem;padding:.22rem .55rem;border-radius:999px;background:var(--surface-2);color:var(--fg);border:1px solid var(--line);max-width:100%;overflow-wrap:anywhere}
+.chip.id{background:var(--accent-soft);border-color:transparent;color:var(--accent-strong)}
+.chip.gate{background:var(--gate-soft);border-color:transparent;color:var(--gate)}
+.chip.ms{background:var(--warn-soft);border-color:transparent;color:var(--warn)}
+.toolswitch{display:flex;flex-wrap:wrap;align-items:center;gap:.6rem}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;background:var(--surface);padding:3px}
+.seg button{font:inherit;font-size:.9rem;border:0;background:transparent;color:var(--fg);padding:.38rem .9rem;border-radius:999px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--on-accent);font-weight:700}
+
+/* Timeline */
+.tl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);margin-top:.4rem}
+.tl{display:grid;grid-template-columns:8.6rem repeat(27,minmax(1.75rem,1fr));min-width:58rem;font-size:.74rem;font-family:var(--font-mono);padding:.6rem .7rem .7rem;row-gap:5px}
+.tl .wk{text-align:center;color:var(--muted);font-variant-numeric:tabular-nums}
+.tl .lab{color:var(--muted);align-self:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:.4rem}
+.tl .bar{display:flex;align-items:center;justify-content:center;height:1.55rem;margin:0 1px;border-radius:5px;background:var(--bar);color:var(--bar-fg);text-decoration:none;font-weight:600;overflow:hidden;white-space:nowrap}
+.tl a.bar:hover{filter:brightness(1.08)}
+.tl .cal{background:var(--warn-soft);color:var(--warn)}
+.tl .cal.eid{background:var(--gate-soft);color:var(--gate)}
+.tl .msk{display:flex;align-items:center;justify-content:center;height:1.55rem;color:var(--warn);font-weight:700}
+.tl .grid-line{grid-row:1 / -1;border-left:1px dashed var(--line);pointer-events:none}
+.tl-legend{display:flex;flex-wrap:wrap;gap:.9rem;margin-top:.5rem;font-size:.85rem;color:var(--muted)}
+
+/* Layout */
+.layout{display:grid;grid-template-columns:15.5rem minmax(0,1fr);gap:2.6rem;margin-top:2rem}
+.toc{position:sticky;top:calc(env(safe-area-inset-top,0px) + 1rem);align-self:start;max-height:calc(100vh - 2rem);overflow:auto;padding-right:.3rem;font-size:.92rem}
+.toc details{border:0}
+.toc summary{display:none}
+.toc h4{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:600;margin:1.1rem 0 .35rem}
+.toc ol{list-style:none;padding:0;margin:0}
+.toc li+li{margin-top:0}
+.toc a{display:flex;gap:.5rem;align-items:baseline;padding:.26rem .45rem;border-radius:6px;color:var(--fg);text-decoration:none;line-height:1.3}
+.toc a:hover{background:var(--surface-2)}
+.toc a.active{background:var(--accent-soft);color:var(--accent-strong);font-weight:700}
+.toc .n{font-family:var(--font-mono);font-size:.75rem;color:var(--muted);min-width:1.4rem}
+.toc .prog{margin-left:auto;font-family:var(--font-mono);font-size:.7rem;color:var(--muted)}
+.toc .toolbox{margin-top:.2rem;display:grid;gap:.4rem}
+main{min-width:0;display:grid;gap:3.2rem}
+section{display:grid;gap:1.05rem;scroll-margin-top:1rem}
+section > * {min-width:0}
+.sec-head{display:grid;gap:.45rem;padding-top:.4rem}
+
+/* Step header */
+.step{padding-top:2rem;border-top:1px solid var(--line)}
+.step-head{display:grid;grid-template-columns:auto minmax(0,1fr);gap:.2rem 1.1rem;align-items:end}
+.step-num{font-family:var(--font-display);font-weight:800;font-size:3.6rem;line-height:.85;color:transparent;-webkit-text-stroke:1.5px var(--accent);font-variant-numeric:tabular-nums}
+.step-head .chips{grid-column:1 / -1;margin-top:.5rem}
+
+/* Boxes */
+.box{border-radius:var(--radius);padding:.95rem 1.1rem;display:grid;gap:.5rem;background:var(--surface);border:1px solid var(--line)}
+.box.gate{background:var(--gate-soft);border-color:transparent}
+.box.gate .tag{color:var(--gate)}
+.box.warn{background:var(--warn-soft);border-color:transparent}
+.box.warn .tag{color:var(--warn)}
+.box .tag{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.09em;text-transform:uppercase;font-weight:600;color:var(--accent-strong)}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,17rem),1fr));gap:.9rem}
+
+/* Prompts and code */
+.prompt,.codeblock{border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);overflow:hidden;min-width:0}
+.pbar{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem;padding:.55rem .75rem;background:var(--surface-2);border-bottom:1px solid var(--line)}
+.pbar .title{font-weight:700;font-size:.95rem;margin-right:auto}
+.pbar .when{font-family:var(--font-mono);font-size:.72rem;color:var(--muted)}
+.copy{font:inherit;font-size:.82rem;font-weight:700;border:1px solid var(--accent);background:transparent;color:var(--accent-strong);padding:.2rem .7rem;border-radius:999px;cursor:pointer}
+.copy:hover{background:var(--accent);color:var(--on-accent)}
+.copy.done{background:var(--accent);color:var(--on-accent)}
+pre{margin:0;font-family:var(--font-mono);font-size:.84rem;line-height:1.55;color:var(--code-fg);background:var(--code-bg);padding:.85rem 1rem;overflow-x:auto;tab-size:2}
+.prompt pre{white-space:pre-wrap;word-break:break-word;background:var(--surface);color:var(--fg);font-size:.86rem}
+.fname{font-family:var(--font-mono);font-size:.8rem;font-weight:600;margin-right:auto;overflow-wrap:anywhere}
+.cols > div{display:grid;gap:.5rem;align-content:start;min-width:0}
+details.more > summary{overflow-wrap:anywhere}
+
+/* Tool notes */
+.toolnotes{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,18rem),1fr));gap:.9rem}
+.tn{border:1px solid var(--line);border-radius:var(--radius);padding:.85rem 1rem;display:grid;gap:.45rem;background:var(--surface)}
+.tn .who{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.09em;text-transform:uppercase;font-weight:600}
+.tn .who{color:var(--accent-strong)}
+/* Flow diagram */
+.flow{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr) auto minmax(0,1fr);gap:.6rem;align-items:center;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);padding:1rem}
+.flow .node{display:grid;gap:.3rem;padding:.75rem .85rem;border-radius:8px;background:var(--accent-soft);color:var(--fg);min-width:0}
+.flow .node b{font-family:var(--font-display);font-size:1.02rem;color:var(--accent-strong)}
+.flow .node span{font-size:.86rem;line-height:1.45}
+.flow .link{display:grid;justify-items:center;gap:.1rem;font-family:var(--font-mono);font-size:.7rem;color:var(--muted);text-align:center}
+.flow .arrow{font-size:1.4rem;color:var(--accent);line-height:1}
+.flow-note{grid-column:1 / -1;font-size:.88rem;color:var(--muted);border-top:1px dashed var(--line);padding-top:.6rem}
+@media (max-width: 720px){.flow{grid-template-columns:minmax(0,1fr)}.flow .link{grid-auto-flow:column;justify-content:center;gap:.5rem}.flow .arrow{transform:rotate(90deg)}}
+
+/* Lists and tables */
+.checklist{list-style:none;padding:0;display:grid;gap:.35rem}
+.checklist li{margin:0}
+.checklist label{display:flex;gap:.6rem;align-items:flex-start;cursor:pointer}
+.checklist input{margin-top:.32rem;accent-color:var(--accent);width:1rem;height:1rem;flex:none}
+.table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.92rem}
+th,td{text-align:left;vertical-align:top;padding:.55rem .75rem;border-bottom:1px solid var(--line)}
+th{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;background:var(--surface-2)}
+tr:last-child td{border-bottom:0}
+td code{white-space:nowrap}
+
+/* Loop */
+.loop{list-style:none;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,9.5rem),1fr));gap:.6rem;max-width:none;counter-reset:loop}
+.loop li{margin:0;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:.7rem .8rem;display:grid;gap:.2rem;counter-increment:loop}
+.loop li::before{content:counter(loop);font-family:var(--font-display);font-weight:800;font-size:1.4rem;color:var(--accent)}
+.loop b{font-size:.98rem}
+.loop span{font-size:.86rem;color:var(--muted)}
+details.more{border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+details.more > summary{cursor:pointer;padding:.65rem 1rem;font-weight:700}
+details.more > div{padding:0 1rem 1rem;display:grid;gap:.8rem}
+
+footer{margin-top:3rem;padding-top:1.4rem;border-top:1px solid var(--line);color:var(--muted);font-size:.9rem;display:grid;gap:.5rem}
+
+@media (max-width: 960px){
+  .layout{grid-template-columns:minmax(0,1fr);gap:1.4rem}
+  .toc{position:static;max-height:none;overflow:visible;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);padding:.2rem .7rem}
+  .toc summary{display:block;cursor:pointer;padding:.6rem 0;font-weight:700}
+  .step-num{font-size:2.8rem}
+}
+</style>
+
+<div class="page">
+<header class="hero" id="top">
+  <span class="eyebrow">Build guide · design v1.5.0 · review v1.5.0</span>
+  <h1>Retail ERP Build Playbook</h1>
+  <p class="lede">How to build the multi-tenant retail ERP from its design document, one roadmap step at a time, with the Google Antigravity desktop app doing most of the typing, a shared dev server running the code over SSH, and you checking every result.</p>
+  <div class="chips">
+    <span class="chip">27 weeks · 2 Nov 2026 – 9 May 2027</span>
+    <span class="chip">Laravel 13 · Filament 5 · PostgreSQL 17</span>
+    <span class="chip">Alpine + Dexie offline POS</span>
+    <span class="chip">Go print &amp; fiscal bridge</span>
+    <span class="chip">Antigravity desktop + SSH dev server</span>
+    <span class="chip">14 build steps · 8 milestones</span>
+  </div>
+
+  <div>
+    <div class="tl-wrap">
+      <div class="tl" role="img" aria-label="Roadmap: 27 weeks from 2 November 2026, with build steps by stream, Ramadan from about 9 February to 9 March 2027, Eid-ul-Fitr around 10 March, and the Eid-ul-Adha release freeze starting around 3 May.">
+        <span class="lab" style="grid-row:1;grid-column:1">Week</span>
+        <span class="wk" style="grid-row:1;grid-column:2">1</span><span class="wk" style="grid-row:1;grid-column:3">2</span><span class="wk" style="grid-row:1;grid-column:4">3</span><span class="wk" style="grid-row:1;grid-column:5">4</span><span class="wk" style="grid-row:1;grid-column:6">5</span><span class="wk" style="grid-row:1;grid-column:7">6</span><span class="wk" style="grid-row:1;grid-column:8">7</span><span class="wk" style="grid-row:1;grid-column:9">8</span><span class="wk" style="grid-row:1;grid-column:10">9</span><span class="wk" style="grid-row:1;grid-column:11">10</span><span class="wk" style="grid-row:1;grid-column:12">11</span><span class="wk" style="grid-row:1;grid-column:13">12</span><span class="wk" style="grid-row:1;grid-column:14">13</span><span class="wk" style="grid-row:1;grid-column:15">14</span><span class="wk" style="grid-row:1;grid-column:16">15</span><span class="wk" style="grid-row:1;grid-column:17">16</span><span class="wk" style="grid-row:1;grid-column:18">17</span><span class="wk" style="grid-row:1;grid-column:19">18</span><span class="wk" style="grid-row:1;grid-column:20">19</span><span class="wk" style="grid-row:1;grid-column:21">20</span><span class="wk" style="grid-row:1;grid-column:22">21</span><span class="wk" style="grid-row:1;grid-column:23">22</span><span class="wk" style="grid-row:1;grid-column:24">23</span><span class="wk" style="grid-row:1;grid-column:25">24</span><span class="wk" style="grid-row:1;grid-column:26">25</span><span class="wk" style="grid-row:1;grid-column:27">26</span><span class="wk" style="grid-row:1;grid-column:28">27</span>
+
+        <span class="lab" style="grid-row:2;grid-column:1">A · Platform</span>
+        <a class="bar" href="#step-01" style="grid-row:2;grid-column:2 / 4" title="Step 1: platform baseline, weeks 1–2">S1</a>
+        <a class="bar" href="#step-02" style="grid-row:2;grid-column:4 / 7" title="Step 2: tenancy and RLS, weeks 3–5">S2</a>
+        <a class="bar" href="#step-03" style="grid-row:2;grid-column:7 / 10" title="Step 3: identity and SoD, weeks 6–8">S3</a>
+        <a class="bar" href="#step-06" style="grid-row:2;grid-column:10 / 12" title="Step 6: billing and onboarding, weeks 9–10">S6</a>
+
+        <span class="lab" style="grid-row:3;grid-column:1">B · Finance &amp; tax</span>
+        <a class="bar" href="#step-05" style="grid-row:3;grid-column:7 / 11" title="Step 5: general ledger, weeks 6–9">S5</a>
+        <a class="bar" href="#step-09" style="grid-row:3;grid-column:11 / 15" title="Step 9: VAT engine and invoices, weeks 10–13">S9</a>
+        <a class="bar" href="#step-11" style="grid-row:3;grid-column:15 / 17" title="Step 11: receivables, payables and documents, weeks 14–15">S11</a>
+
+        <span class="lab" style="grid-row:4;grid-column:1">C · Catalog &amp; stock</span>
+        <a class="bar" href="#step-04" style="grid-row:4;grid-column:7 / 10" title="Step 4: catalog and tax codes, weeks 6–8">S4</a>
+        <a class="bar" href="#step-07" style="grid-row:4;grid-column:10 / 17" title="Step 7: inventory and costing, weeks 9–15">S7</a>
+
+        <span class="lab" style="grid-row:5;grid-column:1">D · POS &amp; bridge</span>
+        <a class="bar" href="#step-08" style="grid-row:5;grid-column:10 / 14" title="Step 8: offline POS shell, weeks 9–12">S8</a>
+        <a class="bar" href="#step-10" style="grid-row:5;grid-column:14 / 17" title="Step 10: print and fiscal bridge, weeks 13–15">S10</a>
+        <a class="bar" href="#step-12" style="grid-row:5;grid-column:17 / 20" title="Step 12: offline sync, weeks 16–18">S12</a>
+
+        <span class="lab" style="grid-row:6;grid-column:1">E · Import &amp; QA</span>
+        <a class="bar" href="#step-13" style="grid-row:6;grid-column:20 / 22" title="Step 13: outbox, import, QA and security, weeks 19–20">S13</a>
+
+        <span class="lab" style="grid-row:7;grid-column:1">F · Pilot &amp; launch</span>
+        <a class="bar" href="#step-14" style="grid-row:7;grid-column:22 / 29" title="Step 14: pilot weeks 21–26, go-live week 27">S14</a>
+
+        <span class="lab" style="grid-row:8;grid-column:1">Milestones</span>
+        <span class="msk" style="grid-row:8;grid-column:6" title="M1, 6 Dec 2026">M1</span>
+        <span class="msk" style="grid-row:8;grid-column:10" title="M2, 3 Jan 2027">M2</span>
+        <span class="msk" style="grid-row:8;grid-column:14" title="M3, 31 Jan 2027">M3</span>
+        <span class="msk" style="grid-row:8;grid-column:16" title="M4, 14 Feb 2027">M4</span>
+        <span class="msk" style="grid-row:8;grid-column:19" title="M5, 7 Mar 2027">M5</span>
+        <span class="msk" style="grid-row:8;grid-column:21" title="M6, 21 Mar 2027">M6</span>
+        <span class="msk" style="grid-row:8;grid-column:27" title="M7, 2 May 2027">M7</span>
+        <span class="msk" style="grid-row:8;grid-column:28" title="M8, 9 May 2027">M8</span>
+
+        <span class="lab" style="grid-row:9;grid-column:1">Calendar</span>
+        <span class="bar cal" style="grid-row:9;grid-column:16 / 20" title="Ramadan, expected 9 Feb – 9 Mar 2027">Ramadan</span>
+        <span class="bar cal eid" style="grid-row:9;grid-column:20 / 21" title="Eid-ul-Fitr, expected around 10 Mar 2027">Eid</span>
+        <span class="bar cal eid" style="grid-row:9;grid-column:28 / 29" title="Release freeze before Eid-ul-Adha (about 17–19 May) starts around 3 May">Frz</span>
+      </div>
+    </div>
+    <div class="tl-legend">
+      <span>Bars link to each step. S7 covers two roadmap tasks (weeks 9–12 and 13–15).</span>
+      <span>Ramadan and Eid dates depend on moon sighting.</span>
+    </div>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="toc" aria-label="Guide contents">
+  <details id="toc-details" open>
+    <summary>Contents</summary>
+    <h4>Prepare</h4>
+    <ol>
+      <li><a href="#overview"><span class="n">·</span>How to use this guide</a></li>
+      <li><a href="#before"><span class="n">·</span>Before you start</a></li>
+      <li><a href="#tools"><span class="n">·</span>Antigravity and dev server</a></li>
+      <li><a href="#github"><span class="n">·</span>Create the GitHub repository</a></li>
+      <li><a href="#testing"><span class="n">·</span>Testing workflow</a></li>
+    </ol>
+    <h4>Build</h4>
+    <ol>
+      <li><a href="#step-01" data-step="step-01"><span class="n">1</span>Platform baseline<span class="prog"></span></a></li>
+      <li><a href="#step-02" data-step="step-02"><span class="n">2</span>Tenancy and RLS<span class="prog"></span></a></li>
+      <li><a href="#step-03" data-step="step-03"><span class="n">3</span>Identity and SoD<span class="prog"></span></a></li>
+      <li><a href="#step-04" data-step="step-04"><span class="n">4</span>Catalog and tax codes<span class="prog"></span></a></li>
+      <li><a href="#step-05" data-step="step-05"><span class="n">5</span>General ledger<span class="prog"></span></a></li>
+      <li><a href="#step-06" data-step="step-06"><span class="n">6</span>Billing and onboarding<span class="prog"></span></a></li>
+      <li><a href="#step-07" data-step="step-07"><span class="n">7</span>Inventory and costing<span class="prog"></span></a></li>
+      <li><a href="#step-08" data-step="step-08"><span class="n">8</span>Offline POS shell<span class="prog"></span></a></li>
+      <li><a href="#step-09" data-step="step-09"><span class="n">9</span>VAT and invoices<span class="prog"></span></a></li>
+      <li><a href="#step-10" data-step="step-10"><span class="n">10</span>Print and fiscal bridge<span class="prog"></span></a></li>
+      <li><a href="#step-11" data-step="step-11"><span class="n">11</span>AR, AP and documents<span class="prog"></span></a></li>
+      <li><a href="#step-12" data-step="step-12"><span class="n">12</span>Offline sync<span class="prog"></span></a></li>
+      <li><a href="#step-13" data-step="step-13"><span class="n">13</span>Outbox, import and QA<span class="prog"></span></a></li>
+      <li><a href="#step-14" data-step="step-14"><span class="n">14</span>Pilot and go-live<span class="prog"></span></a></li>
+    </ol>
+    <h4>Reference</h4>
+    <ol>
+      <li><a href="#prompts"><span class="n">·</span>Reusable prompts</a></li>
+      <li><a href="#templates"><span class="n">·</span>File templates</a></li>
+      <li><a href="#sources"><span class="n">·</span>Sources</a></li>
+    </ol>
+  </details>
+</nav>
+
+<main>
+
+<!-- ============ OVERVIEW ============ -->
+<section id="overview">
+  <div class="sec-head">
+    <span class="eyebrow">Prepare</span>
+    <h2>How to use this guide</h2>
+  </div>
+  <p>You're building the platform described in <code>ERP_SYSTEM_DESIGN.md</code> v1.5.0: a modular Laravel monolith with three layers (tenant user app, tenant admin panel, Super-Admin panel), PostgreSQL row-level security for tenant isolation, a double-entry ledger, Bangladesh VAT and Mushak forms, an offline-first POS, and a small Go program that drives receipt printers and the NBR fiscal device. The latest review (<code>ERP_DESIGN_REVIEW_v1.5.0.md</code>) lists what the design still gets wrong, and each step below tells you which of those items to fix as you build.</p>
+  <p>The 14 build steps follow the roadmap in design §18. Every step has the same parts: the goal, a gate of decisions to settle first, what to build, copy-ready prompts, how to test it, a "done when" checklist, and how to ship it to GitHub. Tick the checklist boxes as you go; they're saved in this browser only.</p>
+
+  <h3>The working loop</h3>
+  <p>Use the same six-part loop for every piece of work. The agent writes the code and runs it on the dev server; you approve the plan and each command, read the failing test, and read the review.</p>
+  <ol class="loop">
+    <li><b>Plan</b><span>Agent reads the design sections and writes a commit-by-commit plan. You approve it.</span></li>
+    <li><b>Red</b><span>Agent writes the test first and runs it. You see it fail for the right reason.</span></li>
+    <li><b>Green</b><span>Agent implements the smallest change and runs the test again.</span></li>
+    <li><b>Full check</b><span>Pint, PHPStan and the module's tests run on the server, with output pasted back.</span></li>
+    <li><b>Review</b><span>A new conversation, on a different model, reviews the diff against the design.</span></li>
+    <li><b>Ship</b><span>Pull request, CI, human review, squash merge.</span></li>
+  </ol>
+
+  <h3>How the prompts are written</h3>
+  <p>Each prompt gives the agent four things: where to read (design sections and review IDs), the task, the rules it must keep, and when to stop. Prompts point at files in the repository instead of pasting the design, so the agent always reads the current version. They're written for the Antigravity desktop app, where the agent edits your local clone and runs every command on the dev server over SSH. Start each new conversation with the <a href="#tools">SSH block</a>, then the prompt. Every activity has a drop-in prompt: setup prompts S1–S5, the step routine R0–R9, utilities U1–U6, and two or three prompts inside each step. The <a href="#prompts">prompt index</a> lists them all. Placeholders look like <code>{N}</code>; replace them before sending.</p>
+
+  <div class="box warn">
+    <span class="tag">Keep the agent honest</span>
+    <ul>
+      <li>Never accept "done" without the pasted output of the test command.</li>
+      <li>Never let an agent weaken a database rule, delete a test or switch tests to SQLite to make something pass.</li>
+      <li>Read every migration and trigger yourself. The last four design reviews found new SQL defects in each rewrite, and every one of them would have been caught by a test.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============ BEFORE ============ -->
+<section id="before">
+  <div class="sec-head">
+    <span class="eyebrow">Prepare</span>
+    <h2>Before you start</h2>
+  </div>
+  <p>Stream A (weeks 1–5) can start now. These items from the v1.5.0 review must be settled before the streams that depend on them, and some need people outside the engineering team.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Settle by</th><th>Decision or task</th><th>Review IDs</th><th>Who</th></tr></thead>
+    <tbody>
+      <tr><td>Week 1 (2 Nov)</td><td>Answer the open product questions: first retail segment, POS-only or accounting-only plans, how pilot tenants pay, whether known customers can buy on credit while the terminal is offline.</td><td><span class="chip id">NEW-32</span></td><td>Product owner</td></tr>
+      <tr><td>Week 1</td><td>Start the legal work: NBR acceptance of per-terminal invoice series and provisional receipts, SDC integration spec, in-country hosting under the PDPO, breach-notification rule, record retention.</td><td><span class="chip id">POS-03</span> <span class="chip id">TAX-01</span> <span class="chip id">NEW-35</span></td><td>Legal / tax lead</td></tr>
+      <tr><td>Week 6 (7 Dec)</td><td>Fix staffing so Streams B and C aren't one person's work, and add tasks for sales and procurement documents, reporting, notifications and settings.</td><td><span class="chip id">NEW-34</span></td><td>Project lead</td></tr>
+      <tr><td>Week 6</td><td>Re-plan the data-import window (Ramadan starts about 9 Feb), the go-live date versus the Eid-ul-Adha freeze, and the Eid database budget.</td><td><span class="chip id">NEW-28</span></td><td>Project lead, tech lead</td></tr>
+      <tr><td>Week 9 (28 Dec)</td><td>Decide how offline oversells are recorded; this changes ADR-009.</td><td><span class="chip id">NEW-26</span></td><td>Product owner, domain specialist</td></tr>
+      <tr><td>Week 10 (4 Jan)</td><td>Have the NBR answers in hand before the VAT engine and bridge are built.</td><td><span class="chip id">NEW-18</span></td><td>Legal / tax lead</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Accounts and equipment</h3>
+  <div class="cols">
+    <div class="box">
+      <span class="tag">Accounts</span>
+      <ul>
+        <li>GitHub organisation with admin rights</li>
+        <li>Google account signed in to the Antigravity desktop app</li>
+        <li>A Linux dev server (Ubuntu 24.04, 4 vCPUs, 8 GB) and someone with admin rights on it</li>
+        <li>DigitalOcean (or your chosen host) and Cloudflare</li>
+        <li>SMS gateway sandbox accounts (two providers for failover)</li>
+      </ul>
+    </div>
+    <div class="box">
+      <span class="tag">Test hardware</span>
+      <ul>
+        <li>58 mm and 80 mm ESC/POS thermal printers</li>
+        <li>USB barcode scanner (keyboard mode) and a cash drawer</li>
+        <li>An NBR-certified SDC, or the vendor's emulator</li>
+        <li>One low-end Windows 10/11 PC and one Ubuntu 22.04 PC as POS terminals</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============ TOOLS ============ -->
+<section id="tools">
+  <div class="sec-head">
+    <span class="eyebrow">Prepare</span>
+    <h2>Set up Antigravity and the dev server</h2>
+  </div>
+  <p>The agent runs in the Antigravity desktop app on your computer and edits a local clone of the repository, so you can review every change in the app. Everything that executes runs on a shared Linux dev server that the agent reaches over SSH: installing software, PHP, Composer, Node, Go, PostgreSQL, Redis and all the tests. Git, through GitHub, is the only way code moves between the two copies.</p>
+
+  <div class="flow" role="img" aria-label="Your computer runs Antigravity and the local clone. It pushes and pulls through GitHub, which the dev server also pushes to and pulls from. The agent runs commands on the dev server over SSH, and your browser reaches the app on the server through an SSH tunnel.">
+    <div class="node"><b>Your computer</b><span>Antigravity desktop app<br>Local clone (the agent edits here)<br>Chrome, git, gh, ssh</span></div>
+    <div class="link"><span>git push / pull</span><span class="arrow" aria-hidden="true">⇄</span></div>
+    <div class="node"><b>GitHub</b><span>retail-erp repository<br>Pull requests and CI</span></div>
+    <div class="link"><span>git pull / push</span><span class="arrow" aria-hidden="true">⇄</span></div>
+    <div class="node"><b>Dev server</b><span>Clone used to run the code<br>PHP, Node, Go, Docker<br>PostgreSQL 17, Redis 7</span></div>
+    <div class="flow-note"><code>ssh erp-dev '…'</code> runs each command on the server · <code>ssh -N erp-dev-tunnel</code> shows the app at <code>http://localhost:8000</code></div>
+  </div>
+
+  <h3>1. What only you can do</h3>
+  <p>The agent does everything else through prompts, but it needs these in place first. They take about 20 minutes.</p>
+  <ol>
+    <li><b>Install the app.</b> Download the Antigravity desktop app from <a href="https://antigravity.google/docs/getting-started">antigravity.google</a> (macOS 12 or later, Windows 10 or 11, or Linux) and sign in with your Google account. Install git, the GitHub CLI (<code>gh</code>) and Chrome. PHP, Node and Docker aren't needed on your computer.</li>
+    <li><b>Make the project folder.</b> Create an empty folder such as <code>~/code/retail-erp</code> with an <code>incoming/</code> folder inside it, and put <code>ERP_SYSTEM_DESIGN-v6.md</code> and the <code>ERP_DESIGN_REVIEW*.md</code> files in <code>incoming/</code>. In the app, choose <b>New Project → Add Folder</b>, pick the folder, choose <b>Local mode</b> and click <b>Create</b>.</li>
+    <li><b>Set the permission preset.</b> Open <b>Settings → Projects</b>, pick this project and set <b>Permission Preset</b> to <b>Request Review</b> (why: see part 2).</li>
+    <li><b>Connect to the server.</b> Create a key and three SSH aliases, as shown below, and accept the server's host key once by hand. The agent can't answer that question for you.</li>
+    <li><b>Sign in to GitHub.</b> Run <code>gh auth login</code> in a terminal and finish the browser sign-in, as an owner of the GitHub organisation.</li>
+  </ol>
+  <div class="codeblock"><div class="pbar"><span class="fname">~/.ssh/config (append)</span><button type="button" class="copy">Copy</button></div><pre># The account you were given, with sudo: used once, by prompt S1
+Host erp-dev-admin
+  HostName 203.0.113.10
+  User {admin-user}
+  IdentityFile ~/.ssh/erp_dev_ed25519
+  IdentitiesOnly yes
+  BatchMode yes
+
+# Daily work as the erp user that S1 creates (no sudo)
+Host erp-dev
+  HostName 203.0.113.10
+  User erp
+  IdentityFile ~/.ssh/erp_dev_ed25519
+  IdentitiesOnly yes
+  BatchMode yes
+  ServerAliveInterval 30
+
+# Browser tunnel to the app on the server
+Host erp-dev-tunnel
+  HostName 203.0.113.10
+  User erp
+  IdentityFile ~/.ssh/erp_dev_ed25519
+  IdentitiesOnly yes
+  ExitOnForwardFailure yes
+  LocalForward 8000 127.0.0.1:8000
+  LocalForward 5173 127.0.0.1:5173</pre></div>
+  <div class="codeblock"><div class="pbar"><span class="title">On your computer</span><button type="button" class="copy">Copy</button></div><pre>ssh-keygen -t ed25519 -f ~/.ssh/erp_dev_ed25519 -C "you@erp-dev"
+ssh-copy-id -i ~/.ssh/erp_dev_ed25519.pub {admin-user}@203.0.113.10   # if you were given a password
+ssh-add ~/.ssh/erp_dev_ed25519      # load the key into ssh-agent
+ssh erp-dev-admin true              # accept the host key once, by hand
+gh auth login</pre></div>
+  <p class="small muted"><code>BatchMode yes</code> makes ssh fail at once instead of waiting for a password the agent can't type. Your administrator needs passwordless <code>sudo</code> while S1 runs; it can be removed afterwards, because daily work uses the <code>erp</code> user, which has none.</p>
+  <details class="more">
+    <summary>On Windows: start ssh-agent, and install the key without ssh-copy-id</summary>
+    <div>
+      <p>Windows 10 and 11 include the OpenSSH client but not <code>ssh-copy-id</code>. Start the agent once in an administrator PowerShell, then load the key in a normal one. If you were given a password, ask the server administrator to add your <code>.pub</code> key to the admin account. Your config file is <code>C:\Users\you\.ssh\config</code>.</p>
+      <div class="codeblock"><div class="pbar"><span class="title">PowerShell (administrator)</span><button type="button" class="copy">Copy</button></div><pre>Get-Service ssh-agent | Set-Service -StartupType Automatic
+Start-Service ssh-agent</pre></div>
+      <div class="codeblock"><div class="pbar"><span class="title">PowerShell</span><button type="button" class="copy">Copy</button></div><pre>ssh-add $HOME\.ssh\erp_dev_ed25519
+ssh erp-dev-admin true</pre></div>
+    </div>
+  </details>
+
+  <h3>2. Why the project uses Request Review</h3>
+  <p>With the app's <b>Default</b> permission preset, terminal commands run in a sandbox that has no network and can't read <code>~/.ssh</code>, so ssh can't connect. <b>Request Review</b> turns the sandbox off for this project and makes every command wait for your approval, so you read each ssh command before it runs.</p>
+  <p class="small muted">Once Step 2 is merged and the routine is familiar, you can add allow rules for commands you approve all day, in the form <code>command(regex:…)</code>. Allowed commands run without asking, outside the sandbox. Keep anything that resets data (<code>migrate:fresh</code>, <code>db:wipe</code>, <code>docker compose down -v</code>) out of them, and test each rule before relying on it.</p>
+
+  <h3>3. The SSH block</h3>
+  <p>Start every new conversation with this block, filled in, above the prompt. It tells the agent where to run commands; the dev-server rule (added by prompt S4) tells it how. Share the aliases and paths only. Never paste a private key, passphrase or password into a prompt, because prompts stay in the conversation history. A public key (the one-line <code>.pub</code> file) is safe to paste.</p>
+  <div class="prompt"><div class="pbar"><span class="title">SSH block</span><span class="when">Top of every new conversation</span><button type="button" class="copy">Copy</button></div><pre>Dev server (SSH)
+- Connect with: ssh erp-dev        (alias in my ~/.ssh/config; the key is loaded in ssh-agent)
+- Project folder on the server: ~/retail-erp
+- Branch for this conversation: step-{NN}-{name}
+- Test database: erp_test
+- App in my browser, through my tunnel: http://localhost:8000
+Follow .agents/rules/dev-server.md for every command and for keeping the two copies in sync.</pre></div>
+
+  <h3>4. Let the agent provision the server</h3>
+  <p>Run S1 in your first conversation. It's the only prompt that uses the admin alias. Approve each command after reading it, and stop the agent if anything looks wrong for your server.</p>
+  <div class="prompt"><div class="pbar"><span class="title">S1 · Provision the dev server</span><span class="when">Once, first conversation</span><button type="button" class="copy">Copy</button></div><pre>Dev server setup (SSH)
+- Admin connection: ssh erp-dev-admin   (an account with passwordless sudo, for this setup only)
+- Daily connection, once you've created it: ssh erp-dev   (user erp)
+- My public key for the erp user: {paste the one line from ~/.ssh/erp_dev_ed25519.pub}
+
+Provision this server for the retail ERP project. Run each command through ssh erp-dev-admin with sudo -n, one ssh call per command, so I can review each one. If sudo asks for a password, or a step fails, stop and tell me.
+
+1. Show me the OS version, CPU count, memory and free disk. Stop if it isn't Ubuntu 24.04 or newer.
+2. Create a user named erp with no password and no sudo rights. Put my public key in /home/erp/.ssh/authorized_keys with owner erp, mode 700 on the folder and 600 on the file.
+3. Install Docker with the official script from get.docker.com and add erp to the docker group.
+4. Install git, unzip, jq, tmux and postgresql-client; PHP 8.4 from the ondrej/php PPA with the cli, pgsql, redis, mbstring, xml, curl, zip, bcmath and intl packages; Composer into /usr/local/bin; Node.js 24 from NodeSource; Go and k6 from snap.
+5. Install the system libraries headless Chromium needs: npx -y playwright install-deps chromium.
+6. Firewall: find the port sshd listens on, allow it in ufw, then enable ufw with nothing else open. Tell me whether SSH password logins are enabled, but don't change the SSH server settings.
+7. As erp (ssh erp-dev), check: php -v, composer --version, node -v, go version, k6 version, docker compose version, and that docker runs without sudo.
+
+Finish with a table of what was installed, the versions, and anything that failed. Never print or copy any private key.</pre></div>
+  <details class="more">
+    <summary>What S1 installs, if you'd rather run it yourself</summary>
+    <div>
+      <div class="codeblock"><div class="pbar"><span class="title">On the server, as an administrator</span><button type="button" class="copy">Copy</button></div><pre>sudo adduser --disabled-password --gecos "" erp
+sudo mkdir -p /home/erp/.ssh
+sudo nano /home/erp/.ssh/authorized_keys      # paste your public key, save
+sudo chown -R erp:erp /home/erp/.ssh &amp;&amp; sudo chmod 700 /home/erp/.ssh &amp;&amp; sudo chmod 600 /home/erp/.ssh/authorized_keys
+
+curl -fsSL https://get.docker.com | sudo sh
+sudo usermod -aG docker erp
+
+sudo apt-get update &amp;&amp; sudo apt-get install -y software-properties-common git unzip jq tmux postgresql-client
+sudo add-apt-repository -y ppa:ondrej/php
+sudo apt-get install -y php8.4-cli php8.4-pgsql php8.4-redis php8.4-mbstring php8.4-xml \
+  php8.4-curl php8.4-zip php8.4-bcmath php8.4-intl
+curl -sS https://getcomposer.org/installer | sudo php -- --install-dir=/usr/local/bin --filename=composer
+curl -fsSL https://deb.nodesource.com/setup_24.x | sudo bash - &amp;&amp; sudo apt-get install -y nodejs
+sudo snap install go --classic
+sudo snap install k6
+sudo npx -y playwright install-deps chromium
+
+sudo ufw allow OpenSSH &amp;&amp; sudo ufw --force enable</pre></div>
+    </div>
+  </details>
+  <div class="box warn"><span class="tag">Keep the server private</span><ul>
+    <li>The <code>compose.yaml</code> template publishes PostgreSQL and Redis on <code>127.0.0.1</code> only. Don't open them to the internet.</li>
+    <li>Use the server for development data only. The agent never gets SSH access to staging or production.</li>
+  </ul></div>
+
+  <h3>5. What the agent knows about the project</h3>
+  <p>Prompt S4 adds these files from the <a href="#templates">templates</a>. Because they live in the repository, every conversation and every team member gets the same ones. Check that they appear under <b>Customizations</b> in the app.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>What</th><th>File</th><th>Loaded</th></tr></thead>
+    <tbody>
+      <tr><td>Project rules</td><td><code>AGENTS.md</code></td><td>Always</td></tr>
+      <tr><td>How to run commands on the server and keep both copies in sync</td><td><code>.agents/rules/dev-server.md</code></td><td>Always (<code>trigger: always_on</code>)</td></tr>
+      <tr><td>Skills: <code>/erp-step</code>, <code>/db-rule-test</code>, <code>/review-branch</code></td><td><code>.agents/skills/{name}/SKILL.md</code></td><td>When the task matches, or by typing the slash command</td></tr>
+      <tr><td>Step map</td><td><code>docs/build/steps.md</code></td><td>Read by the skills</td></tr>
+      <tr><td>SSH details</td><td>First message of each conversation</td><td>Never committed</td></tr>
+    </tbody>
+  </table></div>
+  <p class="small muted">Laravel Boost (Step 1) writes a block of Laravel and Filament guidance into <code>AGENTS.md</code>, inside <code>&lt;laravel-boost-guidelines&gt;</code> tags. It only ever replaces that block. Because Boost runs on the server, it's committed there and pulled here like any other generated file.</p>
+</section>
+
+<!-- ============ GITHUB ============ -->
+<section id="github">
+  <div class="sec-head">
+    <span class="eyebrow">Prepare</span>
+    <h2>Create the GitHub repository</h2>
+  </div>
+  <p>Four prompts, run in order in week 1 after S1. The agent creates the empty repository with your <code>gh</code> login, scaffolds Laravel on the server and pushes it from there with the server's own key, brings it into your project folder with the design and agent files, then protects <code>main</code>. You can run them in the same conversation as S1. Put <code>main</code> as the branch in the SSH block. Until S4 adds the dev-server rule the agent can't read it, so these prompts spell out what to run where.</p>
+
+  <div class="prompt"><div class="pbar"><span class="title">S2 · Create the repository and the server's GitHub key</span><span class="when">After S1</span><button type="button" class="copy">Copy</button></div><pre>{SSH block}
+
+GitHub: organisation your-org, repository retail-erp, private. gh on this computer is logged in as me.
+
+1. Here, run gh repo create your-org/retail-erp --private --description "Multi-tenant retail ERP". If it already exists, tell me and continue.
+2. On the server, as erp: create the key ~/.ssh/github_erp (ed25519, no passphrase); add a "Host github.com" entry to ~/.ssh/config that uses it with IdentitiesOnly yes; set git's global user.name to "erp-dev server" and user.email to {email}.
+3. Copy the server's public key, only the .pub file, to .scratch/erp-dev.pub here, and add it as a deploy key with write access: gh repo deploy-key add .scratch/erp-dev.pub --repo your-org/retail-erp --allow-write --title "erp-dev server".
+4. On the server, run ssh -o StrictHostKeyChecking=accept-new -T git@github.com and show me GitHub's greeting. (It exits with code 1 even when it works.)</pre></div>
+
+  <div class="prompt"><div class="pbar"><span class="title">S3 · Scaffold Laravel on the server and push it</span><span class="when">After S2</span><button type="button" class="copy">Copy</button></div><pre>{SSH block}
+
+On the server, as erp, in the home folder:
+1. composer global require laravel/installer. Call the installer by its full path: $(composer global config bin-dir --absolute --quiet)/laravel.
+2. Read laravel new --help and choose the flags for a non-interactive install: no starter kit, Pest, PostgreSQL, and no migrations run. Show me the full command before running it, then create ~/retail-erp.
+3. Make sure ~/retail-erp is a git repository on branch main with a single commit "chore: scaffold Laravel 13 app". Add the remote git@github.com:your-org/retail-erp.git and push main.
+If any step can only run interactively, stop and give me the exact command to run in my own SSH session. Don't change anything else yet.</pre></div>
+
+  <div class="prompt"><div class="pbar"><span class="title">S4 · Bring the repository here and add the agent files</span><span class="when">After S3</span><button type="button" class="copy">Copy</button></div><pre>{SSH block}
+
+This project folder holds only incoming/, with ERP_SYSTEM_DESIGN-v6.md and the ERP_DESIGN_REVIEW*.md files.
+1. Run gh auth setup-git. Then turn this folder into a clone without losing incoming/: git init -b main; git remote add origin https://github.com/your-org/retail-erp.git; git pull origin main; git branch --set-upstream-to=origin/main main.
+2. Move incoming/ERP_SYSTEM_DESIGN-v6.md to docs/design/ERP_SYSTEM_DESIGN.md and the review files to docs/reviews/, then remove incoming/. Add docs/adr/.gitkeep.
+3. Create these files from the templates I paste below, exactly as given: AGENTS.md, .agents/rules/dev-server.md, the three skills under .agents/skills/, docs/build/steps.md, and the lines to append to .gitignore.
+4. Commit "docs: add design, reviews and agent rules", push to main, then on the server run git pull --ff-only in ~/retail-erp.
+5. List the rules and skills you now have for this project.
+
+{paste the templates: AGENTS.md, dev-server.md, the three SKILL.md files, steps.md, .gitignore lines}</pre></div>
+
+  <div class="prompt"><div class="pbar"><span class="title">S5 · Protect main and turn on security features</span><span class="when">After S4</span><button type="button" class="copy">Copy</button></div><pre>Repository: your-org/retail-erp. Use gh on this computer.
+
+1. With gh api, create a branch ruleset named "protect main" on the default branch: require a pull request with 1 approval, dismiss stale approvals on new commits, require linear history, block force pushes and deletion, and no bypass actors. Leave required status checks out; prompt 1B adds them once CI exists. Show me the JSON before you send it.
+2. Turn on Dependabot alerts and Dependabot security updates. Turn on secret scanning and push protection if the repository's plan includes them, and tell me if it doesn't.
+3. Create the environments staging and production. Production requires approval from {my GitHub username}.
+4. Show me the ruleset and settings as GitHub now reports them. If the plan doesn't allow rulesets on a private repository, stop and tell me.</pre></div>
+
+  <div class="box gate"><span class="tag">Only you</span><ul>
+    <li><b>Secret values.</b> Set them yourself with <code>gh secret set NAME --env staging</code>, which asks for the value. Never give a secret value to the agent.</li>
+    <li><b>Approvals.</b> GitHub doesn't let you approve your own pull request, and the agent opens pull requests as you. A teammate, such as the tech lead, approves.</li>
+    <li><b>Plan limits.</b> Rulesets on a private repository need a paid GitHub plan, and secret scanning on a private repository needs GitHub's secret protection add-on. S5 reports what your plan allows.</li>
+  </ul></div>
+
+  <details class="more">
+    <summary>Lines S4 appends to .gitignore</summary>
+    <div>
+      <div class="codeblock"><div class="pbar"><span class="fname">.gitignore (append)</span><button type="button" class="copy">Copy</button></div><pre># Local settings and secrets
+.env.*
+!.env.example
+.mcp.json
+*.pub
+
+# Test and build output
+tests/Browser/Screenshots
+/playwright-report
+/test-results
+/bridge/dist
+
+# Files the agent copies back from the server to look at
+/.scratch/</pre></div>
+    </div>
+  </details>
+
+  <h3>The per-step routine</h3>
+  <p>Each build step gets its own branch and at least one pull request; keep each pull request small enough to review in under an hour. All of it runs from prompts in <a href="#prompts">Reusable prompts</a>:</p>
+  <ol>
+    <li><b>R0</b> creates the step branch here and switches the server to it.</li>
+    <li><b>R1</b>, <b>R2</b>, then the step's own prompts and <b>R3</b> repeated, build the step commit by commit.</li>
+    <li><b>R5</b> reviews it in a new conversation; <b>R6</b> opens the pull request.</li>
+    <li><b>R8</b> answers review comments; a teammate approves.</li>
+    <li><b>R9</b> merges, brings both copies back to <code>main</code>, and tags milestones.</li>
+  </ol>
+  <details class="more">
+    <summary>The git and gh commands behind R0, R6 and R9</summary>
+    <div>
+      <div class="codeblock"><div class="pbar"><span class="title">For reference</span><button type="button" class="copy">Copy</button></div><pre># R0: start the step
+git switch main &amp;&amp; git pull
+git switch -c step-02-tenancy-rls
+git push -u origin step-02-tenancy-rls
+ssh erp-dev 'cd ~/retail-erp &amp;&amp; git fetch &amp;&amp; git switch step-02-tenancy-rls'
+
+# R6: open the pull request
+gh pr create --fill --base main
+gh pr checks --watch
+
+# R9: after approval
+gh pr merge --squash --delete-branch
+git switch main &amp;&amp; git pull
+ssh erp-dev 'cd ~/retail-erp &amp;&amp; git switch main &amp;&amp; git pull --ff-only'
+git tag -a m1-tenancy -m "M1: tenancy, composite keys and RLS"
+git push origin m1-tenancy
+gh release create m1-tenancy --notes-file docs/build/step-02-plan.md</pre></div>
+    </div>
+  </details>
+</section>
+
+<!-- ============ TESTING ============ -->
+<section id="testing">
+  <div class="sec-head">
+    <span class="eyebrow">Prepare</span>
+    <h2>Testing workflow</h2>
+  </div>
+  <p>Testing carries more weight here than in most projects: the money, tax and tenancy rules live in PostgreSQL triggers and policies, and the POS has to work with no network. Every test runs on the dev server; the agent starts it over SSH and reads the output. This section sets out the test layers, the loop in Antigravity, and copyable recipes. Each build step then says which layers it needs.</p>
+
+  <h3>Test layers</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Layer</th><th>Proves</th><th>Tool and folder</th><th>When</th></tr></thead>
+    <tbody>
+      <tr><td>Unit</td><td>Pure logic: money, tax maths, number formatting</td><td>Pest · <code>tests/Unit</code></td><td>Every change</td></tr>
+      <tr><td>Feature</td><td>HTTP endpoints, Filament actions, policies</td><td>Pest · <code>tests/Feature</code></td><td>Every change</td></tr>
+      <tr><td>Database rules</td><td>Triggers, constraints, RLS and composite keys reject the bad case</td><td>Pest against PostgreSQL as <code>app_rw</code> · <code>tests/Database</code></td><td>Every PR</td></tr>
+      <tr><td>Concurrency</td><td>Locks, number series and stock hold under parallel processes</td><td>Pest with Symfony Process · <code>tests/Concurrency</code></td><td>PRs touching stock, invoices or numbering; nightly</td></tr>
+      <tr><td>Golden vectors</td><td>PHP and JavaScript tax maths agree to the paisa</td><td>Shared JSON · <code>tests/golden/</code> · Pest and Vitest</td><td>Every PR</td></tr>
+      <tr><td>Back-office browser</td><td>Screens per role, Bangla rendering</td><td>Pest browser plugin, headless on the server · <code>tests/Browser</code></td><td>Every PR touching UI</td></tr>
+      <tr><td>POS end to end</td><td>Offline checkout, reload, sync</td><td>Playwright, headless on the server · <code>resources/pos/tests/e2e</code></td><td>Nightly and before release</td></tr>
+      <tr><td>Look and feel</td><td>What a person sees and clicks</td><td>Antigravity's browser, through your tunnel</td><td>Every UI step</td></tr>
+      <tr><td>Bridge</td><td>Origin and token checks, ESC/POS output, SDC round trip</td><td><code>go test</code> with emulators · <code>bridge/</code></td><td>Every PR touching <code>bridge/</code></td></tr>
+      <tr><td>Load</td><td>Eid-level throughput, database CPU and lock waits</td><td>k6, from the dev server against staging · <code>loadtests/</code></td><td>Before the pilot, before each Eid</td></tr>
+      <tr><td>Security</td><td>Known-vulnerable packages, static errors, OWASP gaps</td><td><code>composer audit</code>, <code>npm audit</code>, PHPStan, external pen test</td><td>Every PR; pen test before pilot</td></tr>
+    </tbody>
+  </table></div>
+  <p class="small muted">Browser tests on the server need Chromium: run <code>npx playwright install --with-deps chromium</code> there once. It installs system packages, so an administrator runs it.</p>
+
+  <div class="box gate">
+    <span class="tag">Two rules for every database test</span>
+    <ul>
+      <li>Run against PostgreSQL 17, never SQLite. RLS, triggers, exclusion constraints and <code>NULLS NOT DISTINCT</code> don't exist in SQLite, so a passing SQLite test proves nothing.</li>
+      <li>Connect as <code>app_rw</code>. The <code>POSTGRES_USER</code> in Docker and CI is a superuser, and superusers bypass row-level security.</li>
+    </ul>
+  </div>
+
+  <h3>Running the loop in Antigravity</h3>
+  <ol>
+    <li><b>Plan.</b> Open a new conversation and send the SSH block with R0, then R1 and R2. The agent creates the branch on both sides and writes the plan file; comment on it and approve it before any code is written.</li>
+    <li><b>Red.</b> With R3 the agent writes the test locally, commits it, pushes, pulls on the server and runs it there, for example <code>ssh erp-dev 'cd ~/retail-erp &amp;&amp; php artisan test --filter=InvoiceImmutability'</code>. Read the failure: it must fail for the reason the test describes.</li>
+    <li><b>Green.</b> The agent changes the code, commits, pushes, pulls and runs the test again, then Pint, PHPStan and the module's tests.</li>
+    <li><b>Approve with care.</b> Read each command before you approve it. Anything touching <code>database/</code>, Docker volumes or <code>git</code> history deserves a second look; the dev-server rule forbids resets unless you ask.</li>
+    <li><b>Look at it.</b> For a UI change, send U1 to start the app and the tunnel; the agent then opens <code>http://localhost:8000</code> in its browser through your tunnel, signs in as a role, clicks through the flow and saves screenshots or a recording. Screenshots that headless tests save on the server can be copied back with <code>scp</code> into the ignored <code>.scratch/</code> folder.</li>
+    <li><b>Review.</b> Open a new conversation, pick a different model in the model selector, paste the SSH block and run <code>/review-branch</code> (prompt R5). A fresh conversation hasn't seen the reasoning behind the code, and a different model has different blind spots.</li>
+  </ol>
+
+  <h3>Recipes</h3>
+  <details class="more">
+    <summary>Database rule test (Pest)</summary>
+    <div>
+      <p>One test per forbidden path, each naming the review ID it guards. This example covers the invoice hole found in the v1.5.0 review (NEW-27, check T4).</p>
+      <div class="codeblock"><div class="pbar"><span class="fname">tests/Database/InvoiceImmutabilityTest.php</span><button type="button" class="copy">Copy</button></div><pre>use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\DB;
+
+it('rejects reopening an issued invoice through fiscal enrichment (NEW-27)', function () {
+    $invoice = issuedInvoice(); // helper: draft -> one line -> issued
+
+    expect(fn () => DB::table('sales_invoices')
+        ->where('id', $invoice->id)
+        ->update(['fiscal_signature' => 'SIG', 'status' => 'draft']))
+        ->toThrow(QueryException::class);
+});
+
+it('allows the one-time fiscal fill and nothing else (NEW-27)', function () {
+    $invoice = issuedInvoice();
+
+    DB::table('sales_invoices')->where('id', $invoice->id)
+        ->update(['fiscal_signature' => 'SIG', 'sdc_invoice_number' => 'SDC-1']);
+
+    expect(DB::table('sales_invoices')->find($invoice->id)->status)->toBe('issued');
+});</pre></div>
+    </div>
+  </details>
+  <details class="more">
+    <summary>Tenant isolation test</summary>
+    <div>
+      <div class="codeblock"><div class="pbar"><span class="fname">tests/Database/TenantIsolationTest.php</span><button type="button" class="copy">Copy</button></div><pre>it('hides another tenant\'s rows', function () {
+    [$a, $b] = [makeTenant(), makeTenant()];
+
+    TenantContext::run($a, fn () => Company::factory()->create());
+
+    TenantContext::run($b, function () {
+        expect(Company::count())->toBe(0);
+    });
+});
+
+it('returns nothing when no tenant context is set', function () {
+    TenantContext::run(makeTenant(), fn () => Company::factory()->create());
+
+    TenantContext::clear();
+    expect(DB::table('companies')->count())->toBe(0);
+});</pre></div>
+    </div>
+  </details>
+  <details class="more">
+    <summary>Golden tax vectors shared by PHP and the POS</summary>
+    <div>
+      <p>Both the PHP <code>TaxCalculator</code> and the POS tax module load this file in their test suites. Values use the design's tax-inclusive formula: net is the gross divided by one plus the rate, rounded half-up to 2 places, and VAT is the difference. Have the VAT consultant check every case before it becomes a vector.</p>
+      <div class="codeblock"><div class="pbar"><span class="fname">tests/golden/vat-vectors.json</span><button type="button" class="copy">Copy</button></div><pre>[
+  { "id": "incl-exempt-rice",  "basis": "tax_inclusive", "gross": "450.00", "vat_rate": "0",  "expect": { "net": "450.00", "vat": "0.00" } },
+  { "id": "incl-5pct-oil",     "basis": "tax_inclusive", "gross": "280.00", "vat_rate": "5",  "expect": { "net": "266.67", "vat": "13.33" } },
+  { "id": "incl-15pct-soap-x2","basis": "tax_inclusive", "gross": "130.00", "vat_rate": "15", "expect": { "net": "113.04", "vat": "16.96" } },
+  { "id": "basket-total",      "basis": "tax_inclusive", "lines": ["incl-exempt-rice", "incl-5pct-oil", "incl-15pct-soap-x2"],
+    "expect": { "gross": "860.00", "net": "829.71", "vat": "30.29" } }
+]</pre></div>
+      <p class="small muted">Don't use the "2.63% net-effective" mustard-oil line from design §11.4: it isn't a statutory rate and its figures don't follow the formula (review NEW-29).</p>
+    </div>
+  </details>
+  <details class="more">
+    <summary>Offline POS test (Playwright)</summary>
+    <div>
+      <div class="codeblock"><div class="pbar"><span class="fname">resources/pos/tests/e2e/offline.spec.ts</span><button type="button" class="copy">Copy</button></div><pre>import { test, expect } from '@playwright/test';
+
+test('sells while offline, keeps the cart on reload, syncs once', async ({ page, context }) =&gt; {
+  await page.goto('/pos');
+  await page.getByLabel('Cashier PIN').fill('4821');
+  await page.keyboard.press('Enter');
+
+  await context.setOffline(true);
+  await page.getByTestId('scan').fill('8941100234567');
+  await page.keyboard.press('Enter');
+  await page.reload();                                   // cart must survive
+  await expect(page.getByTestId('cart-lines')).toContainText('Mustard Oil');
+
+  await page.getByRole('button', { name: 'Cash' }).click();
+  await page.getByRole('button', { name: 'Complete sale' }).click();
+  await expect(page.getByTestId('sync-status')).toHaveText(/1 sale waiting/);
+
+  await context.setOffline(false);
+  await expect(page.getByTestId('sync-status')).toHaveText('Synced', { timeout: 30_000 });
+});</pre></div>
+    </div>
+  </details>
+  <details class="more">
+    <summary>Eid-level load test (k6)</summary>
+    <div>
+      <div class="codeblock"><div class="pbar"><span class="fname">loadtests/eid-peak.js</span><button type="button" class="copy">Copy</button></div><pre>import http from 'k6/http';
+import { check } from 'k6';
+
+export const options = {
+  scenarios: {
+    eid_peak: { executor: 'constant-arrival-rate', rate: 15, timeUnit: '1s',
+                duration: '10m', preAllocatedVUs: 60, maxVUs: 200 },
+  },
+  thresholds: {
+    http_req_duration: ['p(95)&lt;500'],
+    http_req_failed: ['rate&lt;0.01'],
+  },
+};
+
+export default function () {
+  const res = http.post(`${__ENV.BASE_URL}/api/v1/pos/checkout`, JSON.stringify(sampleCart()), {
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${__ENV.DEVICE_TOKEN}` },
+  });
+  check(res, { 'sale recorded': (r) =&gt; r.status === 201 });
+}
+
+function sampleCart() {
+  return { client_txn_id: crypto.randomUUID(), lines: [{ sku: 'OIL1', qty: 1 }], tender: 'cash' };
+}</pre></div>
+      <p class="small muted">Run it from the dev server against staging, never production. While it runs, watch PostgreSQL CPU, active connections and lock waits; the review expects the 1-vCPU database, not PHP, to be the limit.</p>
+    </div>
+  </details>
+
+  <h3>What CI checks on every pull request</h3>
+  <ul>
+    <li>Pint formatting, PHPStan level 8 and Pest (unit, feature, database, golden vectors) against PostgreSQL 17 as <code>app_rw</code>.</li>
+    <li><code>php artisan db:check-rls</code>: fails if any table with a <code>tenant_id</code> column lacks forced RLS or a policy (added in Step 2).</li>
+    <li>POS build, Vitest and <code>npm audit</code>; <code>go vet</code> and <code>go test</code> for the bridge.</li>
+    <li><code>composer audit</code> for vulnerable PHP packages.</li>
+  </ul>
+  <p>CI runs on GitHub's machines, not on the dev server, so a green run there confirms the work doesn't depend on anything set up by hand on the server. The workflow file is in the <a href="#templates">templates</a>. Playwright end-to-end, concurrency repeats and k6 run in a separate nightly workflow (Step 13).</p>
+</section>
+<!-- ============ STEP 1 ============ -->
+<section id="step-01" class="step" data-step="step-01">
+  <div class="step-head">
+    <span class="step-num" aria-hidden="true">01</span>
+    <div><span class="eyebrow">Step 1 · Stream A · Tech lead</span><h2>Platform baseline</h2></div>
+    <div class="chips">
+      <span class="chip">Weeks 1–2 · 2–15 Nov 2026</span>
+      <span class="chip">Design §4, §5.1–5.3, §15, §17</span>
+      <span class="chip id">MOD-02</span><span class="chip id">MOD-09</span><span class="chip id">QA-03</span>
+    </div>
+  </div>
+  <p><b>Goal:</b> a running Laravel 13 app with Filament, the module skeleton, PostgreSQL and Redis on the dev server, quality tools, agent files and CI, all passing before any business table exists.</p>
+  <div class="box gate"><span class="tag">Gate · settle first</span><ul>
+    <li>The week-1 items in <a href="#before">Before you start</a> are in motion.</li>
+    <li>The dev server is set up and the agent passed the "Check the dev server" prompt in <a href="#tools">Set up</a>.</li>
+    <li>PHP on the dev server and in CI is the same version (8.4 in the templates).</li>
+  </ul></div>
+  <h3>What to build</h3>
+  <ul>
+    <li>Filament 5 panels, Laravel Horizon, Larastan at level 8, Pint; PostgreSQL as the default connection and Redis for cache, queues and sessions.</li>
+    <li><code>compose.yaml</code> with PostgreSQL 17 and Redis 7.</li>
+    <li><code>app/Core</code> and one folder per module under <code>app/Modules</code>, each with a service provider implementing the §5.2 <code>ModuleInterface</code>.</li>
+    <li>Pest architecture tests so a module can only use another module's <code>Contracts</code> namespace (review MOD-09).</li>
+    <li>Laravel Boost, the agent files, <code>docs/build/steps.md</code>, the CI workflow, a pull request template and Dependabot.</li>
+  </ul>
+  <div class="tn"><span class="who">In Antigravity</span><p>Prompt 1A installs Laravel Boost on the server, which adds Laravel- and Filament-aware guidance to <code>AGENTS.md</code>. Boost also offers an MCP server with documentation search and database tools. If your version of the app lets you add a custom MCP server, use the <code>.agents/mcp_config.json</code> template, which starts Boost through <code>ssh erp-dev</code>. The app's documentation only describes adding servers from the MCP Store under <b>Customizations</b>, so if that's all you see, skip it: the guidance in <code>AGENTS.md</code> works without it.</p></div>
+  <h3>Prompts</h3>
+  <p class="small muted">Every step starts the same way: a new conversation with the <a href="#tools">SSH block</a>, then <a href="#r-step">R0</a> (start the step, here <code>step-01-baseline</code>), R1 (kickoff) and R2 (plan). Then:</p>
+  <div class="prompt"><div class="pbar"><span class="title">1A · Configure the platform baseline</span><span class="when">Plan first, then build</span><button type="button" class="copy">Copy</button></div><pre>Configure the platform baseline for Step 1 on branch step-01-baseline. The Laravel 13 app, docs/, AGENTS.md and .agents/ already exist; read AGENTS.md and .agents/rules/dev-server.md first. Run every composer, artisan, npm and docker command on the dev server, then commit there, push, and pull here, as the rule says.
+
+0. Install Laravel Boost: composer require laravel/boost --dev, then php artisan boost:install. Read boost:install --help first and use non-interactive options that select Filament, Pest and Antigravity or AGENTS.md guidelines. If it can only run interactively, stop and give me the exact command to run in my own SSH session. Afterwards, check that my own rules in AGENTS.md are unchanged outside the laravel-boost-guidelines block.
+1. Install Filament 5 panels (composer require filament/filament:"^5.0", then php artisan filament:install --panels), Laravel Horizon, Larastan (phpstan.neon at level 8) and Laravel Pint. Keep Pest as the test runner.
+2. Make PostgreSQL the default database and Redis the cache, queue and session store. Update .env.example. Add compose.yaml with postgres:17 and redis:7 matching the template in the build guide, plus docker/postgres/init.sql that creates an erp_test database. In phpunit.xml, remove the SQLite DB_CONNECTION and DB_DATABASE lines and point tests at pgsql / erp_test, so no test ever runs on SQLite.
+3. Create app/Core and app/Modules/{Accounting,Tax,Catalog,Inventory,Procurement,Sales,Pos,Reporting}. Give each module a service provider that implements the ModuleInterface from design §5.2 and register it in bootstrap/providers.php. Add the missing contract methods the review asks for (migrations, install/upgrade hooks, policies; review MOD-02).
+4. Add Pest arch() tests: code in one module may use another module only through its Contracts namespace (review MOD-09).
+5. Don't create any business tables yet.
+
+Before writing code, show me the plan as a numbered list of commits and wait for approval. When done, run on the dev server: docker compose up -d, php artisan migrate, vendor/bin/pint --test, vendor/bin/phpstan analyse and php artisan test, and paste the output.</pre></div>
+  <div class="prompt"><div class="pbar"><span class="title">1B · Add CI and repository files</span><span class="when">After 1A merges</span><button type="button" class="copy">Copy</button></div><pre>Add .github/workflows/ci.yml, .github/pull_request_template.md, .github/dependabot.yml and .github/CODEOWNERS from the templates I'm pasting below. In ci.yml, leave the lines marked "Step 2" as they are (commented out) and leave out the bridge job until bridge/ exists; in dependabot.yml, leave out the gomod entry for the same reason. Run every command the PHP and POS jobs run on the dev server, and fix anything that fails. Commit on a branch named step-01-ci and open a pull request (R6). Once CI has run once, add the PHP tests and POS tests checks as required status checks to the "protect main" ruleset with gh api, and show me the updated ruleset.
+
+{paste the four templates here}</pre></div>
+  <div class="prompt"><div class="pbar"><span class="title">1C · Move the ADRs into their own files</span><span class="when">Optional, same week</span><button type="button" class="copy">Copy</button></div><pre>Move ADR-001 to ADR-014 from design §20 into docs/adr/ADR-001-*.md … ADR-014-*.md without changing their wording, add docs/adr/README.md explaining the format (context, alternatives considered, decision, consequences, review IDs closed), and replace §20's ADR text with a list of links. Don't edit any other part of the design.</pre></div>
+  <h3>Test it</h3>
+  <div class="tn"><span class="who">In Antigravity</span><p>Open <b>Customizations</b> and check that <code>AGENTS.md</code>, the <code>dev-server</code> rule and the three skills appear. Ask the agent: "Which rules and skills do you have for this project, and how will you run the tests?" It should describe the commit, push, pull and run cycle on the server. Then break an arch rule on purpose and confirm the arch test fails on the server.</p></div>
+  <h3>Done when</h3>
+  <ul class="checklist">
+    <li><label><input type="checkbox" id="s01-1"><span><code>docker compose up -d</code> and <code>php artisan migrate</code> work on a fresh clone on the dev server.</span></label></li>
+    <li><label><input type="checkbox" id="s01-2"><span>Pint, PHPStan level 8 and Pest pass on the dev server and in CI.</span></label></li>
+    <li><label><input type="checkbox" id="s01-3"><span>Every module has a provider implementing the expanded <code>ModuleInterface</code>.</span></label></li>
+    <li><label><input type="checkbox" id="s01-4"><span>Arch tests fail when a module reaches into another module's internals.</span></label></li>
+    <li><label><input type="checkbox" id="s01-5"><span>The agent lists the project rules and skills, and runs the tests on the dev server over SSH.</span></label></li>
+    <li><label><input type="checkbox" id="s01-6"><span>Main is protected and CI is a required check.</span></label></li>
+  </ul>
+  <p class="small"><b>Ship it:</b> branches <code>step-01-baseline</code> and <code>step-01-ci</code>.</p>
+</section>
+
+<!-- ============ STEP 2 ============ -->
+<section id="step-02" class="step" data-step="step-02">
+  <div class="step-head">
+    <span class="step-num" aria-hidden="true">02</span>
+    <div><span class="eyebrow">Step 2 · Stream A · Tech lead</span><h2>Tenancy, database roles and RLS</h2></div>
+    <div class="chips">
+      <span class="chip">Weeks 3–5 · 16 Nov – 6 Dec 2026</span>
+      <span class="chip ms">M1 · 6 Dec</span>
+      <span class="chip">Design §4.2, §6.1–6.4, §9.1</span>
+      <span class="chip id">TEN-02</span><span class="chip id">TEN-03</span><span class="chip id">TEN-04</span><span class="chip id">TEN-05</span><span class="chip id">TEN-09</span><span class="chip id">NEW-04</span>
+    </div>
+  </div>
+  <p><b>Goal:</b> PostgreSQL itself keeps every tenant's rows apart. The application connects as a role that can't bypass row-level security, and tenant context is set and cleared correctly in web requests, queued jobs and scheduled commands.</p>
+  <div class="box gate"><span class="tag">Gate · settle first</span><ul>
+    <li>Connection mode: direct connections or PgBouncer in session mode, within the 44-of-47 connection budget (§4.2).</li>
+    <li>If the Eid plan will rely on transaction pooling (review NEW-28), build and test that path in this step; it can't be switched on later.</li>
+  </ul></div>
+  <h3>What to build</h3>
+  <ul>
+    <li><code>database/sql/roles.sql</code>: an owner role for migrations, <code>app_rw</code> without <code>BYPASSRLS</code>, <code>reporting_ro</code>, <code>platform_ro</code>, and default privileges. Two Laravel connections: <code>pgsql_owner</code> for migrations and <code>pgsql</code> (as <code>app_rw</code>) for the app.</li>
+    <li>A migration helper that adds <code>tenant_id</code>, <code>UNIQUE (tenant_id, id)</code>, enabled and forced RLS and the fail-closed policy for <code>app_rw</code> and <code>reporting_ro</code>, so every later table uses it.</li>
+    <li><code>tenants</code> and <code>companies</code> from §9.1, with application-generated UUIDv7 IDs.</li>
+    <li><code>TenantContext</code>, host-based tenant resolution (<code>X-Tenant-ID</code> only as an assertion), <code>set_config('app.current_tenant_id', id, false)</code> on connect and a reset in <code>terminate()</code>.</li>
+    <li>Job middleware that stores <code>tenant_id</code> in every job and restores it; scheduled commands that loop over tenants explicitly.</li>
+    <li>Tenant-prefixed cache keys and spatie/laravel-permission in teams mode keyed by tenant.</li>
+    <li><code>php artisan db:check-rls</code>, run in CI.</li>
+  </ul>
+  <h3>Prompts</h3>
+  <div class="prompt"><div class="pbar"><span class="title">2A · Plan tenancy and RLS</span><span class="when">Plan first</span><button type="button" class="copy">Copy</button></div><pre>Plan Step 2 (tenancy, database roles and RLS) from design §4.2, §6.1–6.4 and the tenants and companies tables in §9.1, closing review items TEN-02, TEN-03, TEN-04, TEN-05, TEN-09 and NEW-04 in docs/reviews/ERP_DESIGN_REVIEW_v1.5.0.md.
+
+The plan must include:
+1. database/sql/roles.sql creating the owner/migrator role, app_rw (no BYPASSRLS), reporting_ro and platform_ro, with default privileges, plus two Laravel connections: pgsql_owner for migrations and pgsql (app_rw) for the application.
+2. A reusable migration helper that adds tenant_id, UNIQUE (tenant_id, id), ENABLE and FORCE ROW LEVEL SECURITY, and the fail-closed policy from §6.1 for app_rw and reporting_ro.
+3. The tenants and companies tables with UUIDv7 IDs generated by the application.
+4. TenantContext and resolution middleware: host or custom domain first; X-Tenant-ID only checked against the authenticated session; set_config('app.current_tenant_id', id, false) when the connection is used; reset in terminate().
+5. Job middleware that serialises tenant_id into every job and restores it; scheduled commands that iterate tenants explicitly and reset context after each one.
+6. Tenant-prefixed cache keys; spatie/laravel-permission in teams mode with tenant_id as the team key and a tenant-aware cache key.
+7. An artisan command db:check-rls that fails if any table with a tenant_id column lacks forced RLS or a policy for app_rw.
+
+Tests to write first (tests/Database, connecting as app_rw): tenant A can't read, insert or update tenant B's rows; a foreign key pointing at another tenant's row is rejected; with no context set, queries return zero rows; context doesn't carry over between two requests on the same connection; a queued job runs under the tenant that dispatched it.
+
+Write the plan to docs/build/step-02-plan.md and stop for my approval.</pre></div>
+  <div class="prompt"><div class="pbar"><span class="title">2B · Try to break isolation</span><span class="when">After the plan is built</span><button type="button" class="copy">Copy</button></div><pre>Act as an attacker inside our own codebase. List the ways a developer could accidentally bypass tenant isolation here: raw DB::statement or DB::select calls, a query on the pgsql_owner connection, a cache key without the tenant prefix, a job without the tenant middleware, a Filament resource or global search that skips TenantContext, a scheduled command that doesn't reset context. For each, either add a failing test in tests/Database or a rule in db:check-rls or a Pest arch test that would catch it, then make them pass. Report what you added.</pre></div>
+  <div class="prompt"><div class="pbar"><span class="title">2C · Turn on the Step 2 CI lines</span><span class="when">Before merging</span><button type="button" class="copy">Copy</button></div><pre>In .github/workflows/ci.yml, apply every change marked "Step 2": set DB_USERNAME to app_rw, create the roles with roles.sql, migrate on pgsql_owner, and run db:check-rls. Do the same in phpunit.xml and .env.example. Push, and fix anything that fails until CI is green. Don't change any test expectations.</pre></div>
+  <h3>Test it</h3>
+  <div class="tn"><span class="who">In Antigravity</span><p>Keep the Request Review preset while the agent runs migrations, and read each ssh command. Run <code>/db-rule-test</code> for each policy and composite key. Ask the agent to list any table without forced RLS by querying <code>pg_class</code> and <code>pg_policies</code> on the server with <code>docker compose exec -T postgres psql</code>. Finish with <code>/review-branch</code> in a new conversation on a different model.</p></div>
+  <h3>Done when</h3>
+  <ul class="checklist">
+    <li><label><input type="checkbox" id="s02-1"><span>All five isolation tests pass as <code>app_rw</code>, and fail if you run them as the owner (proving they test RLS).</span></label></li>
+    <li><label><input type="checkbox" id="s02-2"><span><code>db:check-rls</code> runs in CI and fails on a table created without the helper.</span></label></li>
+    <li><label><input type="checkbox" id="s02-3"><span>Jobs and scheduled commands run under the right tenant, with tests.</span></label></li>
+    <li><label><input type="checkbox" id="s02-4"><span>M1 exit criteria from design §18.1 met: no cross-tenant leakage across the RLS test scenarios; composite foreign keys validated.</span></label></li>
+  </ul>
+  <p class="small"><b>Ship it:</b> branch <code>step-02-tenancy-rls</code>, then tag <code>m1-tenancy</code>.</p>
+</section>
+
+<!-- ============ STEP 3 ============ -->
+<section id="step-03" class="step" data-step="step-03">
+  <div class="step-head">
+    <span class="step-num" aria-hidden="true">03</span>
+    <div><span class="eyebrow">Step 3 · Stream A · Tech lead</span><h2>Identity, roles and segregation of duties</h2></div>
+    <div class="chips">
+      <span class="chip">Weeks 6–8 · 7–27 Dec 2026</span>
+      <span class="chip">Design §3, §6.5, §7.3</span>
+      <span class="chip id">TEN-10</span><span class="chip id">SEC-01</span><span class="chip id">SEC-02</span><span class="chip id">SEC-06</span><span class="chip id">SEC-09</span>
+    </div>
+  </div>
+  <p><b>Goal:</b> one login per person across tenants, two Filament panels on separate guards, roles per tenant, branch scoping on every screen and export, and the SoD rules enforced in code.</p>
+  <div class="box gate"><span class="tag">Gate · settle first</span><ul>
+    <li>Record ADR-015: platform staff in a separate <code>platform_users</code> table and guard (design §6.5's <code>is_platform_admin</code> flag contradicts §1.2), and <code>TenantContext</code> as the authority that Filament's tenant switcher reads.</li>
+    <li>Discount ceilings: use the §3.2 matrix (cashier 5%, supervisor 10%, branch manager 15%); the offline matrix in §11.2 disagrees (review NEW-32).</li>
+  </ul></div>
+  <h3>What to build</h3>
+  <ul>
+    <li>Global <code>users</code>, <code>tenant_memberships</code>, <code>user_location_scopes</code>; <code>platform_users</code> on its own guard.</li>
+    <li>Tenant Admin panel and Super-Admin panel; the tenant switcher lists the user's memberships.</li>
+    <li>A location scope applied as a global scope and in policies on every surface: tables, global search, relation managers, exports, API.</li>
+    <li>SoD-01 to SoD-05 from §3.3 as policy checks, including support access with tenant consent, a time limit, a banner and audit entries.</li>
+    <li>TOTP for admin roles, login throttling, a demo seeder with one user per role.</li>
+  </ul>
+  <h3>Prompts</h3>
+  <div class="prompt"><div class="pbar"><span class="title">3A · Plan identity and SoD</span><span class="when">Plan first</span><button type="button" class="copy">Copy</button></div><pre>Plan Step 3 from design §3, §6.5 and §7.3, closing TEN-10, SEC-01, SEC-02, SEC-06 and SEC-09.
+
+First write docs/adr/ADR-015-identity-and-tenancy.md: global users with tenant_memberships and user_location_scopes; platform staff in a separate platform_users table with its own guard (the is_platform_admin flag in §6.5 contradicts §1.2); TenantContext is authoritative and Filament's tenant switcher reads memberships.
+
+Then plan: the Tenant Admin and Super-Admin Filament panels on separate guards; laravel-permission roles per tenant (teams mode from Step 2); a LocationScope applied as a global scope and in policies for tables, global search, relation managers, exports and API resources; SoD-01 to SoD-05 as policy checks; the support-access flow (tenant owner consent, 4-hour limit, ticket reference, banner, read-only by default, audit entry); TOTP for admin roles and login throttling; a DemoTenantSeeder with two companies, three branches and one user per role in the §3.2 matrix.
+
+Tests first: one test per SoD rule that proves the forbidden action is refused; a branch-scoping test for each surface listed above; support access expires after 4 hours. Write the plan to docs/build/step-03-plan.md and stop for my approval.</pre></div>
+  <div class="prompt"><div class="pbar"><span class="title">3B · Check the permission matrix in the browser</span><span class="when">After the panels work</span><button type="button" class="copy">Copy</button></div><pre>On the dev server, seed the database with DemoTenantSeeder and start the app with composer run dev in a tmux session named erp. Then, in your browser at http://localhost:8000 (my tunnel), sign in as the cashier, shift supervisor, branch manager, accountant and tenant owner in turn. For each, open Products, Sales, Journals, Mushak reports and Audit log, and compare what the user can see and do with the matrix in design §3.2. Take a screenshot of every screen that doesn't match and give me a table: role, screen, expected, actual.</pre></div>
+  <h3>Test it</h3>
+  <div class="tn"><span class="who">In Antigravity</span><p>Send 3B as written: the agent's browser signs in as each role through your tunnel and saves screenshots and a recording. Attach the recording to the pull request so the reviewer can see each role's view. Then ask for the same checks as Pest browser tests (<code>visit()</code>, <code>assertSee()</code>, <code>screenshot()</code>) so they repeat headless on the server and in CI.</p></div>
+  <h3>Done when</h3>
+  <ul class="checklist">
+    <li><label><input type="checkbox" id="s03-1"><span>ADR-015 merged and the code follows it.</span></label></li>
+    <li><label><input type="checkbox" id="s03-2"><span>Each SoD rule has a test that proves the forbidden action fails.</span></label></li>
+    <li><label><input type="checkbox" id="s03-3"><span>A cashier can't see another branch's data on any surface, including exports and global search.</span></label></li>
+    <li><label><input type="checkbox" id="s03-4"><span>Support access needs consent, expires, shows a banner and leaves an audit entry.</span></label></li>
+  </ul>
+  <p class="small"><b>Ship it:</b> branch <code>step-03-identity</code>.</p>
+</section>
+
+<!-- ============ STEP 4 ============ -->
+<section id="step-04" class="step" data-step="step-04">
+  <div class="step-head">
+    <span class="step-num" aria-hidden="true">04</span>
+    <div><span class="eyebrow">Step 4 · Stream C · Domain specialist</span><h2>Catalog, tax codes and price lists</h2></div>
+    <div class="chips">
+      <span class="chip">Weeks 6–8 · 7–27 Dec 2026</span>
+      <span class="chip">Design §7.5, §8.2 (1), §9.1 tables 3 and 7</span>
+      <span class="chip id">NEW-17</span><span class="chip id">NEW-20</span><span class="chip id">TAX-02</span><span class="chip id">TAX-07</span><span class="chip id">DATA-08</span>
+    </div>
+  </div>
+  <p><b>Goal:</b> products and variants with company-consistent keys, tax codes whose rates change by date, price lists that say whether prices include tax, barcodes per unit, unit conversions, and a block on selling above MRP.</p>
+  <div class="box gate"><span class="tag">Gate · settle first</span><ul>
+    <li>The VAT consultant confirms the rate list, the turnover-tax regime and which items use tariff values (TAX-02, TAX-07).</li>
+    <li>Staffing: this step runs in parallel with Step 5 for the same person in §18.3 (review NEW-34).</li>
+  </ul></div>
+  <h3>What to build</h3>
+  <ul>
+    <li><code>categories</code>, <code>products</code>, <code>product_variants</code>, <code>tax_codes</code> and <code>tax_code_rates</code> as in §9.1, keeping the exclusion constraint that already passes testing.</li>
+    <li>New tables the design still lacks: <code>price_lists</code> (tax-inclusive flag, effective dates), <code>variant_barcodes</code> (per unit), <code>unit_conversions</code>.</li>
+    <li>A <code>TaxRateResolver</code> that returns the rate for a tax code on a given invoice date, and an MRP ceiling check.</li>
+    <li>Filament resources with Bangla and English names.</li>
+  </ul>
+  <h3>Prompts</h3>
+  <div class="prompt"><div class="pbar"><span class="title">4A · Plan the catalog</span><span class="when">Plan first</span><button type="button" class="copy">Copy</button></div><pre>Plan Step 4 (catalog, tax codes and price lists) from design §7.5, §8.2 item 1 and §9.1 tables 3 and 7, closing NEW-17, NEW-20, TAX-02, TAX-07 and DATA-08.
+
+Use the Step 2 migration helper for every table and company-consistent composite keys (tenant_id, company_id, id) as in §6.2. Include: categories; products and product_variants; tax_codes and tax_code_rates with the btree_gist exclusion constraint from §9.1; price_lists with a tax_inclusive flag and effective dates; variant_barcodes so a carton and a piece of the same product have different barcodes; unit_conversions; name_en and name_bn on customer-facing master data. Add a TaxRateResolver that returns the rate and supplementary duty for a tax code on a given date, and an MRP ceiling rule that rejects a selling price above the variant's MRP.
+
+Tests first: overlapping rate periods rejected; the resolver picks the right rate either side of a rate change; a variant can't use another company's tax code; carton and piece barcodes resolve to the right unit and quantity; a price above MRP is rejected. Write the plan to docs/build/step-04-plan.md and stop for my approval.</pre></div>
+  <div class="prompt"><div class="pbar"><span class="title">4B · Build and check the catalog screens</span><span class="when">After the tables pass</span><button type="button" class="copy">Copy</button></div><pre>Build Filament resources for categories, products (variants as a relation manager), tax codes (rates as a relation manager), price lists and units, with labels in English and Bangla. Then, in your browser at http://localhost:8000, create through the UI a product "Pure Mustard Oil 1L / খাঁটি সরিষার তেল" with a piece barcode and a 12-piece carton barcode, at 5% VAT, MRP ৳280, on a tax-inclusive retail price list. Take screenshots of the product page and the variant list and confirm the Bangla text renders correctly.</pre></div>
+  <h3>Test it</h3>
+  <div class="tn"><span class="who">In Antigravity</span><p>Run <code>/db-rule-test</code> on the exclusion constraint, the company keys and the MRP rule. Send 4B as written so the browser fills the form and saves screenshots, then ask it to switch the panel to Bangla and repeat. Look closely at the Bangla conjuncts in the screenshots.</p></div>
+  <h3>Done when</h3>
+  <ul class="checklist">
+    <li><label><input type="checkbox" id="s04-1"><span>A rate change only needs a new <code>tax_code_rates</code> row; no variant changes.</span></label></li>
+    <li><label><input type="checkbox" id="s04-2"><span>Barcodes, units and price lists exist as tables with tests.</span></label></li>
+    <li><label><input type="checkbox" id="s04-3"><span>Selling above MRP is impossible through the API and the UI.</span></label></li>
+  </ul>
+  <p class="small"><b>Ship it:</b> branch <code>step-04-catalog</code>.</p>
+</section>
+
+<!-- ============ STEP 5 ============ -->
+<section id="step-05" class="step" data-step="step-05">
+  <div class="step-head">
+    <span class="step-num" aria-hidden="true">05</span>
+    <div><span class="eyebrow">Step 5 · Stream B · Domain specialist</span><h2>General ledger and accounting periods</h2></div>
+    <div class="chips">
+      <span class="chip">Weeks 6–9 · 7 Dec 2026 – 3 Jan 2027</span>
+      <span class="chip ms">M2 · 3 Jan</span>
+      <span class="chip">Design §5.4, §9.1 tables 8–11, §9.2</span>
+      <span class="chip id">ACC-03</span><span class="chip id">ACC-05</span><span class="chip id">ACC-07</span><span class="chip id">NEW-21</span>
+    </div>
+  </div>
+  <p><b>Goal:</b> a chart of accounts, fiscal years and periods, journals that can't change once posted, a posting service other modules call inside their own transaction, money arithmetic without floats, and gap-free number series.</p>
+  <div class="box"><span class="tag">Good news</span><p>The §9.2 journal triggers passed every check in the v1.5.0 review: balanced posting, closed periods, reversals of drafts and lines added after posting are all rejected. Build on them as written.</p></div>
+  <h3>What to build</h3>
+  <ul>
+    <li><code>fiscal_years</code>, <code>accounting_periods</code>, <code>chart_of_accounts</code>, <code>journal_entries</code>, <code>journal_lines</code> and the §9.2 triggers.</li>
+    <li>A <code>Money</code> value object on brick/math, rounding half-up to 2 places; money as strings in JSON.</li>
+    <li><code>AccountingPostingService</code> that posts inside the caller's transaction.</li>
+    <li>A <code>NumberSeries</code> service per company, branch and document type, with fiscal-year reset and a row lock per series (ACC-07).</li>
+    <li>A Bangladesh retail chart-of-accounts template used by onboarding in Step 6.</li>
+  </ul>
+  <h3>Prompts</h3>
+  <div class="prompt"><div class="pbar"><span class="title">5A · Plan the ledger</span><span class="when">Plan first</span><button type="button" class="copy">Copy</button></div><pre>Plan Step 5 (general ledger) from design §5.4, §9.1 tables 8–11 and §9.2, closing ACC-03, ACC-05, ACC-07 and NEW-21.
+
+Use the §9.2 journal triggers as written; they passed the v1.5.0 review's tests. Add: a Money value object on brick/math with half-up rounding to 2 places and string serialisation; AccountingPostingService that posts inside the caller's database transaction and never opens its own; a NumberSeries service per company, branch and document type with fiscal-year reset and SELECT … FOR UPDATE on the series row; fiscal years with July–June periods and open, soft-closed and closed status; a chart-of-accounts template for a Bangladesh retailer with VAT payable, VAT receivable, supplementary duty and VDS accounts.
+
+Tests first: the review's journal checks G1–G5 (balanced post succeeds; adding a line after posting, posting into a closed period, reversing a draft and posting an unbalanced entry all fail); posting date outside its period fails; an account from another company is rejected; two parallel processes drawing 500 numbers each from one series produce 1,000 distinct numbers with no gaps. Write the plan to docs/build/step-05-plan.md and stop for my approval.</pre></div>
+  <div class="prompt"><div class="pbar"><span class="title">5B · Property test the ledger</span><span class="when">After 5A</span><button type="button" class="copy">Copy</button></div><pre>Add tests/Database/LedgerPropertyTest.php. Generate 500 random balanced journals (2 to 8 lines, random accounts from the template, random amounts with 2 decimals), post them through AccountingPostingService, and assert that every entry balances and the trial balance totals zero. Then generate 200 journals that are unbalanced by a random 0.01 to 100.00 and assert every one is rejected and nothing is written. Use a fixed random seed printed in the test output so failures can be replayed.</pre></div>
+  <h3>Test it</h3>
+  <div class="tn"><span class="who">In Antigravity</span><p>Run <code>/db-rule-test</code> for each trigger path, including the reversal checks. Ask the agent to run the number-series concurrency test five times on the server and report any duplicate or gap. Check the plan's chart of accounts against your accountant's before approving it.</p></div>
+  <h3>Done when</h3>
+  <ul class="checklist">
+    <li><label><input type="checkbox" id="s05-1"><span>G1–G5 and the property tests pass.</span></label></li>
+    <li><label><input type="checkbox" id="s05-2"><span>No float appears in money code (PHPStan rule or arch test).</span></label></li>
+    <li><label><input type="checkbox" id="s05-3"><span>Number series are gap-free under parallel load.</span></label></li>
+    <li><label><input type="checkbox" id="s05-4"><span>M2 exit criteria met: balance triggers reject unbalanced journals; period locking works.</span></label></li>
+  </ul>
+  <p class="small"><b>Ship it:</b> branch <code>step-05-ledger</code>, then tag <code>m2-ledger</code>.</p>
+</section>
+
+<!-- ============ STEP 6 ============ -->
+<section id="step-06" class="step" data-step="step-06">
+  <div class="step-head">
+    <span class="step-num" aria-hidden="true">06</span>
+    <div><span class="eyebrow">Step 6 · Stream A · Tech lead</span><h2>Super-Admin billing and onboarding</h2></div>
+    <div class="chips">
+      <span class="chip">Weeks 9–10 · 28 Dec 2026 – 10 Jan 2027</span>
+      <span class="chip">Design §1.2, §5.3, §7.3</span>
+      <span class="chip id">TEN-11</span><span class="chip id">MOD-03</span><span class="chip id">MOD-04</span>
+    </div>
+  </div>
+  <p><b>Goal:</b> platform staff can create plans, provision a tenant and switch modules on and off; a new tenant can sign up and finish an onboarding wizard that leaves them ready to sell.</p>
+  <div class="box gate"><span class="tag">Gate · settle first</span><ul>
+    <li>How pilot tenants pay, and whether billing must work at launch (product owner).</li>
+    <li>What each tenant state allows: active, in arrears, suspended, including POS behaviour mid-shift (TEN-11).</li>
+  </ul></div>
+  <h3>Prompts</h3>
+  <div class="prompt"><div class="pbar"><span class="title">6A · Plan billing and onboarding</span><span class="when">Plan first</span><button type="button" class="copy">Copy</button></div><pre>Plan Step 6 from design §1.2, §5.3 and §7.3, closing TEN-11, MOD-03 and MOD-04.
+
+Include: plans and subscriptions in the Super-Admin panel; module entitlements stored per tenant and mirrored into Laravel Pennant flags that are derived from the subscription, so flags can't drift from billing; the module disable guards from §5.3 (dependents and open documents); tenant states active, in_arrears and suspended with written behaviour for the back office and the POS (a suspended tenant's terminals finish the current shift, then block new ones; exports stay available); the hierarchical settings engine (platform, tenant, company, branch, terminal) with audit and cache invalidation; an onboarding wizard that calls each module's seedDefaultData() to create the chart of accounts, tax codes, default roles, the first branch and one POS terminal; email and phone verification and rate limits on self-service sign-up.
+
+Tests first: disabling a module that another enabled module depends on fails; a suspended tenant can still export; a setting overridden at branch level wins over the tenant default; the wizard leaves a tenant that can post a journal. Write the plan to docs/build/step-06-plan.md and stop for my approval.</pre></div>
+  <div class="prompt"><div class="pbar"><span class="title">6B · Walk through sign-up end to end</span><span class="when">After 6A</span><button type="button" class="copy">Copy</button></div><pre>In your browser at http://localhost:8000, sign up a new tenant called "Demo Mart" with one company and two branches, finish the onboarding wizard, then sign in to the Tenant Admin panel and confirm the chart of accounts, tax codes, roles, branches and POS terminal exist. Then, in the Super-Admin panel, suspend Demo Mart and check what its users see. Save screenshots at each stage and list any step that was confusing or failed.</pre></div>
+  <h3>Test it</h3>
+  <div class="tn"><span class="who">In Antigravity</span><p>Send 6B as written and keep the browser recording; watch it once yourself, since onboarding is the first thing a pilot retailer sees. Then ask for the same flow as a Pest browser test, so onboarding is checked on every pull request.</p></div>
+  <h3>Done when</h3>
+  <ul class="checklist">
+    <li><label><input type="checkbox" id="s06-1"><span>A tenant can be provisioned, suspended and reactivated, with defined behaviour in each state.</span></label></li>
+    <li><label><input type="checkbox" id="s06-2"><span>The wizard produces a tenant that can post a journal and open a POS shift.</span></label></li>
+    <li><label><input type="checkbox" id="s06-3"><span>Module flags always match the subscription.</span></label></li>
+  </ul>
+  <p class="small"><b>Ship it:</b> branch <code>step-06-onboarding</code>.</p>
+</section>
+
+<!-- ============ STEP 7 ============ -->
+<section id="step-07" class="step" data-step="step-07">
+  <div class="step-head">
+    <span class="step-num" aria-hidden="true">07</span>
+    <div><span class="eyebrow">Step 7 · Stream C · Domain specialist</span><h2>Inventory, stock movements and costing</h2></div>
+    <div class="chips">
+      <span class="chip">Weeks 9–15 · 28 Dec 2026 – 14 Feb 2027</span>
+      <span class="chip">Design §8.2 (5), §9.1 tables 12–13, §13.1, ADR-009</span>
+      <span class="chip gate">NEW-26</span><span class="chip id">INV-01</span><span class="chip id">INV-03</span><span class="chip id">INV-04</span><span class="chip id">INV-06</span>
+    </div>
+  </div>
+  <p><b>Goal:</b> an append-only stock ledger with balances derived from it, weighted-average and FIFO costing, reservations, stock counts, transfers and landed costs, with checkout locking that doesn't deadlock.</p>
+  <div class="box gate"><span class="tag">Gate · settle first</span><ul>
+    <li>Decide how offline oversells are recorded (review NEW-26). ADR-009's strict no-negative rule would make offline sales fail to sync, leaving real tax invoices unrecorded. Prompt 7A writes the decision.</li>
+  </ul></div>
+  <h3>Prompts</h3>
+  <div class="prompt"><div class="pbar"><span class="title">7A · Decide the offline oversell policy</span><span class="when">Before planning; no code</span><button type="button" class="copy">Copy</button></div><pre>Write docs/adr/ADR-016-offline-oversell.md resolving review NEW-26. A sale made offline has already happened when it syncs, so the server must never reject it for lack of stock.
+
+Compare two options: (a) let balances go negative only through a flagged OFFLINE_OVERSELL movement that opens an item in a supervisor exception queue; (b) post the shortfall to an "oversold" virtual stock location that may go negative. Recommend one. Explain how weighted-average and FIFO cost are handled until stock arrives, how the exception is cleared, and whether online checkout still rejects insufficient stock (as a tenant setting). List every part of the design that must change: ADR-009, OQ-02, RSK-05, §11.2, the §14 watchdog and the §16.2 test. Don't write code.</pre></div>
+  <div class="prompt"><div class="pbar"><span class="title">7B · Plan inventory</span><span class="when">Plan first, after ADR-016 is approved</span><button type="button" class="copy">Copy</button></div><pre>Plan Step 7 (inventory) from design §8.2 item 5, §9.1 tables 12–13, §13.1 and ADR-016, closing INV-01, INV-03, INV-04, INV-06 and NEW-26.
+
+Include: warehouses and stock_locations; the append-only stock_movements table with the §9.2 trigger (it passed testing); stock_balances updated in the same transaction as each movement, with a location column; weighted-average cost per company and FIFO cost_layers; reservations linked to their document, with expiry; stock count sessions that snapshot quantities and apply movements made during the count; transfers between branches (document now, Mushak 6.5 later); landed cost allocation, including cost arriving after the goods were sold; the ADR-016 oversell path. Lock stock rows in sorted order and retry on SQLSTATE 40001 and 40P01, as in §13.1.
+
+Tests first: the §16.2 two-process test (one unit, two checkouts, exactly one succeeds online); editing or deleting a movement fails; after 1,000 random movements each balance equals the sum of its movements; a forced deadlock is retried and succeeds; an offline oversell syncs and opens an exception. Write the plan to docs/build/step-07-plan.md and stop for my approval.</pre></div>
+  <div class="prompt"><div class="pbar"><span class="title">7C · Shake out flaky concurrency</span><span class="when">While working on locking</span><button type="button" class="copy">Copy</button></div><pre>Add -&gt;repeat(20) to every test in tests/Concurrency, run them, and report any run that failed with its seed and the interleaving you suspect. Fix the cause, not the test. When all 20 repeats pass three times in a row, remove the repeat and commit.</pre></div>
+  <h3>Test it</h3>
+  <div class="tn"><span class="who">In Antigravity</span><p>Concurrency tests can't use Laravel's <code>RefreshDatabase</code>, because child processes can't see an uncommitted test transaction: ask for <code>DatabaseMigrations</code> or truncation, with tenant context set in each child process. Ask the agent to show <code>pg_locks</code> on the server while a concurrency test is paused, to confirm the lock order. Step 7 lasts seven weeks and overlaps Steps 8–10; if you run it in a parallel worktree conversation, give it its own server folder and test database in the SSH block.</p></div>
+  <h3>Done when</h3>
+  <ul class="checklist">
+    <li><label><input type="checkbox" id="s07-1"><span>ADR-016 merged and ADR-009, OQ-02 and RSK-05 updated to match.</span></label></li>
+    <li><label><input type="checkbox" id="s07-2"><span>Stock movements can't be edited; balances always equal the sum of movements.</span></label></li>
+    <li><label><input type="checkbox" id="s07-3"><span>Concurrency tests pass 20 repeats in a row.</span></label></li>
+    <li><label><input type="checkbox" id="s07-4"><span>Inventory value reconciles to the GL inventory account.</span></label></li>
+  </ul>
+  <p class="small"><b>Ship it:</b> branches <code>step-07a-stock-ledger</code> (weeks 9–12) and <code>step-07b-counts-transfers</code> (weeks 13–15).</p>
+</section>
+
+<!-- ============ STEP 8 ============ -->
+<section id="step-08" class="step" data-step="step-08">
+  <div class="step-head">
+    <span class="step-num" aria-hidden="true">08</span>
+    <div><span class="eyebrow">Step 8 · Stream D · POS engineer</span><h2>Offline POS shell</h2></div>
+    <div class="chips">
+      <span class="chip">Weeks 9–12 · 28 Dec 2026 – 24 Jan 2027</span>
+      <span class="chip">Design §11.1, §11.2, §11.4</span>
+      <span class="chip gate">NEW-32</span><span class="chip id">POS-04</span><span class="chip id">POS-07</span><span class="chip id">POS-08</span><span class="chip id">POS-11</span>
+    </div>
+  </div>
+  <p><b>Goal:</b> a browser POS that opens, scans, prices, takes payment and saves sales with the network unplugged, survives a reload or power cut mid-sale, and keeps the controls the v1.5.0 design dropped.</p>
+  <div class="box gate"><span class="tag">Gate · settle first</span><ul>
+    <li>The rounding rules (per unit or per line, how discounts apply to tax-inclusive lines) are written down with golden vectors (week-9 gate, NEW-08).</li>
+    <li>The product owner confirms whether known customers can buy on credit while offline (NEW-32).</li>
+    <li>Offline discount ceilings follow §3.2: cashier 5%, supervisor 10%, branch manager 15%.</li>
+  </ul></div>
+  <h3>What to build</h3>
+  <ul>
+    <li>A separate Vite entry in <code>resources/pos</code> with Alpine.js, Dexie tables (<code>catalog</code>, <code>carts</code>, <code>pending_sales</code>, <code>pending_fiscal_queue</code>, <code>shifts</code>) and a service worker that precaches the app.</li>
+    <li>Terminal pairing and a device token; <code>/api/v1/pos/catalog-delta</code> on the server.</li>
+    <li>PIN sign-in from §11.1 (PBKDF2 through WebCrypto, device salt, non-extractable key, lockouts after 3 and 5 failures).</li>
+    <li>Storage checks: <code>navigator.storage.persist()</code>, a quota check, and no new shift below 50 MB free.</li>
+    <li>Shift open and close with float, drops, pickups, denomination count and over/short.</li>
+    <li>The controls NEW-32 asks to restore: cart saved on every change, kiosk mode and a key map that doesn't fight Chrome, the 4-hour unsynced-sales alert, the returns row and the MFS manual-reference control.</li>
+  </ul>
+  <h3>Prompts</h3>
+  <div class="prompt"><div class="pbar"><span class="title">8A · Plan the POS shell</span><span class="when">Plan first</span><button type="button" class="copy">Copy</button></div><pre>Plan Step 8 (offline POS shell) from design §11.1, §11.2 and the POS screen in §11.4, closing POS-04, POS-07, POS-08, POS-11 and NEW-32 in docs/reviews/ERP_DESIGN_REVIEW_v1.5.0.md.
+
+Build it as a separate Vite entry in resources/pos with Alpine.js and Dexie. Include: Dexie tables catalog, carts, pending_sales, pending_fiscal_queue and shifts with a versioned schema; a service worker that precaches the shell; terminal pairing with a device token and the catalog-delta endpoint; PIN sign-in exactly as §11.1 describes; navigator.storage.persist() and the 50 MB quota rule; shift open and close with float, drops, pickups, denomination count and over/short.
+
+Restore the controls v1.5.0 dropped (NEW-32): save the cart to Dexie on every change and restore it after reload; run in Chrome kiosk mode, block DevTools on terminals by policy, and choose a key map that doesn't depend on F10, F11 or F12; alert the supervisor when any sale has been unsynced for 4 hours; returns and refunds offline need a supervisor PIN and create a linked credit note; bKash, Nagad and card payments offline need a manual reference and are marked pending verification; discount ceilings follow §3.2 (cashier 5%, supervisor 10%, branch manager 15%) with a reason code.
+
+Tests first: Vitest for the PIN lockout rules, discount ceilings and cart restore; Playwright for an offline sale that survives a reload (I'll paste the recipe). Write the plan to docs/build/step-08-plan.md and stop for my approval.</pre></div>
+  <div class="prompt"><div class="pbar"><span class="title">8B · Share the tax maths with the server</span><span class="when">After 9B's vectors exist, or with them</span><button type="button" class="copy">Copy</button></div><pre>Create resources/pos/src/tax.js with the tax-inclusive formula from design §11.4, using integer paisa or a decimal library, never floating point. Load tests/golden/vat-vectors.json in a Vitest test and assert every vector matches exactly; the PHP TaxCalculator test will load the same file. If a vector and the formula disagree, stop and tell me which one; don't change the vector.</pre></div>
+  <div class="prompt"><div class="pbar"><span class="title">8C · Test the cashier's day in the browser</span><span class="when">Before the pull request</span><button type="button" class="copy">Copy</button></div><pre>In your browser at http://localhost:8000/pos (my tunnel), at a 1366×768 window: open a shift with a ৳2,000 float, scan three products, apply a 5% discount as the cashier, try 8% and confirm it's refused, take cash and complete the sale. Then go offline, make two more sales, reload the page in the middle of the second one and check the cart comes back. Sign in with a wrong PIN three times and confirm the 60-second lock. Close the shift with a denomination count. Save screenshots at each stage and list anything slow, unclear or broken.</pre></div>
+  <h3>Test it</h3>
+  <div class="tn"><span class="who">In Antigravity</span><p>Send 8C as written; the agent's browser reaches the POS through your tunnel at <code>http://localhost:8000/pos</code>, and the browser recording shows the whole cashier's day. Then ask for the same flow as Playwright tests, using the offline recipe in <a href="#testing">Testing workflow</a> with <code>context.setOffline(true)</code> and a reload mid-sale, running headless on the server.</p></div>
+  <div class="box warn"><span class="tag">Try it on real hardware</span><p>Run the shell on the low-end Windows and Ubuntu PCs with the USB scanner before the step ends, through an SSH tunnel from each PC or on staging. Barcode scanners type fast, and a slow Dexie lookup or a focus bug shows up only there.</p></div>
+  <h3>Done when</h3>
+  <ul class="checklist">
+    <li><label><input type="checkbox" id="s08-1"><span>A sale can be completed and kept with the network off, through a reload and a browser restart.</span></label></li>
+    <li><label><input type="checkbox" id="s08-2"><span>PIN lockouts, discount ceilings, returns and MFS reference rules have tests.</span></label></li>
+    <li><label><input type="checkbox" id="s08-3"><span>No shortcut key opens a browser feature on a terminal.</span></label></li>
+    <li><label><input type="checkbox" id="s08-4"><span>The JavaScript tax module passes every golden vector.</span></label></li>
+  </ul>
+  <p class="small"><b>Ship it:</b> branch <code>step-08-pos-shell</code>.</p>
+</section>
+
+<!-- ============ STEP 9 ============ -->
+<section id="step-09" class="step" data-step="step-09">
+  <div class="step-head">
+    <span class="step-num" aria-hidden="true">09</span>
+    <div><span class="eyebrow">Step 9 · Stream B · Domain specialist</span><h2>VAT engine, invoices and Mushak forms</h2></div>
+    <div class="chips">
+      <span class="chip">Weeks 10–13 · 4–31 Jan 2027</span>
+      <span class="chip ms">M3 · 31 Jan</span>
+      <span class="chip">Design §8.2 (8), §9.1–9.2, §11.4, §12.2–12.3, §16.3</span>
+      <span class="chip gate">NEW-27</span><span class="chip id">NEW-24</span><span class="chip id">NEW-29</span><span class="chip id">NEW-08</span><span class="chip id">TAX-03</span>
+    </div>
+  </div>
+  <p><b>Goal:</b> sales invoices that truly can't change once issued, one tax calculator shared with the POS through golden vectors, GL posting for every invoice, and the Mushak forms the VAT consultant signs off.</p>
+  <div class="box gate"><span class="tag">Gate · settle first</span><ul>
+    <li>NBR answers on per-terminal invoice series, SDC numbering and provisional receipts are in hand (week-10 gate, NEW-18).</li>
+    <li>The VAT consultant has reviewed the list of forms and every threshold, including the BDT 25,000 buyer-BIN rule (TAX-03).</li>
+    <li>Scope of Mushak 9.1: M3 asks for it, but §1.3 puts the full return in Phase 2. Agree what M3 means (for example, the return's figures, not the filed form).</li>
+  </ul></div>
+  <div class="box"><span class="tag">Fix the triggers before anything else</span><p>The v1.5.0 review loaded the §9.1 invoice tables and §9.2 triggers into PostgreSQL and broke them five ways: invoices default to <code>issued</code>; the fiscal-enrichment path can reopen, renumber and redate an issued invoice; lines can be moved between invoices; an invoice can be issued with no lines and a ৳999 total; and cancelled invoices can be deleted. Prompt 9A turns those five checks into tests first.</p></div>
+  <h3>Prompts</h3>
+  <div class="prompt"><div class="pbar"><span class="title">9A · Build invoice tables with fixed triggers</span><span class="when">Tests first</span><button type="button" class="copy">Copy</button></div><pre>Build sales_invoices and sales_invoice_lines from design §9.1 and their triggers from §9.2, with the corrections in review NEW-27 and NEW-24. Write these tests in tests/Database first, run them against the design's triggers as written, and show me that each one fails:
+
+T1  inserting an invoice without a status creates a draft, and lines can be added to it;
+T2  issuing an invoice with no lines, or whose header totals differ from the sum of its lines, is rejected;
+T4  an update that fills fiscal_signature may not change any other column (status, number, dates, customer, discount, duty or totals);
+T5  changing sales_invoice_id on a line is rejected;
+T6  a cancelled invoice can't be updated or deleted.
+
+Then change the triggers: default status 'draft'; on draft to issued, require at least one line and header totals equal to the lines; in the enrichment branch allow only fiscal_signature and sdc_invoice_number to change, each only from null to a value, and compare every other column to OLD; block changes to sales_invoice_id; read the invoice with FOR SHARE in the line trigger; make cancelled immutable and define the void flow (a draft is cancelled, never deleted, so its number stays recorded). Rerun the tests and show them passing. Record the trigger changes in docs/adr/ADR-017-invoice-immutability.md.</pre></div>
+  <div class="prompt"><div class="pbar"><span class="title">9B · Tax calculator and golden vectors</span><span class="when">After 9A</span><button type="button" class="copy">Copy</button></div><pre>Build app/Modules/Tax/TaxCalculator from the formula in design §11.4, using Money and TaxRateResolver from Steps 4 and 5. Write tests/golden/vat-vectors.json starting with the four vectors in the build guide (rice exempt; oil ৳280 at 5% gives VAT ৳13.33; soap 2 × ৳65 at 15% gives ৳16.96; basket VAT ৳30.29), then add vectors for: supplementary duty; a tax-exclusive wholesale line; a line discount and an invoice discount on tax-inclusive lines; quantity above one where per-unit and per-line rounding differ; cash rounding to ৳1. Write the rounding rules you chose into docs/adr/ADR-018-tax-rounding.md (review NEW-08) and mark every new vector "needs consultant check". Don't use the 2.63% example from §11.4 (review NEW-29). A Pest test loads every vector and asserts exact equality.</pre></div>
+  <div class="prompt"><div class="pbar"><span class="title">9C · Issue, post and report</span><span class="when">After 9B</span><button type="button" class="copy">Copy</button></div><pre>Build InvoiceIssuer: it calculates tax with TaxCalculator, draws the number from NumberSeries, issues the invoice and posts the journal (revenue, VAT payable, supplementary duty, cost of goods and inventory) through AccountingPostingService in the same transaction. Returns create a Mushak 6.7 credit note that reverses the original's tax; they never edit the invoice. Then add the registers and documents the consultant approved: Mushak 6.3 (A4 and 80 mm, Bangla and English), 6.1 purchase book, 6.2 sales book, 6.6 VDS certificate, 6.7 and 6.8, and the monthly figures for 9.1. Each register's VAT total must equal the matching GL account for the period; add that as a test. Show me a rendered 6.3 for the basket vector.</pre></div>
+  <h3>Test it</h3>
+  <div class="tn"><span class="who">In Antigravity</span><p>Run <code>/db-rule-test</code> for every trigger path in 9A. For the Mushak documents, ask the agent to open each one in the browser at 100% zoom, take a screenshot and compare the figures with the golden vectors. Send the screenshots to the VAT consultant.</p></div>
+  <h3>Done when</h3>
+  <ul class="checklist">
+    <li><label><input type="checkbox" id="s09-1"><span>T1, T2 and T4–T6 pass in CI.</span></label></li>
+    <li><label><input type="checkbox" id="s09-2"><span>PHP and JavaScript pass the same golden vectors, and the consultant has checked them.</span></label></li>
+    <li><label><input type="checkbox" id="s09-3"><span>Every issued invoice has a balanced journal posted in the same transaction.</span></label></li>
+    <li><label><input type="checkbox" id="s09-4"><span>M3 met: Mushak 6.3 and the agreed 9.1 figures come out right for the vectors; issued invoices can't change.</span></label></li>
+  </ul>
+  <p class="small"><b>Ship it:</b> branches <code>step-09a-invoice-triggers</code>, <code>step-09b-tax</code>, <code>step-09c-mushak</code>, then tag <code>m3-vat</code>.</p>
+</section>
+
+<!-- ============ STEP 10 ============ -->
+<section id="step-10" class="step" data-step="step-10">
+  <div class="step-head">
+    <span class="step-num" aria-hidden="true">10</span>
+    <div><span class="eyebrow">Step 10 · Stream D · POS engineer</span><h2>Print and fiscal bridge</h2></div>
+    <div class="chips">
+      <span class="chip">Weeks 13–15 · 25 Jan – 14 Feb 2027</span>
+      <span class="chip ms">M4 · 14 Feb</span>
+      <span class="chip">Design §11.3, §12.2</span>
+      <span class="chip gate">NEW-33</span><span class="chip id">NEW-18</span><span class="chip id">POS-03</span><span class="chip id">TAX-01</span>
+    </div>
+  </div>
+  <p><b>Goal:</b> a small, signed Go program on each terminal that prints Bangla receipts, kicks the cash drawer and talks to the SDC, which only the ERP's own web page can drive, and which can't be replaced by a forged update.</p>
+  <div class="box gate"><span class="tag">Gate · settle first</span><ul>
+    <li>The SDC vendor's integration spec and emulator are available (TAX-01).</li>
+    <li>Code-signing certificates for Windows (Authenticode) and a GPG key for the Ubuntu package are ordered; EV certificates take time.</li>
+  </ul></div>
+  <h3>What to build</h3>
+  <ul>
+    <li><code>bridge/</code>: a WebSocket server on <code>127.0.0.1:9191</code> that accepts only the tenant's HTTPS origins (no <code>http://localhost</code>), after the 64-character pairing token.</li>
+    <li>A <code>/health</code> endpoint that returns only non-sensitive fields, or requires the token, and sends no permissive CORS headers.</li>
+    <li>ESC/POS output for 58 mm and 80 mm printers; Bangla text arrives from the browser as a raster image drawn on a canvas; cash drawer kick on cash tender.</li>
+    <li>An SDC adapter with a 2-second timeout. The browser owns <code>pending_fiscal_queue</code> and replays it; the bridge keeps no state (NEW-18). Alerts at 10 unfiscalized invoices per shift; lock at 25 or after 60 minutes.</li>
+    <li>Signed MSI and <code>.deb</code> packages; an updater that checks the signature against a key built into the bridge, not just a checksum, and installs only at shift close.</li>
+  </ul>
+  <h3>Prompts</h3>
+  <div class="prompt"><div class="pbar"><span class="title">10A · Plan the bridge</span><span class="when">Plan first</span><button type="button" class="copy">Copy</button></div><pre>Plan Step 10 (print and fiscal bridge) from design §11.3 and §12.2 with the fixes in review NEW-33 and NEW-18. Create a Go module in bridge/ with no network listener other than 127.0.0.1:9191.
+
+Security: accept WebSocket connections only from the tenant's configured HTTPS origins (never http://localhost), and only after the pairing handshake with the 64-character Bridge-Token; rate-limit failed handshakes; /health returns only status and version unless the token is sent, with no Access-Control-Allow-Origin: *; the updater downloads a manifest and binary, verifies a detached signature against a public key compiled into the bridge (not a checksum from the same API), and installs only when the POS reports the shift closed.
+
+Hardware: ESC/POS for 58 mm and 80 mm; accept Bangla lines as monochrome raster bitmaps from the browser and send them with GS v 0; cash drawer kick; an SDC adapter behind an interface, with the vendor emulator and a fake for tests, and a 2.0 s timeout. The browser owns pending_fiscal_queue and replays it; the bridge holds no queue. The POS side alerts at 10 unfiscalized invoices per shift and locks at 25 or after 60 minutes offline, as §12.2 says.
+
+Tests first (go test): wrong origin rejected; http://localhost rejected; missing or wrong token rejected; /health leaks nothing without the token; an update with a bad signature is refused; ESC/POS output for a sample receipt matches a golden byte file; SDC timeout yields a provisional receipt. Write the plan to docs/build/step-10-plan.md and stop for my approval.</pre></div>
+  <div class="prompt"><div class="pbar"><span class="title">10B · Attack the bridge</span><span class="when">After 10A works</span><button type="button" class="copy">Copy</button></div><pre>Act as a malicious web page or local program on the terminal. Try to reach the bridge: a page on another origin, a page served from http://localhost:8080, a WebSocket without the token, a replayed token from a different origin, a flood of handshakes, a forged update manifest, and an oversized print job. Write each attempt as a go test in bridge/security_test.go and make sure every one fails safely. Report anything that got through.</pre></div>
+  <div class="prompt"><div class="pbar"><span class="title">10C · Prepare the hardware test</span><span class="when">Before you test with the printers</span><button type="button" class="copy">Copy</button></div><pre>I'll test the bridge on a POS test PC with an 80 mm printer, a 58 mm printer, a cash drawer and the SDC emulator; you can't reach that PC. On the dev server, build the bridge for Windows (amd64) and Ubuntu (amd64) into bridge/dist/ and tell me the scp commands to copy them. Add a page in the admin panel, available only in local and staging environments, that prints the basket vector's Mushak 6.3 receipt with a long Bangla product name, a discount line and a provisional (unfiscalized) footer. Then write me a checklist for the session: printing on each width, the drawer kick, unplugging the SDC for three sales and plugging it back in to check the browser replays the queue, and what to check on the paper by eye. I'll report the results back to you.</pre></div>
+  <h3>Test it</h3>
+  <div class="tn"><span class="who">In Antigravity</span><p>The agent builds and tests the bridge on the server (<code>go vet</code>, <code>go test</code>) and adds the bridge job to <code>ci.yml</code> and the <code>gomod</code> entry to <code>dependabot.yml</code> in this step. The printers are attached to a POS test PC, not the server: the agent cross-compiles there (<code>GOOS=windows GOARCH=amd64 go build</code>) and you copy the binary with <code>scp erp-dev:…</code>. Because the bridge now rejects <code>http</code> origins, hardware tests need the app on an HTTPS host name: use staging, or give the dev server one that only your office can reach.</p></div>
+  <h3>Done when</h3>
+  <ul class="checklist">
+    <li><label><input type="checkbox" id="s10-1"><span>Every attack in 10B fails safely and is a test in CI.</span></label></li>
+    <li><label><input type="checkbox" id="s10-2"><span>Updates are refused unless signed by your key.</span></label></li>
+    <li><label><input type="checkbox" id="s10-3"><span>M4 met: raster Bangla receipts print on both widths, and the SDC emulator round trip works over WebSocket.</span></label></li>
+  </ul>
+  <p class="small"><b>Ship it:</b> branch <code>step-10-bridge</code>, then tag <code>m4-bridge</code>. Attach the signed installers to the GitHub release.</p>
+</section>
+
+<!-- ============ STEP 11 ============ -->
+<section id="step-11" class="step" data-step="step-11">
+  <div class="step-head">
+    <span class="step-num" aria-hidden="true">11</span>
+    <div><span class="eyebrow">Step 11 · Stream B · Domain specialist + backend</span><h2>Receivables, payables and business documents</h2></div>
+    <div class="chips">
+      <span class="chip">Weeks 14–15 · 1–14 Feb 2027</span>
+      <span class="chip">Design §8.2 (4, 6, 7), §3.3</span>
+      <span class="chip id">ACC-06</span><span class="chip id">NEW-16</span><span class="chip gate">NEW-34</span>
+    </div>
+  </div>
+  <p><b>Goal:</b> one module owns customer and supplier balances, payments and allocations, with aging and bank reconciliation, plus the sales and procurement documents that the MVP promises.</p>
+  <div class="box gate"><span class="tag">This step is under-planned</span><p>The roadmap gives two weeks to "AP/AR subledgers and bank reconciliation". Quotations, sales orders, delivery challans, purchase orders, goods receipts and vendor bills have no task at all (NEW-34). Settle in week 6 who builds them and when: add a backend engineer, extend the plan, or cut documents from the pilot.</p></div>
+  <h3>Prompts</h3>
+  <div class="prompt"><div class="pbar"><span class="title">11A · Plan the subledgers</span><span class="when">Plan first</span><button type="button" class="copy">Copy</button></div><pre>Plan the receivables and payables subledger from design §8.2 items 4, 6 and 7, closing ACC-06 and NEW-16. One module (app/Modules/Accounting/Subledger, or a new Receivables module; record the choice in an ADR) owns open items, payments, allocations and aging; Sales and Procurement post to it through its contract and never keep their own balances.
+
+Include: a payments table with method (cash, bank, cheque, bKash, Nagad), reference and status; allocation of one payment across several invoices and partial payments; customer credit limits ("baki") checked at sale time, including at the POS; VDS withheld by corporate buyers, with a Mushak 6.6 certificate; supplier payment vouchers needing SoD approval (§3.3); bank and cash reconciliation against imported statement lines; aging registers; and a trial balance, profit and loss and balance sheet.
+
+Tests first: the sum of open items equals the GL control account after 500 random invoices, payments and credit notes; an allocation can't exceed the open amount; a sale above the credit limit is refused; the same user can't create and approve a supplier payment. Write the plan to docs/build/step-11-plan.md and stop for my approval.</pre></div>
+  <div class="prompt"><div class="pbar"><span class="title">11B · Sales and procurement documents</span><span class="when">In the extra time agreed for NEW-34</span><button type="button" class="copy">Copy</button></div><pre>Build the document chains from design §1.3 and §8.2: quotation → sales order → delivery challan → invoice, and purchase order → goods receipt (GRN) → vendor bill. Each document has its own number series (Step 5), keeps a link to its source, and can be partly fulfilled. A delivery challan and a GRN create stock movements; an invoice and a vendor bill post to the GL and the subledger. Nothing is edited after it's confirmed: use cancellation and new documents. Write one feature test per chain that runs it end to end with a partial delivery, and check the GL, the stock ledger and the subledger agree at the end.</pre></div>
+  <h3>Test it</h3>
+  <div class="tn"><span class="who">In Antigravity</span><p>In the review conversation, ask the agent to check that no module other than the subledger owner stores a balance, then to add a Pest arch test that keeps it that way. Have the browser run one full purchase chain and one sales chain as the right roles, then open the aging register and trial balance and take screenshots of both.</p></div>
+  <h3>Done when</h3>
+  <ul class="checklist">
+    <li><label><input type="checkbox" id="s11-1"><span>Subledger totals equal the GL control accounts, in a property test.</span></label></li>
+    <li><label><input type="checkbox" id="s11-2"><span>Credit limits are enforced in the back office and at the POS.</span></label></li>
+    <li><label><input type="checkbox" id="s11-3"><span>Every MVP document in §1.3 has an owner and a date, even if it lands after this step.</span></label></li>
+  </ul>
+  <p class="small"><b>Ship it:</b> branches <code>step-11a-subledger</code> and <code>step-11b-documents</code>.</p>
+</section>
+
+<!-- ============ STEP 12 ============ -->
+<section id="step-12" class="step" data-step="step-12">
+  <div class="step-head">
+    <span class="step-num" aria-hidden="true">12</span>
+    <div><span class="eyebrow">Step 12 · Stream D · POS engineer + backend</span><h2>Offline sync engine</h2></div>
+    <div class="chips">
+      <span class="chip">Weeks 16–18 · 15 Feb – 7 Mar 2027</span>
+      <span class="chip ms">M5 · 7 Mar</span>
+      <span class="chip">Design §10.2, §11.2</span>
+      <span class="chip id">POS-09</span><span class="chip id">POS-10</span><span class="chip id">NEW-26</span><span class="chip id">API-03</span>
+    </div>
+  </div>
+  <p><b>Goal:</b> terminals that were offline for hours, or are a version behind, sync every sale exactly once, never lose one, and don't knock the server over when a whole area comes back online at once.</p>
+  <div class="box gate"><span class="tag">Gate · settle first</span><ul>
+    <li>Sync API versioning and the minimum supported client version (POS-09).</li>
+    <li>Clock-skew handling (POS-10).</li>
+    <li>ADR-016 from Step 7 is merged, so the server knows what to do with an offline oversell.</li>
+  </ul></div>
+  <h3>Prompts</h3>
+  <div class="prompt"><div class="pbar"><span class="title">12A · Plan the sync engine</span><span class="when">Plan first</span><button type="button" class="copy">Copy</button></div><pre>Plan Step 12 (offline sync) from design §10.2 and §11.2, closing POS-09, POS-10 and API-03, and following ADR-016 for oversells (NEW-26).
+
+Server: POST /api/v1/pos/sync-batch processes each sale in its own savepoint with INSERT … ON CONFLICT (tenant_id, terminal_id, client_txn_id) DO NOTHING; inserts every invoice as a draft, adds its lines, then issues it through InvoiceIssuer (never insert as issued: review NEW-27); returns committed, already_synced or failed per sale with a reason; never rejects a completed sale for lack of stock (ADR-016); stores both device time and server-received time; flags clock skew above a threshold; uses the fiscal-enrichment path only to fill fiscal_signature and sdc_invoice_number.
+
+Versioning: every request sends X-POS-Client-Version; the server accepts the current and previous sync schema versions, answers 426 below the minimum, and the client applies updates only at shift close.
+
+Load: the client syncs with exponential backoff and jitter; the server admits a limited number of sync batches at a time and answers 429 with Retry-After beyond that.
+
+Tests first: the same batch sent twice records each sale once; a batch where one sale fails still commits the others; a previous-version payload still syncs (contract test with a saved fixture); a client below the minimum gets 426; an oversell syncs and opens an exception; skewed device time is flagged. Write the plan to docs/build/step-12-plan.md and stop for my approval.</pre></div>
+  <div class="prompt"><div class="pbar"><span class="title">12B · Outage recovery test</span><span class="when">After 12A</span><button type="button" class="copy">Copy</button></div><pre>Write tests/Concurrency/SyncStormTest.php and a k6 scenario loadtests/sync-storm.js. Simulate 50 terminals that each made 20 offline sales (1,000 in total, some overselling the same products) reconnecting within the same 10 seconds, and some sending their batch twice. Afterwards assert: exactly 1,000 invoices; no duplicate stock movements; every balance equals the sum of its movements; every oversell has an exception; the trial balance is zero; and no request failed except with 429. Report the server's peak database connections and p95 latency.</pre></div>
+  <h3>Test it</h3>
+  <div class="tn"><span class="who">In Antigravity</span><p>Keep old sync payloads as fixtures in <code>tests/Fixtures/pos-sync/v{N}.json</code> and ask for a new one whenever the payload changes; the contract test then fails if the server drops the previous version. Ask the agent to run the Step 8 Playwright offline test on the server with three browser contexts at once (three terminals), reconnect them together and report each one's sync status.</p></div>
+  <h3>Done when</h3>
+  <ul class="checklist">
+    <li><label><input type="checkbox" id="s12-1"><span>M5 met: 1,000 offline sales sync with no duplicate stock deductions or errors.</span></label></li>
+    <li><label><input type="checkbox" id="s12-2"><span>A previous-version client still syncs; an unsupported one is told to update.</span></label></li>
+    <li><label><input type="checkbox" id="s12-3"><span>A sync storm is throttled with 429s, not errors.</span></label></li>
+  </ul>
+  <p class="small"><b>Ship it:</b> branch <code>step-12-sync</code>, then tag <code>m5-sync</code>.</p>
+</section>
+
+<!-- ============ STEP 13 ============ -->
+<section id="step-13" class="step" data-step="step-13">
+  <div class="step-head">
+    <span class="step-num" aria-hidden="true">13</span>
+    <div><span class="eyebrow">Step 13 · Stream E · Tech lead + QA</span><h2>Outbox, audit, import and QA sign-off</h2></div>
+    <div class="chips">
+      <span class="chip">Weeks 19–20 · 8–21 Mar 2027</span>
+      <span class="chip ms">M6 · 21 Mar</span>
+      <span class="chip">Design §5.5, §7.1–7.2, §12.4, §14, §16</span>
+      <span class="chip gate">NEW-30</span><span class="chip gate">NEW-31</span><span class="chip id">TEN-06</span><span class="chip id">MOD-07</span><span class="chip id">OBS-01</span>
+    </div>
+  </div>
+  <p><b>Goal:</b> reliable events and webhooks, an audit trail that can't be quietly edited, a watchdog that actually checks the books, tools to import a retailer's data and to export or restore one tenant, and the load and security tests that gate the pilot.</p>
+  <div class="box warn"><span class="tag">Eid falls in this step</span><p>Eid-ul-Fitr is expected around 10 March, in week 19, and the holiday around it takes several working days. Plan for fewer days than the two weeks suggest, or start the import tool early. The review recommends running the pilot data imports just after Eid, in weeks 20–21 (NEW-28).</p></div>
+  <h3>Prompts</h3>
+  <div class="prompt"><div class="pbar"><span class="title">13A · Fix the watchdog and the audit trail</span><span class="when">Tests first</span><button type="button" class="copy">Copy</button></div><pre>Fix review NEW-30 and NEW-31.
+
+Watchdog (§14): for each active tenant, open a transaction, call set_config('app.current_tenant_id', :id, true), run the checks, commit. Never use SET or SET LOCAL with bind parameters. Fail the job if the tenant context is empty. Check that posted journals balance and that stock balances equal their movements; report negative stock only when it has no ADR-016 exception. Test first: seed an unbalanced posted entry (bypassing the trigger as the owner) and expect the watchdog to report it; run it with no tenant context and expect it to fail loudly, not report "all clear".
+
+Audit (§9.1 and §12.4): keep one audit_logs definition with a (tenant_id, id) key and UUIDv7 IDs, RLS enabled, and a chain_position column assigned by the hashing worker as it processes rows; verify the chain in chain_position order. Use a per-tenant advisory lock key instead of the global one. Add a trigger that allows only the one-time hash fill and rejects any other update or delete. Test: a slow transaction that commits after later rows doesn't cause a false tamper alert; editing an audit row is rejected; changing a hashed row as the owner is detected by the verifier.</pre></div>
+  <div class="prompt"><div class="pbar"><span class="title">13B · Outbox, notifications, import and tenant export</span><span class="when">Plan first</span><button type="button" class="copy">Copy</button></div><pre>Plan the rest of Step 13 from design §5.5, §7.1, §7.2 and §10.3, closing MOD-07 and TEN-06.
+
+Outbox: one table named transactional_outbox (ADR-005 calls it outbox_events; fix the ADR), written in the same transaction as the business change, processed with FOR UPDATE SKIP LOCKED, with retries, a dead-letter state and tenant context set per event. Webhooks: timestamped HMAC signatures, a 300-second replay window and the SSRF checks in §10.3 applied after DNS resolution. Notifications: the SMS gateway with failover between two providers and OTP rate limits.
+
+Import: Excel and CSV import for products, customers, suppliers and opening balances, with a dry run that reports every row error, idempotent re-runs, and opening balances posted as one journal per company.
+
+Tenant export and restore (TEN-06): export one tenant's data to a file; restore it into an empty database or a staging tenant; an offboarding flow with notice, export, retention and a controlled purge.
+
+Tests first: an event survives a worker crash and is delivered once; a webhook to a private IP is refused; importing the same file twice creates nothing new; a tenant exported and restored into a fresh database has the same trial balance and stock value. Write the plan to docs/build/step-13-plan.md and stop for my approval.</pre></div>
+  <div class="prompt"><div class="pbar"><span class="title">13C · Load and security tests</span><span class="when">Week 20</span><button type="button" class="copy">Copy</button></div><pre>Prepare the pilot gate tests.
+1. Load: run loadtests/eid-peak.js against staging at 15 checkouts per second for 10 minutes, then loadtests/sync-storm.js. Record p95 latency, error rate, and PostgreSQL CPU, active connections and lock waits for each. Compare with design §13.3 and C-03, and tell me which limit was hit first.
+2. Security: list the OWASP checks in §12.1 and say for each whether a test covers it. Run composer audit, npm audit and govulncheck in bridge/. Prepare a scope document for the external penetration test: URLs, roles and test accounts, the POS and bridge, and what's out of scope.
+3. Add .github/workflows/nightly.yml that runs the Playwright tests and tests/Concurrency every night against a seeded database.
+Write the results to docs/build/m6-gate.md.</pre></div>
+  <h3>Test it</h3>
+  <div class="tn"><span class="who">In Antigravity</span><p>For 13C, ask the agent to run k6 on the dev server with <code>--summary-export</code> and read the JSON file afterwards rather than the scrolling output. For 13B's import, have it create a sample Excel file with five deliberate errors in <code>.scratch/</code>, upload it through the browser, and check that the dry-run report names all five rows. Run the review conversation on the watchdog against §6.1's tenant-context rule.</p></div>
+  <h3>Done when</h3>
+  <ul class="checklist">
+    <li><label><input type="checkbox" id="s13-1"><span>The watchdog catches a seeded unbalanced entry and fails without tenant context.</span></label></li>
+    <li><label><input type="checkbox" id="s13-2"><span>One <code>audit_logs</code> table; edits are rejected; no false tamper alerts.</span></label></li>
+    <li><label><input type="checkbox" id="s13-3"><span>A tenant can be exported and restored with matching totals.</span></label></li>
+    <li><label><input type="checkbox" id="s13-4"><span>M6 met: master-data import validated; penetration and concurrency tests pass with no open critical findings.</span></label></li>
+  </ul>
+  <p class="small"><b>Ship it:</b> branches <code>step-13a-watchdog-audit</code>, <code>step-13b-outbox-import</code>, <code>step-13c-gate</code>, then tag <code>m6-qa</code>.</p>
+</section>
+
+<!-- ============ STEP 14 ============ -->
+<section id="step-14" class="step" data-step="step-14">
+  <div class="step-head">
+    <span class="step-num" aria-hidden="true">14</span>
+    <div><span class="eyebrow">Step 14 · Stream F/G · Full team</span><h2>Pilot and go-live</h2></div>
+    <div class="chips">
+      <span class="chip">Weeks 21–27 · 22 Mar – 9 May 2027</span>
+      <span class="chip ms">M7 · 2 May</span><span class="chip ms">M8 · 9 May</span>
+      <span class="chip">Design §13.2–13.3, §15, §18</span>
+      <span class="chip gate">NEW-28</span><span class="chip id">OPS-01</span><span class="chip id">OPS-02</span><span class="chip id">OPS-06</span>
+    </div>
+  </div>
+  <p><b>Goal:</b> staging and production environments deployed from GitHub, a tested restore, three pilot retailers trading for six weeks with daily reconciliation, and a launch that doesn't collide with the Eid-ul-Adha freeze.</p>
+  <div class="box gate"><span class="tag">Gate · settle first (week-21 gate)</span><ul>
+    <li>Go-live versus the freeze: the 14-day freeze before Eid-ul-Adha (about 17–19 May) starts around 3 May, which is go-live week. Exempt go-live and start the freeze a week later, or launch after Eid (NEW-28).</li>
+    <li>Eid database budget: moving to the 4 GB database takes the monthly total to about $255–270, above the $200 cap. Get approval or plan around it (NEW-28, OPS-01).</li>
+    <li>Load-test sign-off, tenant export verified, alerting working, a disaster-recovery runbook and a passed penetration test (§18.2).</li>
+    <li>The hosting provider and region ADR, which is still open.</li>
+  </ul></div>
+  <h3>Prompts</h3>
+  <div class="prompt"><div class="pbar"><span class="title">14A · Deployment pipeline</span><span class="when">Week 21</span><button type="button" class="copy">Copy</button></div><pre>Add .github/workflows/deploy.yml. It runs only after CI passes: on a push to main it deploys to the staging environment; on a tag starting with v it deploys to production, which requires approval from a reviewer configured in the GitHub production environment. Secrets come only from GitHub environment secrets. The deploy runs php artisan migrate --database=pgsql_owner --force, then switches traffic, then runs health checks on /ready and rolls back if they fail. Add a CI check that fails a pull request whose migrations drop or rename a column or table (the expand-and-contract rule in §15.1). Write the host-specific steps as deploy/release.sh, and don't put any secret in the repository.</pre></div>
+  <div class="prompt"><div class="pbar"><span class="title">14B · Disaster-recovery runbook and drill</span><span class="when">Before the pilot starts</span><button type="button" class="copy">Copy</button></div><pre>Write docs/ops/disaster-recovery.md covering PostgreSQL (point-in-time restore and failover), Redis, uploaded files and generated documents in object storage (versioning and an off-provider copy), secrets and configuration, and the restore order (OPS-02, OPS-06). Then write a drill script that restores last night's backup into a scratch database, runs the watchdog and compares trial balances and stock value with production's latest report. Measure the time from start to verified restore and record it in the runbook; that number is the real recovery time.</pre></div>
+  <div class="prompt"><div class="pbar"><span class="title">14C · Daily pilot checks</span><span class="when">From pilot day 1</span><button type="button" class="copy">Copy</button></div><pre>Build php artisan pilot:daily-check {tenant} that runs on the reporting_ro connection and prints, per branch: POS cash counted against the GL cash account; stock balances against the sum of movements; the Mushak 6.2 VAT total against the GL VAT payable account; unsynced sales older than 4 hours and unfiscalized invoices per terminal; open oversell exceptions; and audit-chain verification. Exit non-zero if anything differs, and schedule it every morning at 08:00 Asia/Dhaka with the result emailed to the project lead. Add a test that seeds one difference of each kind and expects it to be reported.</pre></div>
+  <h3>Test it</h3>
+  <div class="tn"><span class="who">In Antigravity</span><p>During the pilot, paste a failing <code>pilot:daily-check</code> output into a new conversation with prompt R4, using anonymised data on the dev server. The dev server is the only machine in the agent's SSH block: never give it SSH access or credentials for staging or production. Before every release, run the cashier's day from Step 8 against staging in the browser and attach the recording to the release pull request.</p></div>
+  <h3>Done when</h3>
+  <ul class="checklist">
+    <li><label><input type="checkbox" id="s14-1"><span>A restore drill has been run and its time recorded.</span></label></li>
+    <li><label><input type="checkbox" id="s14-2"><span>The freeze and Eid budget decisions are written down and approved.</span></label></li>
+    <li><label><input type="checkbox" id="s14-3"><span>M7 met: three pilot retailers traded for six weeks with no open critical bugs and clean daily checks.</span></label></li>
+    <li><label><input type="checkbox" id="s14-4"><span>M8 met: production launched from a tagged release.</span></label></li>
+  </ul>
+  <p class="small"><b>Ship it:</b> tag <code>m7-pilot</code>, then <code>v1.0.0</code>, and create the release with <code>gh release create v1.0.0 --generate-notes</code>.</p>
+</section>
+
+<!-- ============ PROMPTS ============ -->
+<section id="prompts">
+  <div class="sec-head">
+    <span class="eyebrow">Reference</span>
+    <h2>Reusable prompts</h2>
+  </div>
+  <p>Every activity in this guide has a drop-in prompt, apart from the few things only you can do (listed in <a href="#tools">Set up</a> and <a href="#github">GitHub</a>). Start each new conversation with the <a href="#tools">SSH block</a>, filled in, then the prompt. Replace <code>{N}</code> with the step number, <code>{NN}</code> with the two-digit form (Step 4 is <code>04</code>), and any other <code>{…}</code> before sending.</p>
+
+  <h3>Prompt index</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Prompts</th><th>Use them to</th><th>When</th></tr></thead>
+    <tbody>
+      <tr><td><a href="#tools">S1</a></td><td>Provision the dev server and create the <code>erp</code> user</td><td>Once, week 1</td></tr>
+      <tr><td><a href="#github">S2–S5</a></td><td>Create the repository and the server's key, scaffold Laravel, add the design and agent files, protect <code>main</code></td><td>Once, week 1, in order</td></tr>
+      <tr><td><a href="#r-step">R0–R2</a></td><td>Start a step: branch, kickoff, plan</td><td>Start of every step</td></tr>
+      <tr><td>Step prompts <a href="#step-01">1A</a> to <a href="#step-14">14C</a></td><td>The work specific to each step (36 prompts)</td><td>Inside each step, after R2</td></tr>
+      <tr><td><a href="#r-step">R3, R4</a></td><td>Build the next commit test-first; fix a failure</td><td>Repeatedly, during a step</td></tr>
+      <tr><td><a href="#r-step">R5, R6, R8, R9</a></td><td>Review, open the pull request, answer review comments, merge and tag</td><td>End of every step</td></tr>
+      <tr><td><a href="#r-step">R7</a></td><td>Record a decision as an ADR</td><td>Whenever a gate item is settled</td></tr>
+      <tr><td><a href="#u-prompts">U1–U6</a></td><td>Start the app and tunnel, resync the copies, ask the database, handle dependency updates, tidy the server, reset dev data</td><td>As needed</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3 id="r-step">Step routine</h3>
+  <div class="prompt"><div class="pbar"><span class="title">R0 · Start a step</span><span class="when">New conversation, before R1</span><button type="button" class="copy">Copy</button></div><pre>{SSH block}
+
+Start Step {N}. Here: switch to main, pull, create the branch step-{NN}-{name} and push it with upstream tracking. On the server: git fetch, switch to the same branch and confirm git status is clean and the commit matches this copy. If the server has uncommitted changes or is on another branch with unpushed work, stop and show me instead of switching.</pre></div>
+
+  <div class="prompt"><div class="pbar"><span class="title">R1 · Kickoff</span><span class="when">After R0</span><button type="button" class="copy">Copy</button></div><pre>We're starting Step {N} of the retail ERP build. Read AGENTS.md and .agents/rules/dev-server.md, then the Step {N} entry in docs/build/steps.md, then the design sections and review IDs it lists in docs/design/ERP_SYSTEM_DESIGN.md and docs/reviews/ERP_DESIGN_REVIEW_v1.5.0.md. Don't write any code yet.
+
+In under 15 lines, tell me: what this step must deliver; each review ID it closes and how; anywhere the design and the review disagree (the review wins unless I say otherwise); which gate items in steps.md are still open; and anything you need from me.</pre></div>
+
+  <div class="prompt"><div class="pbar"><span class="title">R2 · Plan</span><span class="when">After R1</span><button type="button" class="copy">Copy</button></div><pre>Write the plan for Step {N} to docs/build/step-{NN}-plan.md with:
+1. The goal and the review IDs closed.
+2. Commits in order. For each: the files touched, the failing test written first, and the command that proves it passes on the dev server.
+3. Every migration, trigger, constraint and policy, with one database rule test per forbidden path.
+4. Commands that must run on the server because they generate files (composer require, artisan make, npm install), so we know where those commits come from.
+5. Risks and open questions.
+Keep each commit small enough to review in 15 minutes. Commit and push the plan, then stop and wait for my approval.</pre></div>
+
+  <div class="prompt"><div class="pbar"><span class="title">R3 · Build the next commit</span><span class="when">Repeat until the plan is done</span><button type="button" class="copy">Copy</button></div><pre>Implement the next unticked commit in docs/build/step-{NN}-plan.md.
+1. Write the test first. Commit it ("test: …"), push, pull on the server and run it there. Show me the failure and explain why it fails for the right reason.
+2. Make the smallest change that makes it pass. Commit, push, pull on the server and run the test again.
+3. On the server, run vendor/bin/pint --test, vendor/bin/phpstan analyse and the affected tests, and paste the summary lines. If Pint wants to change files, run it without --test on the server, commit and push there, and pull here.
+4. Tick the commit in the plan file. Commit messages are conventional and name the review IDs, for example "feat(tax): issue-time invoice checks (NEW-24, NEW-27)".
+Stop after this one commit.</pre></div>
+
+  <div class="prompt"><div class="pbar"><span class="title">R4 · Fix a failure</span><span class="when">When a test or CI fails</span><button type="button" class="copy">Copy</button></div><pre>This fails:
+
+{paste the command and its output, or the failing CI job's URL}
+
+If it's a CI failure, read the log with gh run view --log-failed. Find the root cause before changing anything, and tell me in two or three sentences what's wrong and where. First check the server isn't out of step with this copy (same commit, clean git status, migrations run). Then fix the code, not the test. Don't weaken, skip or delete any test, constraint, trigger or policy, and don't switch to SQLite or the owner connection. If you think the test itself is wrong, stop and explain why instead of changing it.</pre></div>
+
+  <div class="prompt"><div class="pbar"><span class="title">R5 · Independent review</span><span class="when">New conversation, different model</span><button type="button" class="copy">Copy</button></div><pre>{SSH block}
+
+Use the review-branch skill. Review the changes on this branch (git diff main...HEAD) as a reviewer who didn't write them. Read AGENTS.md, the Step {N} entry in docs/build/steps.md, and the design sections and review IDs it lists. You may run the tests on the dev server, but don't change any files here or on the server.
+
+Check: tenant isolation (RLS helper, composite keys, tenant context in jobs, commands and cache keys); immutability of posted, issued and cancelled records; money handling; concurrency and lock order; missing tests for forbidden paths; migrations that aren't additive; secrets; and anything the design or review requires that's missing.
+
+Reply with a table: severity (blocker, major, minor), file:line, problem, suggested fix. Then list each review ID the step claims to close as closed, partly closed or open.</pre></div>
+
+  <div class="prompt"><div class="pbar"><span class="title">R6 · Open the pull request</span><span class="when">When the plan is done and R5 is clean</span><button type="button" class="copy">Copy</button></div><pre>Prepare this branch for a pull request.
+1. Make sure this copy and the server are on the same commit with a clean git status.
+2. On the server, run vendor/bin/pint --test, vendor/bin/phpstan analyse, php artisan test and php artisan db:check-rls, plus npm run build and npx vitest run if POS files changed, and go test ./... in bridge/ if bridge files changed. Paste the summary lines.
+3. From here, open a pull request against main with gh pr create, filling in .github/pull_request_template.md: the step, the review IDs closed, how it was tested, and any review findings not fixed. Request a review from {reviewer}.
+4. Watch the checks with gh pr checks --watch. If one fails, follow R4. Show me the pull request URL. Don't merge it.</pre></div>
+
+  <div class="prompt"><div class="pbar"><span class="title">R7 · Record a decision</span><span class="when">Whenever a gate item is settled</span><button type="button" class="copy">Copy</button></div><pre>Record this decision as docs/adr/ADR-{NNN}-{short-name}.md: the context, the options considered with their trade-offs, the decision, its consequences, and the review IDs it closes. Then list the design sections that now need changing, and change them only if I say so. Commit and push.
+
+Decision: {describe it}</pre></div>
+
+  <div class="prompt"><div class="pbar"><span class="title">R8 · Answer review comments</span><span class="when">After a reviewer comments on the pull request</span><button type="button" class="copy">Copy</button></div><pre>{SSH block}
+
+Read the review on pull request #{PR}: gh pr view {PR} --comments, and the line comments through gh api repos/your-org/retail-erp/pulls/{PR}/comments. For each comment, say whether you agree. Where you do, fix it test-first as in R3; where you don't, explain why. Push the fixes, wait for CI with gh pr checks --watch, then reply to each comment with what you did and the commit. Don't resolve threads, dismiss reviews or merge.</pre></div>
+
+  <div class="prompt"><div class="pbar"><span class="title">R9 · Finish the step</span><span class="when">After a teammate approves</span><button type="button" class="copy">Copy</button></div><pre>{SSH block}
+
+Pull request #{PR} should now be approved. Check with gh pr view {PR} that it has an approval and every check is green; if not, stop and tell me. Then:
+1. Squash-merge it: gh pr merge {PR} --squash --delete-branch.
+2. Here and on the server: switch to main and git pull --ff-only. On the server, run php artisan migrate --database=pgsql_owner (plain php artisan migrate before Step 2) and php artisan test, and paste the summary.
+3. If this step completes milestone {M or "none"}, create the annotated tag {tag}, push it, and create a GitHub release with notes from docs/build/step-{NN}-plan.md.</pre></div>
+
+  <h3 id="u-prompts">Utilities</h3>
+  <div class="prompt"><div class="pbar"><span class="title">U1 · Start the app and the tunnel</span><span class="when">Before any browser check</span><button type="button" class="copy">Copy</button></div><pre>{SSH block}
+
+On the server: make sure docker compose services are up and healthy. If no tmux session named erp exists, start one that runs composer run dev in ~/retail-erp; if it exists, show me its last 30 lines. Here: check that http://localhost:8000 answers. If it doesn't, open the tunnel with ssh -f -N erp-dev-tunnel and check again. Tell me the URLs to use and any errors in the app's output.</pre></div>
+
+  <div class="prompt"><div class="pbar"><span class="title">U2 · Bring the two copies back in step</span><span class="when">When the server and this copy disagree</span><button type="button" class="copy">Copy</button></div><pre>{SSH block}
+
+Compare this copy with the server: the branch, the last commit, git status on both sides, and whether either is ahead of or behind origin. Tell me what differs and propose the safest way to bring them back in step, keeping every change that matters. Don't stash, reset, discard or force-push anything on either side until I confirm.</pre></div>
+
+  <div class="prompt"><div class="pbar"><span class="title">U3 · Ask the dev database</span><span class="when">Questions about data or schema</span><button type="button" class="copy">Copy</button></div><pre>{SSH block}
+
+Answer this from the dev database, read-only: {question}
+
+On the server, use docker compose exec -T postgres psql -U erp_owner -d erp. Run only SELECT statements inside BEGIN READ ONLY … ROLLBACK. For tenant data, first SET ROLE app_rw and select set_config('app.current_tenant_id', '{tenant id}', true), so row-level security applies as it does for the app. Show me each query you ran with its result.</pre></div>
+
+  <div class="prompt"><div class="pbar"><span class="title">U4 · Handle dependency updates</span><span class="when">Weekly, when Dependabot opens pull requests</span><button type="button" class="copy">Copy</button></div><pre>{SSH block}
+
+List the open Dependabot pull requests with gh pr list --author app/dependabot. For each one: on the server, fetch and check out its branch, run composer install or npm ci as needed, and run the full test suite (plus go test for bridge updates). Then switch the server back to the branch it was on. Give me a table: pull request, package, version change, tests passed, and breaking changes mentioned in the release notes. Don't approve or merge anything.</pre></div>
+
+  <div class="prompt"><div class="pbar"><span class="title">U5 · Tidy the dev server</span><span class="when">Monthly, or when disk runs low</span><button type="button" class="copy">Copy</button></div><pre>{SSH block}
+
+Check the dev server's health: disk and memory use, docker compose ps, container restarts, the size of storage/logs, Docker images and build cache. Report what's using space. You may delete Laravel log files older than 7 days and run docker image prune and docker builder prune. Never remove Docker volumes, databases, the project folder or anything in its git history.</pre></div>
+
+  <div class="prompt"><div class="pbar"><span class="title">U6 · Reset the dev database</span><span class="when">Destructive: only when you mean it</span><button type="button" class="copy">Copy</button></div><pre>{SSH block}
+
+I'm asking you to reset the dev database in this conversation; it's dev data only. On the server, run php artisan db:show first and confirm the app points at the local dev database on 127.0.0.1; if it doesn't, stop. Then run php artisan migrate:fresh --database=pgsql_owner --force, then php artisan db:seed --class=DemoTenantSeeder, then php artisan test tests/Database, and paste the summaries.</pre></div>
+</section>
+
+<!-- ============ TEMPLATES ============ -->
+<section id="templates">
+  <div class="sec-head">
+    <span class="eyebrow">Reference</span>
+    <h2>File templates</h2>
+  </div>
+  <p>Add these to the repository in week 1. Replace <code>your-org</code>, the team names and the server alias with your own.</p>
+
+  <details class="more">
+    <summary>AGENTS.md: project rules</summary>
+    <div>
+      <div class="codeblock"><div class="pbar"><span class="fname">AGENTS.md</span><button type="button" class="copy">Copy</button></div><pre># Retail ERP: rules for AI agents
+
+## Read first
+- Design: docs/design/ERP_SYSTEM_DESIGN.md (v1.5.0)
+- Latest review: docs/reviews/ERP_DESIGN_REVIEW_v1.5.0.md
+- Step map: docs/build/steps.md · Decisions: docs/adr/
+- How to run anything: .agents/rules/dev-server.md
+- Where the review and the design disagree, follow the review and say so.
+
+## Stack
+Laravel 13, PHP 8.4, Filament 5 (Livewire 4), PostgreSQL 17, Redis 7, Horizon,
+Pest, Larastan level 8, Pint. POS: Alpine.js + Dexie PWA in resources/pos.
+Bridge: Go in bridge/. Modules live in app/Core and app/Modules/{Name};
+one module uses another only through app/Modules/{Name}/Contracts.
+
+## Commands (all run on the dev server, in the project folder)
+- Services: docker compose up -d
+- Tests: php artisan test (one file: php artisan test tests/Database/XTest.php)
+- Format: vendor/bin/pint --test · Static analysis: vendor/bin/phpstan analyse
+- RLS check: php artisan db:check-rls
+- POS: npm run build · npx vitest run · npx playwright test
+- Bridge: cd bridge &amp;&amp; go vet ./... &amp;&amp; go test ./...
+
+## Non-negotiable rules
+1. Every tenant table is created with the RLS migration helper (tenant_id,
+   UNIQUE (tenant_id, id), forced RLS, fail-closed policy).
+2. Foreign keys between tenant tables are composite: (tenant_id, …), and
+   (tenant_id, company_id, id) where the design requires company consistency.
+3. The application connects as app_rw. Migrations run on pgsql_owner.
+   Application code never uses the owner connection.
+4. Tenant context is set with set_config('app.current_tenant_id', id, false)
+   per request, or with true inside a transaction. Never SET or SET LOCAL
+   with a bind parameter.
+5. Posted journals, issued or cancelled invoices and stock movements are never
+   updated or deleted. Corrections are reversals, credit notes or new documents.
+6. Money uses brick/math and numeric columns, is a string in JSON, and rounds
+   half-up to 2 places. No floats anywhere in money code.
+7. GL posting happens in the same database transaction as the business
+   document, never in a queued job.
+8. Database tests run on PostgreSQL 17 as app_rw. Never use SQLite, and never
+   weaken a constraint, trigger, policy or test to make something pass.
+
+## How to work
+- Plan first: write docs/build/step-NN-plan.md and stop for approval.
+- Test first: write the failing test, run it on the server and show the failure,
+  then implement.
+- Small commits with conventional messages that name the review IDs closed.
+- After each commit, run Pint, PHPStan and the affected tests on the server;
+  paste the output.
+- Never read or print .env files, SSH keys or other secrets. Never push to main
+  or force-push.
+- If the design is ambiguous, stop and ask. Record decisions in docs/adr/.</pre></div>
+    </div>
+  </details>
+
+  <details class="more">
+    <summary>.agents/rules/dev-server.md: running commands and keeping both copies in sync</summary>
+    <div>
+      <p>This rule is the heart of the setup. It's loaded in every conversation, so the prompts don't have to repeat it.</p>
+      <div class="codeblock"><div class="pbar"><span class="fname">.agents/rules/dev-server.md</span><button type="button" class="copy">Copy</button></div><pre>---
+trigger: always_on
+---
+# Working with the dev server
+
+You edit code in this local folder. It runs on the dev server, over SSH: PHP,
+Composer, Node, Go, Docker, PostgreSQL and Redis are installed there, not here.
+The user gives the server details (ssh alias, project folder, branch, test
+database) in the first message of each conversation. If they're missing, ask.
+Never ask for, read or print a private key, passphrase or password, and never
+read ~/.ssh or any .env file.
+
+## Running commands on the server
+- Form: ssh {alias} 'cd {project folder} &amp;&amp; {command}'
+- One command per ssh call, so the user can review each one. Never append a
+  second, unrelated command with ; or &amp;&amp;.
+- Run php, composer, artisan, npm, npx, go, docker and psql only on the server.
+- Never run migrate:fresh, db:wipe, docker compose down -v, git reset --hard,
+  git clean or rm -rf on the server unless the user asks in this conversation.
+
+## Keeping both copies in step (Git is the only way code moves)
+1. Before running code on the server: commit here, git push, then on the server
+   git fetch, git switch {branch} and git pull --ff-only.
+2. If git status on the server isn't clean before a pull, stop and report it.
+   Don't stash, reset or discard anything there.
+3. Commands that create or change files run on the server (composer require,
+   npm install, php artisan make:*, boost:install, boost:update, pint without
+   --test). Afterwards, commit those files on the server, push, and run
+   git pull --ff-only here before editing anything else.
+4. Never edit the same file in both places without syncing in between.
+5. Never push to main, and never force-push, from either side.
+
+## Seeing results
+- The app runs on the server at 127.0.0.1:8000 (composer run dev in a tmux
+  session named erp). The user keeps an SSH tunnel open, so use
+  http://localhost:8000 in the browser.
+- To look at a file the server produced (a screenshot, a PDF, a k6 summary),
+  copy it here with scp into .scratch/, which Git ignores.</pre></div>
+    </div>
+  </details>
+
+  <details class="more">
+    <summary>Skills: erp-step, db-rule-test and review-branch</summary>
+    <div>
+      <p>Each skill is a folder with a <code>SKILL.md</code> under <code>.agents/skills/</code>. The agent uses one when your request matches its description, or when you type <code>/</code> and its name.</p>
+      <div class="codeblock"><div class="pbar"><span class="fname">.agents/skills/erp-step/SKILL.md</span><button type="button" class="copy">Copy</button></div><pre>---
+name: erp-step
+description: Start or resume a numbered build step of the retail ERP, for example "step 4" or "/erp-step 4". Reads the step map, design sections and review items, and plans before coding.
+---
+# Run an ERP build step
+
+1. Read AGENTS.md, .agents/rules/dev-server.md and the entry for the requested
+   step in docs/build/steps.md.
+2. Read the listed sections of docs/design/ERP_SYSTEM_DESIGN.md and the listed
+   IDs in docs/reviews/ERP_DESIGN_REVIEW_v1.5.0.md. Where they disagree, the
+   review wins; say so.
+3. Check that the server has the step's branch checked out with a clean status.
+4. If docs/build/step-NN-plan.md exists, show its unticked commits and continue
+   with the first one. Otherwise report any open gate items, write the plan
+   (goal, review IDs, commits in order with the test written first for each,
+   migrations with their rule tests, commands that must run on the server,
+   risks) and stop for approval.
+5. For each commit: write the failing test, commit, push, pull on the server and
+   run it; implement, commit, push, pull and run again; then run Pint, PHPStan
+   and the affected tests on the server, and tick the commit in the plan.
+6. Stop after each commit and show the test output.</pre></div>
+      <div class="codeblock"><div class="pbar"><span class="fname">.agents/skills/db-rule-test/SKILL.md</span><button type="button" class="copy">Copy</button></div><pre>---
+name: db-rule-test
+description: Write Pest tests proving that a PostgreSQL trigger, constraint, RLS policy or composite key rejects every forbidden change. Use when adding or changing any database rule.
+---
+# Database rule tests
+
+For the rule the user names:
+1. Read its SQL and list every way a row could break it: insert; update of each
+   protected column; delete; moving a child row to another parent; references
+   across tenants or companies; and the same changes made through a status change.
+2. For each forbidden path, write one test in tests/Database/{Rule}Test.php that
+   expects Illuminate\Database\QueryException and checks the SQLSTATE or message,
+   so a different error doesn't count as a pass. Add a test for each allowed path,
+   so the rule isn't simply rejecting everything.
+3. Tests connect as app_rw on PostgreSQL 17 with tenant context set through
+   TenantContext. Never use SQLite or the owner connection.
+4. Put the review ID each test guards in its description, for example "(NEW-27)".
+5. Commit, push, pull on the dev server and run the tests there. If the rule
+   isn't built yet, show them failing first.</pre></div>
+      <div class="codeblock"><div class="pbar"><span class="fname">.agents/skills/review-branch/SKILL.md</span><button type="button" class="copy">Copy</button></div><pre>---
+name: review-branch
+description: Independently review the current branch against AGENTS.md, the step map, the design and the latest design review. Use in a new conversation before opening a pull request.
+---
+# Review this branch
+
+Act as a reviewer who didn't write this code.
+1. Run git diff main...HEAD here and read the whole diff.
+2. Find the step from the branch name in docs/build/steps.md and read the design
+   sections and review IDs it lists.
+3. Check tenant isolation, immutability of financial records, money handling,
+   concurrency and lock order, missing tests for forbidden paths, non-additive
+   migrations, secrets, and anything the design or review requires that's missing.
+4. You may run the tests on the dev server. Don't change any files, here or there.
+
+Reply with a table: severity (blocker, major, minor), file:line, problem, fix.
+Finish with each review ID the step claims to close, marked closed, partly
+closed or open.</pre></div>
+    </div>
+  </details>
+
+  <details class="more">
+    <summary>compose.yaml and the test database</summary>
+    <div>
+      <div class="codeblock"><div class="pbar"><span class="fname">compose.yaml</span><button type="button" class="copy">Copy</button></div><pre>services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: erp_owner          # superuser: bypasses RLS, migrations only
+      POSTGRES_PASSWORD: secret         # dev server only; it listens on 127.0.0.1
+      POSTGRES_DB: erp
+    ports: ["127.0.0.1:5432:5432"]
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./docker/postgres:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U erp_owner -d erp"]
+      interval: 5s
+      retries: 10
+  redis:
+    image: redis:7
+    ports: ["127.0.0.1:6379:6379"]
+
+volumes:
+  pgdata:</pre></div>
+      <div class="codeblock"><div class="pbar"><span class="fname">docker/postgres/init.sql</span><button type="button" class="copy">Copy</button></div><pre>CREATE DATABASE erp_test;</pre></div>
+      <p class="small muted">The init script runs only when the volume is first created. If you add it later, you can run <code>docker compose down -v</code> on the server once yourself. That deletes the dev data, which is why the dev-server rule forbids the agent from running it unasked.</p>
+    </div>
+  </details>
+
+  <details class="more">
+    <summary>.agents/mcp_config.json: Laravel Boost over SSH (optional)</summary>
+    <div>
+      <p>The MCP documentation gives this workspace file for the Antigravity CLI and IDE, and describes adding servers in the desktop app from the MCP Store under <b>Customizations</b>. Use this file only if your version of the app accepts a custom server. Boost starts on the server through ssh, so it sees the server's database and logs.</p>
+      <div class="codeblock"><div class="pbar"><span class="fname">.agents/mcp_config.json</span><button type="button" class="copy">Copy</button></div><pre>{
+  "mcpServers": {
+    "laravel-boost": {
+      "command": "ssh",
+      "args": ["erp-dev", "cd ~/retail-erp &amp;&amp; php artisan boost:mcp"]
+    }
+  }
+}</pre></div>
+    </div>
+  </details>
+  <details class="more">
+    <summary>.github/workflows/ci.yml</summary>
+    <div>
+      <div class="codeblock"><div class="pbar"><span class="fname">.github/workflows/ci.yml</span><button type="button" class="copy">Copy</button></div><pre>name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  php:
+    name: PHP tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: erp_owner
+          POSTGRES_PASSWORD: secret
+          POSTGRES_DB: erp_test
+        ports: ["5432:5432"]
+        options: &gt;-
+          --health-cmd "pg_isready -U erp_owner -d erp_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+      redis:
+        image: redis:7
+        ports: ["6379:6379"]
+    env:
+      DB_CONNECTION: pgsql
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
+      DB_DATABASE: erp_test
+      DB_USERNAME: erp_owner            # Step 2: change to app_rw
+      DB_PASSWORD: secret
+      DB_OWNER_USERNAME: erp_owner
+      DB_OWNER_PASSWORD: secret
+      REDIS_HOST: 127.0.0.1
+      PGPASSWORD: secret
+    steps:
+      - uses: actions/checkout@v7
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          extensions: pdo_pgsql, pgsql, redis, bcmath, intl
+          coverage: none
+      - run: composer install --no-interaction --prefer-dist --no-progress
+      - run: cp .env.example .env &amp;&amp; php artisan key:generate
+      - run: vendor/bin/pint --test
+      - run: vendor/bin/phpstan analyse --no-progress
+      # Step 2: create the roles, then migrate as the owner and check RLS
+      # - run: psql -v ON_ERROR_STOP=1 -v app_password=secret -h 127.0.0.1 -U erp_owner -d erp_test -f database/sql/roles.sql
+      # - run: php artisan migrate --database=pgsql_owner --force
+      # - run: php artisan db:check-rls
+      - run: php artisan migrate --force   # Step 2: delete this line
+      - run: php artisan test
+      - run: composer audit
+
+  pos:
+    name: POS tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npx vitest run --passWithNoTests
+      - run: npm audit --audit-level=high
+
+  # Step 10: add when bridge/ exists
+  # bridge:
+  #   name: Bridge tests
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v7
+  #     - uses: actions/setup-go@v7
+  #       with:
+  #         go-version-file: bridge/go.mod
+  #     - run: go vet ./...
+  #       working-directory: bridge
+  #     - run: go test ./...
+  #       working-directory: bridge</pre></div>
+      <p class="small muted">The job names (<code>PHP tests</code>, <code>POS tests</code>, <code>Bridge tests</code>) are what you select as required checks in the branch ruleset.</p>
+    </div>
+  </details>
+  <details class="more">
+    <summary>Pull request template, Dependabot and CODEOWNERS</summary>
+    <div>
+      <div class="codeblock"><div class="pbar"><span class="fname">.github/pull_request_template.md</span><button type="button" class="copy">Copy</button></div><pre>## Step and scope
+Step {N}: {title}. Closes review IDs: {IDs}.
+
+## What changed
+-
+
+## How it was tested
+- [ ] php artisan test on the dev server (paste the summary line)
+- [ ] CI green (GitHub runners, not the dev server)
+- [ ] A database rule test for every new trigger, constraint or policy
+- [ ] Screenshots or a recording for UI changes
+
+## Checks
+- [ ] Migrations are additive (design §15.1)
+- [ ] New tenant tables pass php artisan db:check-rls
+- [ ] No floats in money code, no SQLite, no weakened tests
+- [ ] Independent review done (/review-branch in a new conversation, different model)
+
+## Review findings not fixed
+-</pre></div>
+      <div class="codeblock"><div class="pbar"><span class="fname">.github/dependabot.yml</span><button type="button" class="copy">Copy</button></div><pre>version: 2
+updates:
+  - package-ecosystem: composer
+    directory: /
+    schedule: { interval: weekly }
+  - package-ecosystem: npm
+    directory: /
+    schedule: { interval: weekly }
+  - package-ecosystem: github-actions
+    directory: /
+    schedule: { interval: weekly }
+  # Step 10: add when bridge/ exists
+  # - package-ecosystem: gomod
+  #   directory: /bridge
+  #   schedule: { interval: weekly }</pre></div>
+      <div class="codeblock"><div class="pbar"><span class="fname">.github/CODEOWNERS</span><button type="button" class="copy">Copy</button></div><pre># Database rules and money code need the tech lead's review
+/database/                 @your-org/tech-lead
+/app/Core/                 @your-org/tech-lead
+/app/Modules/Accounting/   @your-org/tech-lead
+/app/Modules/Tax/          @your-org/tech-lead
+/bridge/                   @your-org/pos-lead</pre></div>
+    </div>
+  </details>
+  <details class="more">
+    <summary>docs/build/steps.md: the step map the agent reads</summary>
+    <div>
+      <div class="codeblock"><div class="pbar"><span class="fname">docs/build/steps.md</span><button type="button" class="copy">Copy</button></div><pre># Build steps
+
+Each step: design sections to read, review IDs to close, and gate items to
+settle first. Branch names start with step-NN-.
+
+| Step | Name | Weeks | Design sections | Review IDs | Gate |
+|---|---|---|---|---|---|
+| 1 | Platform baseline | 1–2 | §4, §5.1–5.3, §15, §17 | MOD-02, MOD-09, QA-03, DOC-01 | PHP version agreed |
+| 2 | Tenancy, roles and RLS | 3–5 | §4.2, §6.1–6.4, §9.1 (tenants, companies) | TEN-02, TEN-03, TEN-04, TEN-05, TEN-09, NEW-04 | Connection mode; pooling plan (NEW-28) |
+| 3 | Identity and SoD | 6–8 | §3, §6.5, §7.3 | TEN-10, SEC-01, SEC-02, SEC-06, SEC-09 | ADR-015; discount ceilings |
+| 4 | Catalog, tax codes, price lists | 6–8 | §7.5, §8.2 (1), §9.1 | NEW-17, NEW-20, TAX-02, TAX-07, DATA-08 | VAT consultant rate list; staffing (NEW-34) |
+| 5 | General ledger | 6–9 | §5.4, §9.1, §9.2 | ACC-03, ACC-05, ACC-07, NEW-21 | Chart of accounts template |
+| 6 | Billing and onboarding | 9–10 | §1.2, §5.3, §7.3 | TEN-11, MOD-03, MOD-04 | Pilot payment; tenant states |
+| 7 | Inventory and costing | 9–15 | §8.2 (5), §9.1, §13.1, ADR-009 | NEW-26, INV-01, INV-03, INV-04, INV-06 | ADR-016 offline oversell |
+| 8 | Offline POS shell | 9–12 | §11.1, §11.2, §11.4 | NEW-32, POS-04, POS-07, POS-08, POS-11 | Rounding rules; offline credit (NEW-32) |
+| 9 | VAT, invoices, Mushak | 10–13 | §8.2 (8), §9.1, §9.2, §11.4, §12.2, §12.3, §16.3 | NEW-27, NEW-24, NEW-29, NEW-08, TAX-03 | NBR answers; consultant review; 9.1 scope |
+| 10 | Print and fiscal bridge | 13–15 | §11.3, §12.2 | NEW-33, NEW-18, POS-03, TAX-01 | SDC spec; signing certificates |
+| 11 | AR, AP and documents | 14–15 | §8.2 (4, 6, 7), §3.3 | ACC-06, NEW-16, NEW-34 | Who builds the documents (NEW-34) |
+| 12 | Offline sync | 16–18 | §10.2, §11.2 | POS-09, POS-10, NEW-26, API-03 | Sync versioning; clock skew |
+| 13 | Outbox, audit, import, QA | 19–20 | §5.5, §7.1, §7.2, §10.3, §12.4, §14, §16 | NEW-30, NEW-31, TEN-06, MOD-07, OBS-01 | Eid-ul-Fitr in week 19 |
+| 14 | Pilot and go-live | 21–27 | §13.2, §13.3, §15, §18 | NEW-28, OPS-01, OPS-02, OPS-06 | Freeze vs go-live; Eid budget; hosting ADR |</pre></div>
+    </div>
+  </details>
+</section>
+
+<!-- ============ SOURCES ============ -->
+<section id="sources">
+  <div class="sec-head">
+    <span class="eyebrow">Reference</span>
+    <h2>Sources</h2>
+  </div>
+  <p>Project documents: <code>ERP_SYSTEM_DESIGN.md</code> v1.5.0 and <code>ERP_DESIGN_REVIEW_v1.5.0.md</code> (27 October 2026). Antigravity details were checked against its documentation in October 2026. The app changes often, so check again if a menu or setting doesn't match.</p>
+  <div class="cols">
+    <div>
+      <h3>Google Antigravity</h3>
+      <ul class="small">
+        <li><a href="https://antigravity.google/docs/getting-started">Getting started and desktop app install</a></li>
+        <li><a href="https://antigravity.google/docs/permissions">Permissions and presets</a></li>
+        <li><a href="https://antigravity.google/docs/sandbox">Terminal sandbox</a></li>
+        <li><a href="https://antigravity.google/docs/rules">Rules and AGENTS.md</a></li>
+        <li><a href="https://antigravity.google/docs/skills/">Skills</a></li>
+        <li><a href="https://antigravity.google/docs/mcp/">MCP servers</a></li>
+        <li><a href="https://antigravity.google/docs/ide/workflows/">Workflows (retired 19 October 2026)</a></li>
+        <li><a href="https://discuss.ai.google.dev/t/support-remote-server-ssh-remote-development-connections-in-antigravity-2-0-agentic-surface/178599">Forum: remote SSH not in the desktop app</a></li>
+      </ul>
+    </div>
+    <div>
+      <h3>Laravel stack</h3>
+      <ul class="small">
+        <li><a href="https://laravel.com/docs/13.x/installation">Laravel 13 installation</a></li>
+        <li><a href="https://laravel.com/docs/13.x/boost">Laravel Boost</a></li>
+        <li><a href="https://filamentphp.com/docs/5.x/introduction/installation">Filament 5 installation</a></li>
+        <li><a href="https://v5.pestphp.com/docs/browser-testing">Pest browser testing</a></li>
+      </ul>
+    </div>
+    <div>
+      <h3>Operations and calendar</h3>
+      <ul class="small">
+        <li><a href="https://docs.digitalocean.com/products/databases/postgresql/how-to/manage-connection-pools">DigitalOcean connection pools</a></li>
+        <li><a href="https://www.bangladatetoday.com/blog/ramadan-2027-start-date-bangladesh">Ramadan 2027 expected dates</a></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+</main>
+</div>
+
+<footer>
+  <p>Retail ERP Build Playbook · Antigravity desktop edition · based on design v1.5.0 and review v1.5.0 · updated 27 October 2026.</p>
+  <p>Checklist ticks are saved in this browser only. <button type="button" class="copy" id="reset-checks">Clear my ticks</button></p>
+</footer>
+</div>
+
+<script>
+(function () {
+  var store = {
+    get: function (k) { try { return window.localStorage.getItem(k); } catch (e) { return null; } },
+    set: function (k, v) { try { window.localStorage.setItem(k, v); } catch (e) { /* storage unavailable */ } }
+  };
+
+  /* Copy buttons */
+  function selectText(el) {
+    var range = document.createRange();
+    range.selectNodeContents(el);
+    var sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+    return sel;
+  }
+  function flash(btn, text) {
+    var old = btn.dataset.label || btn.textContent;
+    btn.dataset.label = old;
+    btn.textContent = text;
+    btn.classList.add('done');
+    clearTimeout(btn._t);
+    btn._t = setTimeout(function () { btn.textContent = old; btn.classList.remove('done'); }, 1600);
+  }
+  document.querySelectorAll('.prompt .copy, .codeblock .copy').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var box = btn.closest('.prompt, .codeblock');
+      var pre = box && box.querySelector('pre');
+      if (!pre) return;
+      var text = pre.textContent;
+      function fallback() {
+        var sel = selectText(pre);
+        var ok = false;
+        try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+        if (ok) { sel.removeAllRanges(); flash(btn, 'Copied'); }
+        else { flash(btn, 'Selected, press Ctrl+C'); }
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function () { flash(btn, 'Copied'); }, fallback);
+      } else {
+        fallback();
+      }
+    });
+  });
+
+  /* Checklists and per-step progress */
+  var CHECK_KEY = 'erp-guide-checks';
+  var checks = {};
+  try { checks = JSON.parse(store.get(CHECK_KEY) || '{}') || {}; } catch (e) { checks = {}; }
+  var boxes = Array.prototype.slice.call(document.querySelectorAll('.checklist input[type="checkbox"]'));
+  function updateProgress() {
+    document.querySelectorAll('section.step').forEach(function (sec) {
+      var all = sec.querySelectorAll('.checklist input[type="checkbox"]');
+      var done = sec.querySelectorAll('.checklist input[type="checkbox"]:checked').length;
+      var link = document.querySelector('.toc a[data-step="' + sec.id + '"] .prog');
+      if (link) link.textContent = done ? (done === all.length ? '✓ ' + done + '/' + all.length : done + '/' + all.length) : '';
+    });
+  }
+  boxes.forEach(function (cb) {
+    cb.checked = !!checks[cb.id];
+    cb.addEventListener('change', function () {
+      if (cb.checked) checks[cb.id] = true; else delete checks[cb.id];
+      store.set(CHECK_KEY, JSON.stringify(checks));
+      updateProgress();
+    });
+  });
+  updateProgress();
+  var reset = document.getElementById('reset-checks');
+  if (reset) reset.addEventListener('click', function () {
+    checks = {};
+    boxes.forEach(function (cb) { cb.checked = false; });
+    store.set(CHECK_KEY, '{}');
+    updateProgress();
+    flash(reset, 'Cleared');
+  });
+
+  /* Contents: collapse on small screens, highlight the current section */
+  var details = document.getElementById('toc-details');
+  var small = window.matchMedia('(max-width: 960px)');
+  function syncToc() { if (details) details.open = !small.matches; }
+  syncToc();
+  if (small.addEventListener) small.addEventListener('change', syncToc);
+  var tocLinks = Array.prototype.slice.call(document.querySelectorAll('.toc a[href^="#"]'));
+  tocLinks.forEach(function (a) {
+    a.addEventListener('click', function () { if (small.matches && details) details.open = false; });
+  });
+  if ('IntersectionObserver' in window) {
+    var byId = {};
+    tocLinks.forEach(function (a) { byId[a.getAttribute('href').slice(1)] = a; });
+    var visible = {};
+    var observer = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) { visible[en.target.id] = en.isIntersecting; });
+      var current = null;
+      document.querySelectorAll('main > section[id]').forEach(function (sec) {
+        if (!current && visible[sec.id]) current = sec.id;
+      });
+      if (current) tocLinks.forEach(function (a) { a.classList.toggle('active', a === byId[current]); });
+    }, { rootMargin: '0px 0px -70% 0px', threshold: 0 });
+    document.querySelectorAll('main > section[id]').forEach(function (sec) { observer.observe(sec); });
+  }
+})();
+</script>

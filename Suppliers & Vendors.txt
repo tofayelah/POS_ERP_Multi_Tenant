@@ -1,0 +1,133 @@
+Suppliers & Vendors 
+add Additional Notes & Banking Info coloum 
+Internal Notes / Bank Account Details
+add colum - Tax Number / BIN / VAT Reg and 
+make the ERP all device responsive 
+
+
+
+POS
+Open POS Counter Session
+POS Terminal Management
+Shift History
+Payment Methods
+Loyalty Settings
+
+Product Master
+Item Information
+Products & SKUs
+Categories
+Brands
+Units of Measure
+Attributes & Values
+
+Procurement
+
+Procurement Intelligence
+Purchase Requisitions
+RFQs & Tenders
+Suppliers
+Supplier Ratings
+Contracts & Pricing
+Purchase Orders
+Goods Receipts
+Purchase Invoices
+3-Way Match & PPV
+Replenishment Planning
+Supplier Payables
+
+Inventory Management
+
+Stock Levels
+Stock Movements
+Stock Adjustments
+Transfers
+Stock Counts
+Batches & Expiry
+Valuation Report
+Reconciliation
+
+CRM & Sales
+
+Sales Returns & Exchanges
+Customers
+Customer Groups
+Customer 360
+Credit & Limits
+AR Aging & Collections
+CRM & Activities
+Customer Intelligence
+Sales & Demand Intelligence
+
+E-Commerce
+
+E-Commerce Dashboard
+Online Orders
+Fulfillment & Dispatch
+Online Catalog
+E-Com Categories
+Coupons & Promos
+Shipping & Delivery
+Review Moderation
+Online Returns
+E-Commerce Reports
+Store Settings
+Customer Storefront
+
+HRM & Workforce
+
+HR Command Center
+Workforce Directory
+Departments & Roles
+Attendance & Shifts
+Leave Management
+Payroll Engine
+Advances & Loans
+
+Finance Accounting
+Dashboard
+Expenses
+Refunds
+Transactions
+Suppliers
+Supplier Payments
+Profit & Loss Report
+Financial Analytics
+
+Tax & VAT Compliance
+
+Tax Dashboard
+Tax Profiles & Registrations
+Tax Rates & Rules
+Tax Filing Periods
+Tax Subledger Register
+Subledger vs GL Audit
+Tax Adjustments & Notes
+Mushak 9.1 & VAT Reports
+Executive BI & Management Intelligence
+Executive Dashboard
+Sales Intelligence
+Profitability & Margins
+Inventory & Aging Analytics
+Customer & RFM Portfolio
+Supplier Scorecard & AP
+Financial Ratios & DuPont
+Management Alerts
+Custom Report Builder
+Saved Reports & Schedules
+
+Organization Company
+
+Business Units
+Branches
+Warehouses
+Storage Locations
+
+Administration 
+Users
+Roles & Permissions
+
+Audit Logs
+
+System
+Settings
