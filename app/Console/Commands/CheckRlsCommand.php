@@ -102,8 +102,8 @@ class CheckRlsCommand extends Command
             $hasReportingRoPolicy = false;
 
             foreach ($policies as $pol) {
-                $rolesStr = trim($pol->roles_str, '{}');
-                $roleOids = array_filter(explode(',', $rolesStr));
+                $rolesStr = trim((string) $pol->roles_str, '{}');
+                $roleOids = array_filter(explode(',', $rolesStr), fn (string $v): bool => $v !== '');
 
                 // 0 indicates PUBLIC (applies to all roles)
                 if (in_array('0', $roleOids, true)) {

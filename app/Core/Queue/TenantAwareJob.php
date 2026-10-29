@@ -5,6 +5,9 @@ namespace App\Core\Queue;
 use App\Core\Queue\Middleware\TenantJobMiddleware;
 use App\Core\Tenancy\TenantContext;
 
+/**
+ * @phpstan-ignore trait.unused
+ */
 trait TenantAwareJob
 {
     /**

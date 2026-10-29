@@ -44,6 +44,10 @@ class TenantCache
 
     /**
      * Get an item from the cache, or execute the given Closure and store the result.
+     *
+     * @template TCacheValue
+     * @param  Closure(): TCacheValue  $callback
+     * @return TCacheValue
      */
     public static function remember(string $key, mixed $ttl, Closure $callback): mixed
     {

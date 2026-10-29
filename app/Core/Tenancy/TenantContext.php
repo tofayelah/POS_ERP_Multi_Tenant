@@ -15,7 +15,7 @@ class TenantContext
     public static function set(?Tenant $tenant, string $connection = 'pgsql'): void
     {
         self::$currentTenant = $tenant;
-        $tenantId = $tenant?->id ?? '';
+        $tenantId = $tenant !== null ? $tenant->id : '';
 
         DB::connection($connection)->statement(
             "SELECT set_config('app.current_tenant_id', :tenant_id, false)",
