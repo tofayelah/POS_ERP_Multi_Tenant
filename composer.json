@@ -50,6 +50,7 @@
             "Composer\\Config::disableProcessTimeout",
             "@php artisan dev"
         ],
+        "serve:dev": "php artisan serve --host=0.0.0.0 --port=8080",
         "test": [
             "@php artisan config:clear --ansi @no_additional_args",
             "@php artisan test"
