@@ -13,7 +13,7 @@ class AuditLogPage extends Page
 
     protected ?string $heading = 'Audit Log Trail';
 
-    protected static ?string $navigationGroup = 'Administration';
+    protected static \UnitEnum|string|null $navigationGroup = 'Administration';
 
     protected string $view = 'filament.pages.placeholder';
 

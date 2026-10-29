@@ -13,7 +13,7 @@ class ProductsPage extends Page
 
     protected ?string $heading = 'Product Master';
 
-    protected static ?string $navigationGroup = 'Product Master';
+    protected static \UnitEnum|string|null $navigationGroup = 'Product Master';
 
     protected string $view = 'filament.pages.placeholder';
 

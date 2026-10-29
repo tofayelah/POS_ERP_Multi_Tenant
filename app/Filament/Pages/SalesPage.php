@@ -13,7 +13,7 @@ class SalesPage extends Page
 
     protected ?string $heading = 'Sales & Orders';
 
-    protected static ?string $navigationGroup = 'CRM & Sales';
+    protected static \UnitEnum|string|null $navigationGroup = 'CRM & Sales';
 
     protected string $view = 'filament.pages.placeholder';
 

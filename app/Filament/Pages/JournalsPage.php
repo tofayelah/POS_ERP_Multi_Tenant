@@ -13,7 +13,7 @@ class JournalsPage extends Page
 
     protected ?string $heading = 'General Ledger Journals';
 
-    protected static ?string $navigationGroup = 'Finance Accounting';
+    protected static \UnitEnum|string|null $navigationGroup = 'Finance Accounting';
 
     protected string $view = 'filament.pages.placeholder';
 

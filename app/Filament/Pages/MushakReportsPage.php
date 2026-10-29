@@ -13,7 +13,7 @@ class MushakReportsPage extends Page
 
     protected ?string $heading = 'Mushak VAT Reports';
 
-    protected static ?string $navigationGroup = 'Tax & VAT Compliance';
+    protected static \UnitEnum|string|null $navigationGroup = 'Tax & VAT Compliance';
 
     protected string $view = 'filament.pages.placeholder';
 
