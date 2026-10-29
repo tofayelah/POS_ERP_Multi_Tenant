@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Auth;
 
 class SalesPage extends Page
 {
-    protected static ?string $navigationIcon = 'heroicon-o-shopping-cart';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-shopping-cart';
 
     protected static ?string $navigationLabel = 'Sales';
 

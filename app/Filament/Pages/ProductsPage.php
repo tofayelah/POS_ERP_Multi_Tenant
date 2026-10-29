@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Auth;
 
 class ProductsPage extends Page
 {
-    protected static ?string $navigationIcon = 'heroicon-o-cube';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-cube';
 
     protected static ?string $navigationLabel = 'Products';
 

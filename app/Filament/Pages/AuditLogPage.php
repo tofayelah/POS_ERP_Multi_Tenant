@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Auth;
 
 class AuditLogPage extends Page
 {
-    protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-list';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-clipboard-document-list';
 
     protected static ?string $navigationLabel = 'Audit log';
 

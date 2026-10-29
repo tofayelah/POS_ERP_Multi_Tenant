@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Auth;
 
 class JournalsPage extends Page
 {
-    protected static ?string $navigationIcon = 'heroicon-o-book-open';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-book-open';
 
     protected static ?string $navigationLabel = 'Journals';
 

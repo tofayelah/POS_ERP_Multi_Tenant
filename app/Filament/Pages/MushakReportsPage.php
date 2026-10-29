@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Auth;
 
 class MushakReportsPage extends Page
 {
-    protected static ?string $navigationIcon = 'heroicon-o-document-text';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-document-text';
 
     protected static ?string $navigationLabel = 'Mushak reports';
 
