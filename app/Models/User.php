@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Core\Tenancy\TenantContext;
+use Database\Factories\UserFactory;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Models\Contracts\HasTenants;
 use Filament\Panel;
@@ -18,7 +19,7 @@ use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable implements FilamentUser, HasTenants
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
+    /** @use HasFactory<UserFactory> */
     use HasFactory, HasRoles, HasUuids, Notifiable;
 
     protected $table = 'users';
