@@ -284,10 +284,26 @@ class TenantIsolationTest extends TestCase
      * Vector 7:
      * db:check-rls command detects and fails on tables lacking forced RLS.
      */
-    public function test_db_check_rls_command_detects_rls_compliance(): void
+    public function test_db_check_rls_command_detects_rls_compliance_and_fails_without_helper(): void
     {
-        // Run db:check-rls using pgsql_owner catalog connection
+        // 1. Passes on compliant tables created with the helper
         $this->artisan('db:check-rls', ['--connection' => 'pgsql_owner'])
             ->assertExitCode(0);
+
+        // 2. Fails if a table with tenant_id is created without the helper (lacking forced RLS)
+        DB::connection('pgsql_owner')->statement("
+            CREATE TABLE IF NOT EXISTS rogue_unshielded_table (
+                id UUID PRIMARY KEY,
+                tenant_id UUID NOT NULL,
+                data TEXT
+            )
+        ");
+
+        try {
+            $this->artisan('db:check-rls', ['--connection' => 'pgsql_owner'])
+                ->assertExitCode(1);
+        } finally {
+            DB::connection('pgsql_owner')->statement("DROP TABLE IF EXISTS rogue_unshielded_table");
+        }
     }
 }
