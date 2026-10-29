@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
 /**
  * @property string $id
@@ -14,8 +15,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $base_currency
  * @property int $fiscal_year_start_month
  * @property string $tax_regime
- * @property \Illuminate\Support\Carbon $created_at
- * @property \Illuminate\Support\Carbon $updated_at
+ * @property Carbon $created_at
+ * @property Carbon $updated_at
  */
 class Company extends Model
 {

@@ -42,7 +42,7 @@ class CheckRlsCommand extends Command
         }
 
         // 2. Fetch role OIDs for mapping
-        $roles = $db->select("SELECT oid, rolname FROM pg_roles");
+        $roles = $db->select('SELECT oid, rolname FROM pg_roles');
         $roleMap = [];
         foreach ($roles as $r) {
             $roleMap[(int) $r->oid] = $r->rolname;
@@ -73,6 +73,7 @@ class CheckRlsCommand extends Command
 
             if (! $pgClass) {
                 $errors[] = ['Table', $table, 'Table not found in pg_class catalog'];
+
                 continue;
             }
 
@@ -95,6 +96,7 @@ class CheckRlsCommand extends Command
 
             if (empty($policies)) {
                 $errors[] = ['Policy', $table, 'No RLS policies defined on table'];
+
                 continue;
             }
 

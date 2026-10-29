@@ -13,8 +13,11 @@ use Tests\TestCase;
 class CompositeForeignKeyTest extends TestCase
 {
     protected Tenant $tenantA;
+
     protected Tenant $tenantB;
+
     protected Company $companyA;
+
     protected Company $companyB;
 
     protected function setUp(): void
@@ -22,7 +25,7 @@ class CompositeForeignKeyTest extends TestCase
         parent::setUp();
 
         // Create the child table under pgsql_owner
-        DB::connection('pgsql_owner')->statement("
+        DB::connection('pgsql_owner')->statement('
             CREATE TABLE IF NOT EXISTS test_branches (
                 id UUID PRIMARY KEY,
                 tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE RESTRICT,
@@ -32,10 +35,10 @@ class CompositeForeignKeyTest extends TestCase
                 CONSTRAINT fk_test_branches_company FOREIGN KEY (tenant_id, company_id) 
                     REFERENCES companies(tenant_id, id) ON DELETE RESTRICT
             )
-        ");
+        ');
 
-        DB::connection('pgsql_owner')->statement("ALTER TABLE test_branches ENABLE ROW LEVEL SECURITY");
-        DB::connection('pgsql_owner')->statement("ALTER TABLE test_branches FORCE ROW LEVEL SECURITY");
+        DB::connection('pgsql_owner')->statement('ALTER TABLE test_branches ENABLE ROW LEVEL SECURITY');
+        DB::connection('pgsql_owner')->statement('ALTER TABLE test_branches FORCE ROW LEVEL SECURITY');
         DB::connection('pgsql_owner')->statement("
             DO $$
             BEGIN
@@ -48,19 +51,19 @@ class CompositeForeignKeyTest extends TestCase
             END $$;
         ");
 
-        DB::connection('pgsql_owner')->statement("GRANT SELECT, INSERT, UPDATE, DELETE ON test_branches TO app_rw");
+        DB::connection('pgsql_owner')->statement('GRANT SELECT, INSERT, UPDATE, DELETE ON test_branches TO app_rw');
 
         // Seed Tenant A & Tenant B
         $this->tenantA = Tenant::create([
             'id' => (string) Str::uuid(),
             'name' => 'Tenant A Ltd',
-            'subdomain' => 'ta-' . Str::random(6),
+            'subdomain' => 'ta-'.Str::random(6),
         ]);
 
         $this->tenantB = Tenant::create([
             'id' => (string) Str::uuid(),
             'name' => 'Tenant B Ltd',
-            'subdomain' => 'tb-' . Str::random(6),
+            'subdomain' => 'tb-'.Str::random(6),
         ]);
 
         // Seed Company under Tenant A
@@ -85,7 +88,7 @@ class CompositeForeignKeyTest extends TestCase
     protected function tearDown(): void
     {
         TenantContext::clear();
-        DB::connection('pgsql_owner')->statement("DROP TABLE IF EXISTS test_branches");
+        DB::connection('pgsql_owner')->statement('DROP TABLE IF EXISTS test_branches');
         parent::tearDown();
     }
 

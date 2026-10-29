@@ -9,6 +9,7 @@ use App\Core\Tenancy\TenantContext;
 use App\Models\Company;
 use App\Models\Tenant;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use RuntimeException;
@@ -17,8 +18,11 @@ use Tests\TestCase;
 class TenantIsolationTest extends TestCase
 {
     protected Tenant $tenantA;
+
     protected Tenant $tenantB;
+
     protected Company $companyA;
+
     protected Company $companyB;
 
     protected function setUp(): void
@@ -29,7 +33,7 @@ class TenantIsolationTest extends TestCase
         $this->tenantA = Tenant::create([
             'id' => (string) Str::uuid(),
             'name' => 'Apex Retail Ltd',
-            'subdomain' => 'apex-' . Str::random(6),
+            'subdomain' => 'apex-'.Str::random(6),
             'subscription_plan' => 'enterprise',
             'status' => 'active',
         ]);
@@ -37,7 +41,7 @@ class TenantIsolationTest extends TestCase
         $this->tenantB = Tenant::create([
             'id' => (string) Str::uuid(),
             'name' => 'Bata Bangladesh',
-            'subdomain' => 'bata-' . Str::random(6),
+            'subdomain' => 'bata-'.Str::random(6),
             'subscription_plan' => 'growth',
             'status' => 'active',
         ]);
@@ -85,12 +89,12 @@ class TenantIsolationTest extends TestCase
         $this->assertNull(Company::find($this->companyB->id));
 
         // 2. Raw DB::select reads (Attacker bypassing Eloquent)
-        $rawRows = DB::select("SELECT id, tenant_id, legal_name FROM companies");
+        $rawRows = DB::select('SELECT id, tenant_id, legal_name FROM companies');
         $this->assertCount(1, $rawRows);
         $this->assertEquals($this->companyA->id, $rawRows[0]->id);
         $this->assertEquals($this->tenantA->id, $rawRows[0]->tenant_id);
 
-        $specificRaw = DB::select("SELECT * FROM companies WHERE id = :id", ['id' => $this->companyB->id]);
+        $specificRaw = DB::select('SELECT * FROM companies WHERE id = :id', ['id' => $this->companyB->id]);
         $this->assertEmpty($specificRaw);
     }
 
@@ -109,7 +113,7 @@ class TenantIsolationTest extends TestCase
         $this->assertSame(0, $affected);
 
         // 2. Raw delete against Tenant B's ID affects 0 rows
-        $deleted = DB::delete("DELETE FROM companies WHERE id = :id", [
+        $deleted = DB::delete('DELETE FROM companies WHERE id = :id', [
             'id' => $this->companyB->id,
         ]);
         $this->assertSame(0, $deleted);
@@ -129,7 +133,7 @@ class TenantIsolationTest extends TestCase
     {
         TenantContext::set($this->tenantA);
 
-        $this->expectException(\Illuminate\Database\QueryException::class);
+        $this->expectException(QueryException::class);
 
         // Attempting to insert a row with tenant_id = tenantB while in tenantA context
         Company::create([
@@ -149,7 +153,7 @@ class TenantIsolationTest extends TestCase
 
         // Fail-closed RLS returns empty set
         $this->assertCount(0, Company::all());
-        $this->assertEmpty(DB::select("SELECT * FROM companies"));
+        $this->assertEmpty(DB::select('SELECT * FROM companies'));
     }
 
     /**
@@ -158,7 +162,7 @@ class TenantIsolationTest extends TestCase
      */
     public function test_application_connects_as_app_rw_without_bypass_rls(): void
     {
-        $currentUser = DB::selectOne("SELECT current_user")->current_user;
+        $currentUser = DB::selectOne('SELECT current_user')->current_user;
         $this->assertEquals('app_rw', $currentUser);
 
         $roleInfo = DB::selectOne("SELECT rolbypassrls FROM pg_roles WHERE rolname = 'app_rw'");
@@ -197,11 +201,14 @@ class TenantIsolationTest extends TestCase
     {
         TenantContext::set($this->tenantA);
 
-        $job = new class implements ShouldQueue {
+        $job = new class implements ShouldQueue
+        {
             use TenantAwareJob;
 
             public bool $executed = false;
+
             public ?string $observedTenantId = null;
+
             public int $visibleCompaniesCount = 0;
 
             public function __construct()
@@ -224,7 +231,7 @@ class TenantIsolationTest extends TestCase
         TenantContext::clear();
 
         // Process job through middleware
-        $middleware = new TenantJobMiddleware();
+        $middleware = new TenantJobMiddleware;
         $middleware->handle($job, function ($j) {
             $j->handle();
         });

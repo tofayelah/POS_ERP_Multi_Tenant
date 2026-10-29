@@ -10,7 +10,6 @@ class TenantJobMiddleware
     /**
      * Process the queued job with restored tenant context and guarantee cleanup.
      *
-     * @param  mixed  $job
      * @param  Closure(mixed): void  $next
      */
     public function handle(mixed $job, Closure $next): void

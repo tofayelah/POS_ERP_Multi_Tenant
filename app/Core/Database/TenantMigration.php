@@ -13,10 +13,7 @@ abstract class TenantMigration extends Migration
     /**
      * Create a new tenant-scoped table with forced RLS and composite unique index.
      *
-     * @param  string  $table
      * @param  Closure(Blueprint): void  $callback
-     * @param  string  $connection
-     * @return void
      */
     protected function createTenantTable(string $table, Closure $callback, string $connection = 'pgsql_owner'): void
     {

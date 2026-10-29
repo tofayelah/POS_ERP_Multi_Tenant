@@ -30,6 +30,7 @@ class TenantContext
     {
         if ($tenantId === null || $tenantId === '') {
             self::clear($connection);
+
             return;
         }
 
