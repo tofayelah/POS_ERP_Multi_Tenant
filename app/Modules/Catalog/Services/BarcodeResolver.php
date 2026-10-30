@@ -25,7 +25,7 @@ class BarcodeResolver implements BarcodeResolverContract
         /** @var VariantBarcode|null $record */
         $record = $query->first();
 
-        if (! $record || ! $record->variant) {
+        if (! $record) {
             throw new BarcodeNotFoundException($barcode);
         }
 
