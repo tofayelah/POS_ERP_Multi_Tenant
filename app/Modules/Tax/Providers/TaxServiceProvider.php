@@ -14,6 +14,7 @@ class TaxServiceProvider extends AbstractModuleServiceProvider
 
         $this->app->singleton(TaxRateResolverContract::class, TaxRateResolver::class);
     }
+
     public function getIdentifier(): string
     {
         return 'tax';

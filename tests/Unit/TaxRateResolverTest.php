@@ -80,7 +80,7 @@ class TaxRateResolverTest extends TestCase
             'effective_to' => null,
         ]);
 
-        $this->resolver = new TaxRateResolver();
+        $this->resolver = new TaxRateResolver;
     }
 
     protected function tearDown(): void

@@ -10,9 +10,6 @@ interface TaxRateResolverContract
 {
     /**
      * Resolve the effective tax rate and supplementary duty for a tax code on a specified date.
-     *
-     * @param  TaxCode|string  $taxCode
-     * @param  CarbonInterface|string  $date
      */
     public function resolve(TaxCode|string $taxCode, CarbonInterface|string $date): TaxRateResult;
 }
