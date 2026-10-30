@@ -297,44 +297,51 @@ All database tests run on PostgreSQL 17 connecting as `app_rw`, with RLS active 
 
 ## 5. Ordered Commits & Implementation Schedule
 
-- [ ] **Commit 1: `test(tax): add failing test for btree_gist tax rate overlap exclusion constraint`**
+- [x] **Commit 1: `test(tax): add failing test for btree_gist tax rate overlap exclusion constraint`**
   - Create `tests/Database/TaxRateOverlapTest.php`.
   - Connects as `app_rw` and verifies exclusion constraint behavior.
-- [ ] **Commit 2: `feat(tax): migrations and models for tax_codes and tax_code_rates with btree_gist exclusion`**
+- [x] **Commit 2: `feat(tax): migrations and models for tax_codes and tax_code_rates with btree_gist exclusion`**
   - Migration `create_tax_codes_table` and `create_tax_code_rates_table` using `TenantMigration`.
   - Models `App\Models\TaxCode` and `App\Models\TaxCodeRate`.
   - Ensure `btree_gist` extension enabled under `pgsql_owner`.
   - Closes `NEW-20`.
-- [ ] **Commit 3: `test(tax): add unit tests for TaxRateResolver boundary behavior`**
+- [x] **Commit 3: `test(tax): add unit tests for TaxRateResolver boundary behavior`**
   - Create `tests/Unit/TaxRateResolverTest.php`.
-- [ ] **Commit 4: `feat(tax): implement TaxRateResolver service and DTOs`**
+- [x] **Commit 4: `feat(tax): implement TaxRateResolver service and DTOs`**
   - Implement `TaxRateResolverContract`, `TaxRateResolver`, `TaxRateResult`, and `NoEffectiveTaxRateException`.
   - Closes `TAX-02`.
-- [ ] **Commit 5: `test(catalog): add failing test for company-consistent composite foreign keys`**
+- [x] **Commit 5: `test(catalog): add failing test for company-consistent composite foreign keys`**
   - Create `tests/Database/CatalogCompanyConsistencyTest.php`.
-- [ ] **Commit 6: `feat(catalog): migrations and models for categories, products, product_variants, unit_conversions`**
+- [x] **Commit 6: `feat(catalog): migrations and models for categories, products, product_variants, unit_conversions`**
   - Migrations for `categories`, `products`, `product_variants`, and `unit_conversions` with composite FKs.
   - Models `App\Models\Category`, `App\Models\Product`, `App\Models\ProductVariant`, `App\Models\UnitConversion`.
   - Closes `DATA-08`, `NEW-17` (partial).
-- [ ] **Commit 7: `test(catalog): add failing test for variant barcode resolution (carton vs piece)`**
+- [x] **Commit 7: `test(catalog): add failing test for variant barcode resolution (carton vs piece)`**
   - Create `tests/Unit/BarcodeResolverTest.php`.
-- [ ] **Commit 8: `feat(catalog): migration, model and resolver for variant_barcodes`**
+- [x] **Commit 8: `feat(catalog): migration, model and resolver for variant_barcodes`**
   - Migration for `variant_barcodes` with `TenantMigration`.
   - Model `App\Models\VariantBarcode` and service `BarcodeResolver`.
   - Closes `NEW-17` (packaging & barcodes).
-- [ ] **Commit 9: `test(pricing): add failing test for MRP ceiling rule rejection and tax-inclusive price lists`**
+- [x] **Commit 9: `test(pricing): add failing test for MRP ceiling rule rejection and tax-inclusive price lists`**
   - Create `tests/Unit/MrpCeilingRuleTest.php`.
-- [ ] **Commit 10: `feat(pricing): migrations for price_lists and price_list_items, and MrpCeilingRule validator`**
+- [x] **Commit 10: `feat(pricing): migrations for price_lists and price_list_items, and MrpCeilingRule validator`**
   - Migrations for `price_lists` and `price_list_items`.
   - Models `App\Models\PriceList` and `App\Models\PriceListItem`.
   - Rule `MrpCeilingRule` and exception `MrpCeilingExceededException`.
+  - Trigger `trg_price_list_item_mrp` and `trg_product_variant_mrp_reduction`.
   - Closes `TAX-07`, `NEW-17` (pricing decoupling).
-- [ ] **Commit 11: `test(catalog): verify RLS and isolation across all new catalog and pricing tables`**
+- [x] **Commit 11: `test(catalog): verify RLS and isolation across all new catalog and pricing tables`**
   - Create `tests/Database/CatalogTenantIsolationTest.php`.
   - Run `php artisan db:check-rls` and verify 100% coverage.
-- [ ] **Commit 12: `seed(catalog): add standard Bangladesh tax codes and demo catalog items to DemoTenantSeeder`**
+- [x] **Commit 12: `seed(catalog): add standard Bangladesh tax codes and demo catalog items to DemoTenantSeeder`**
   - Seed statutory VAT rates (15%, 10%, 7.5%, 5%, 0%, Exempt, 4% turnover tax) and SD rates.
   - Seed sample FMCG demo catalog items (e.g. Paracetamol piece/carton, Miniket Rice with MRP, Biscuits) and Retail Price List.
+- [x] **Commit 13: `feat(filament): build bilingual resources for categories, products, tax codes, price lists and units`**
+  - Filament resources with English and Bengali labels (`DATA-08`).
+  - Relation managers for variants, rates, price list items.
+- [x] **Commit 14: `test(db): add comprehensive db rule tests for exclusion constraint, company keys and MRP trigger`**
+  - Tests in `TaxRateOverlapTest`, `CatalogCompanyConsistencyTest`, and `MrpCeilingDatabaseTest`.
+  - Closes `NEW-20`, `NEW-17`, `TAX-07`.
 
 ---
 
