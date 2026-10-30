@@ -3,7 +3,9 @@
 namespace App\Modules\Accounting\Providers;
 
 use App\Core\Providers\AbstractModuleServiceProvider;
+use App\Modules\Accounting\Contracts\AccountingPostingServiceContract;
 use App\Modules\Accounting\Contracts\NumberSeriesContract;
+use App\Modules\Accounting\Services\AccountingPostingService;
 use App\Modules\Accounting\Services\NumberSeriesService;
 
 class AccountingServiceProvider extends AbstractModuleServiceProvider
@@ -13,6 +15,7 @@ class AccountingServiceProvider extends AbstractModuleServiceProvider
         parent::register();
 
         $this->app->singleton(NumberSeriesContract::class, NumberSeriesService::class);
+        $this->app->singleton(AccountingPostingServiceContract::class, AccountingPostingService::class);
     }
 
     public function getIdentifier(): string

@@ -498,7 +498,7 @@ EXECUTE FUNCTION trg_fn_enforce_journal_lines_immutability();
   - Closes `NEW-21`, `ACC-03` (period validation).
 - [x] **Commit 11: `test(posting): add tests for synchronous AccountingPostingService transaction behavior`**
   - Create `tests/Unit/AccountingPostingServiceTest.php`.
-- [ ] **Commit 12: `feat(accounting): implement AccountingPostingService adhering to caller transaction constraint`**
+- [x] **Commit 12: `feat(accounting): implement AccountingPostingService adhering to caller transaction constraint`**
   - Create `AccountingPostingServiceContract`, `JournalEntryDTO`, `JournalLineDTO`, and `AccountingPostingService`.
   - Enforce zero internal transaction management (participates in caller's active transaction).
   - Closes §5.4 (`MOD-06`).
