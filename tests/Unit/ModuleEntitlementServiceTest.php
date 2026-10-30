@@ -120,7 +120,7 @@ test('disabling module with open documents throws ModuleHasOpenDocumentsExceptio
     $fiscalYear = \App\Models\FiscalYear::create([
         'tenant_id' => $this->tenant->id,
         'company_id' => $company->id,
-        'name' => 'FY 2026-2027',
+        'title' => 'FY 2026-2027',
         'start_date' => '2026-07-01',
         'end_date' => '2027-06-30',
         'is_closed' => false,
