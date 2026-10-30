@@ -464,10 +464,10 @@ EXECUTE FUNCTION trg_fn_enforce_journal_lines_immutability();
 
 ## 6. Ordered Commits & Implementation Schedule
 
-- [ ] **Commit 1: `test(money): add unit tests for Money value object on brick/math`**
+- [x] **Commit 1: `test(money): add unit tests for Money value object on brick/math`**
   - Create `tests/Unit/MoneyTest.php`.
   - Verifies exact arithmetic, half-up rounding to 2 places, float rejection, and JSON string serialization (`ACC-05`).
-- [ ] **Commit 2: `feat(core): implement immutable Money value object using brick/math`**
+- [x] **Commit 2: `feat(core): implement immutable Money value object using brick/math`**
   - Implement `App\Core\ValueObjects\Money`.
   - Closes `ACC-05`.
 - [ ] **Commit 3: `test(db): add failing database tests for fiscal years and accounting periods`**
