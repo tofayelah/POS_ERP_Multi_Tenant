@@ -2,6 +2,7 @@
 
 namespace App\Modules\Billing\Contracts;
 
+use App\Core\Exceptions\TenantSuspendedException;
 use App\Models\Tenant;
 use DateTimeInterface;
 
@@ -20,7 +21,7 @@ interface TenantLifecycleServiceContract
     /**
      * Assert that tenant is permitted to open a new POS shift.
      *
-     * @throws \App\Core\Exceptions\TenantSuspendedException
+     * @throws TenantSuspendedException
      */
     public function assertCanOpenShift(Tenant $tenant): void;
 

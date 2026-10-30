@@ -17,6 +17,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\TestCase;
 
 uses(TestCase::class, DatabaseTransactions::class);
@@ -105,7 +106,7 @@ test('enforce tenant state middleware allows GET exports but blocks mutations wh
             return new Response('MUTATION_SHOULD_NOT_HAPPEN');
         });
         $this->fail('Expected HttpException 403');
-    } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+    } catch (HttpException $e) {
         expect($e->getStatusCode())->toBe(403);
     }
 });
