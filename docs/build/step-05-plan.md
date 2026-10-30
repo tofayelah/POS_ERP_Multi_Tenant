@@ -502,7 +502,7 @@ EXECUTE FUNCTION trg_fn_enforce_journal_lines_immutability();
   - Create `AccountingPostingServiceContract`, `JournalEntryDTO`, `JournalLineDTO`, and `AccountingPostingService`.
   - Enforce zero internal transaction management (participates in caller's active transaction).
   - Closes §5.4 (`MOD-06`).
-- [ ] **Commit 13: `test(gl): verify RLS coverage and check-rls across all new accounting tables`**
+- [x] **Commit 13: `test(gl): verify RLS coverage and check-rls across all new accounting tables`**
   - Create `tests/Database/AccountingTenantIsolationTest.php`.
   - Run `php artisan db:check-rls`.
 
