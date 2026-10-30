@@ -10,7 +10,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        DB::statement("
+        DB::unprepared("
             CREATE OR REPLACE FUNCTION trg_check_price_list_item_mrp()
             RETURNS TRIGGER AS $$
             DECLARE
@@ -24,17 +24,13 @@ return new class extends Migration
                 RETURN NEW;
             END;
             $$ LANGUAGE plpgsql;
-        ");
 
-        DB::statement("
             DROP TRIGGER IF EXISTS trg_price_list_item_mrp ON price_list_items;
             CREATE TRIGGER trg_price_list_item_mrp
                 BEFORE INSERT OR UPDATE OF unit_price, variant_id ON price_list_items
                 FOR EACH ROW
                 EXECUTE FUNCTION trg_check_price_list_item_mrp();
-        ");
 
-        DB::statement("
             CREATE OR REPLACE FUNCTION trg_check_product_variant_mrp_reduction()
             RETURNS TRIGGER AS $$
             DECLARE
@@ -50,9 +46,7 @@ return new class extends Migration
                 RETURN NEW;
             END;
             $$ LANGUAGE plpgsql;
-        ");
 
-        DB::statement("
             DROP TRIGGER IF EXISTS trg_product_variant_mrp_reduction ON product_variants;
             CREATE TRIGGER trg_product_variant_mrp_reduction
                 BEFORE UPDATE OF mrp ON product_variants
@@ -66,9 +60,11 @@ return new class extends Migration
      */
     public function down(): void
     {
-        DB::statement("DROP TRIGGER IF EXISTS trg_price_list_item_mrp ON price_list_items;");
-        DB::statement("DROP FUNCTION IF EXISTS trg_check_price_list_item_mrp();");
-        DB::statement("DROP TRIGGER IF EXISTS trg_product_variant_mrp_reduction ON product_variants;");
-        DB::statement("DROP FUNCTION IF EXISTS trg_check_product_variant_mrp_reduction();");
+        DB::unprepared("
+            DROP TRIGGER IF EXISTS trg_price_list_item_mrp ON price_list_items;
+            DROP FUNCTION IF EXISTS trg_check_price_list_item_mrp();
+            DROP TRIGGER IF EXISTS trg_product_variant_mrp_reduction ON product_variants;
+            DROP FUNCTION IF EXISTS trg_check_product_variant_mrp_reduction();
+        ");
     }
 };
