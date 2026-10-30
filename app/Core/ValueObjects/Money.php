@@ -65,9 +65,12 @@ class Money implements JsonSerializable, Stringable
         return $this->amount;
     }
 
+    /**
+     * @param  int<0, max>  $scale
+     */
     public function getFormattedAmount(int $scale = 2): string
     {
-        return (string) $this->amount->toScale($scale, RoundingMode::HALF_UP);
+        return (string) $this->amount->toScale($scale, RoundingMode::HalfUp);
     }
 
     public function add(self $other): self
@@ -95,6 +98,9 @@ class Money implements JsonSerializable, Stringable
         return new self($this->amount->multipliedBy($multiplierObj), $this->currency);
     }
 
+    /**
+     * @param  int<0, max>  $scale
+     */
     public function divide(mixed $divisor, int $scale = 4): self
     {
         if (is_float($divisor)) {
@@ -107,15 +113,18 @@ class Money implements JsonSerializable, Stringable
                 throw new InvalidArgumentException('Division by zero.');
             }
 
-            return new self($this->amount->dividedBy($divisorObj, $scale, RoundingMode::HALF_UP), $this->currency);
+            return new self($this->amount->dividedBy($divisorObj, $scale, RoundingMode::HalfUp), $this->currency);
         } catch (DivisionByZeroException $e) {
             throw new InvalidArgumentException('Division by zero.', 0, $e);
         }
     }
 
+    /**
+     * @param  int<0, max>  $scale
+     */
     public function round(int $scale = 2): self
     {
-        return new self($this->amount->toScale($scale, RoundingMode::HALF_UP), $this->currency);
+        return new self($this->amount->toScale($scale, RoundingMode::HalfUp), $this->currency);
     }
 
     public function compareTo(self $other): int
