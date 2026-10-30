@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Core\Http\Middleware\EnforceTenantState;
 use App\Core\Http\Middleware\FilamentTenantContextMiddleware;
 use App\Core\Http\Middleware\SetLocaleMiddleware;
 use App\Core\Http\Middleware\VerifySupportAccessActive;
@@ -38,6 +39,7 @@ class AdminPanelProvider extends PanelProvider
             ->tenantMiddleware([
                 FilamentTenantContextMiddleware::class,
                 VerifySupportAccessActive::class,
+                EnforceTenantState::class,
             ])
             ->brandName('KC ERP')
             ->colors([

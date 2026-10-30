@@ -22,7 +22,7 @@ class TenantResolutionMiddleware
 
         // 1. Resolve by custom domain
         $tenant = Tenant::where('custom_domain', $host)
-            ->where('status', 'active')
+            ->whereIn('status', ['active', 'in_arrears', 'suspended'])
             ->first();
 
         // 2. Resolve by subdomain if not matched by custom domain
@@ -31,7 +31,7 @@ class TenantResolutionMiddleware
             if (count($parts) >= 2) {
                 $subdomain = $parts[0];
                 $tenant = Tenant::where('subdomain', $subdomain)
-                    ->where('status', 'active')
+                    ->whereIn('status', ['active', 'in_arrears', 'suspended'])
                     ->first();
             }
         }

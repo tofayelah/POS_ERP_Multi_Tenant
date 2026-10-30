@@ -4,7 +4,9 @@ namespace App\Modules\Billing\Providers;
 
 use App\Models\Tenant;
 use App\Modules\Billing\Contracts\ModuleEntitlementServiceContract;
+use App\Modules\Billing\Contracts\TenantLifecycleServiceContract;
 use App\Modules\Billing\Services\ModuleEntitlementService;
+use App\Modules\Billing\Services\TenantLifecycleService;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Pennant\Feature;
 
@@ -29,6 +31,11 @@ class BillingServiceProvider extends ServiceProvider
         $this->app->singleton(
             ModuleEntitlementServiceContract::class,
             ModuleEntitlementService::class
+        );
+
+        $this->app->singleton(
+            TenantLifecycleServiceContract::class,
+            TenantLifecycleService::class
         );
     }
 
