@@ -259,6 +259,109 @@ class DemoTenantSeeder extends Seeder
                     );
                 }
             }
+
+            // 6. Seed Standard Bangladesh Tax Codes & Rates for Acme Retail Ltd
+            $taxCodesData = [
+                ['code' => 'VAT-STD-15', 'name_en' => 'Standard VAT 15%', 'name_bn' => 'আদর্শ মূসক ১৫%', 'rate' => '15.00', 'sd' => '0.00'],
+                ['code' => 'VAT-RED-10', 'name_en' => 'Reduced VAT 10%', 'name_bn' => 'হ্রাসকৃত মূসক ১০%', 'rate' => '10.00', 'sd' => '0.00'],
+                ['code' => 'VAT-RED-7.5', 'name_en' => 'Reduced VAT 7.5%', 'name_bn' => 'হ্রাসকৃত মূসক ৭.৫%', 'rate' => '7.50', 'sd' => '0.00'],
+                ['code' => 'VAT-RED-5', 'name_en' => 'Reduced VAT 5%', 'name_bn' => 'হ্রাসকৃত মূসক ৫%', 'rate' => '5.00', 'sd' => '0.00'],
+                ['code' => 'VAT-ZERO-0', 'name_en' => 'Zero-Rated 0%', 'name_bn' => 'শূন্যহার ০%', 'rate' => '0.00', 'sd' => '0.00'],
+                ['code' => 'VAT-EXEMPT', 'name_en' => 'Exempt (Schedule 1)', 'name_bn' => 'মূসক অব্যাহতিপ্রাপ্ত', 'rate' => '0.00', 'sd' => '0.00'],
+                ['code' => 'TURNOVER-4', 'name_en' => 'Turnover Tax 4%', 'name_bn' => 'টার্নওভার কর ৪%', 'rate' => '4.00', 'sd' => '0.00'],
+            ];
+
+            foreach ($taxCodesData as $tcData) {
+                $tc = \App\Models\TaxCode::firstOrCreate(
+                    [
+                        'tenant_id' => $tenant->id,
+                        'company_id' => $companyRetail->id,
+                        'code' => $tcData['code'],
+                    ],
+                    [
+                        'id' => (string) Uuid::uuid7(),
+                        'name_en' => $tcData['name_en'],
+                        'name_bn' => $tcData['name_bn'],
+                        'is_active' => true,
+                    ]
+                );
+
+                \App\Models\TaxCodeRate::firstOrCreate(
+                    [
+                        'tenant_id' => $tenant->id,
+                        'company_id' => $companyRetail->id,
+                        'tax_code_id' => $tc->id,
+                        'effective_from' => '2026-01-01',
+                    ],
+                    [
+                        'id' => (string) Uuid::uuid7(),
+                        'rate_percent' => $tcData['rate'],
+                        'supplementary_duty_percent' => $tcData['sd'],
+                        'effective_to' => null,
+                    ]
+                );
+            }
+
+            // 7. Seed Standard Categories
+            $catGrocery = \App\Models\Category::firstOrCreate(
+                [
+                    'tenant_id' => $tenant->id,
+                    'company_id' => $companyRetail->id,
+                    'code' => 'CAT-GROCERY',
+                ],
+                [
+                    'id' => (string) Uuid::uuid7(),
+                    'name_en' => 'Grocery & Staples',
+                    'name_bn' => 'মুদি ও নিত্যপ্রয়োজনীয় পণ্য',
+                    'is_active' => true,
+                ]
+            );
+
+            \App\Models\Category::firstOrCreate(
+                [
+                    'tenant_id' => $tenant->id,
+                    'company_id' => $companyRetail->id,
+                    'code' => 'CAT-EDIBLE-OIL',
+                ],
+                [
+                    'id' => (string) Uuid::uuid7(),
+                    'parent_id' => $catGrocery->id,
+                    'name_en' => 'Edible Oil & Ghee',
+                    'name_bn' => 'ভোজ্য তেল ও ঘি',
+                    'is_active' => true,
+                ]
+            );
+
+            // 8. Seed Unit Conversions (Carton to Piece)
+            \App\Models\UnitConversion::firstOrCreate(
+                [
+                    'tenant_id' => $tenant->id,
+                    'company_id' => $companyRetail->id,
+                    'from_uom' => 'Carton',
+                    'to_uom' => 'Piece',
+                ],
+                [
+                    'id' => (string) Uuid::uuid7(),
+                    'multiplier' => '12.0000',
+                ]
+            );
+
+            // 9. Seed Retail Tax-Inclusive Price List
+            \App\Models\PriceList::firstOrCreate(
+                [
+                    'tenant_id' => $tenant->id,
+                    'company_id' => $companyRetail->id,
+                    'code' => 'RETAIL-DEFAULT',
+                ],
+                [
+                    'id' => (string) Uuid::uuid7(),
+                    'name_en' => 'Retail Default Price List',
+                    'name_bn' => 'খুচরা বিক্রয় মূল্য তালিকা',
+                    'currency' => 'BDT',
+                    'is_tax_inclusive' => true,
+                    'is_active' => true,
+                ]
+            );
         } finally {
             TenantContext::clear();
         }
