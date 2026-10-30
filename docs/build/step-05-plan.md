@@ -470,9 +470,9 @@ EXECUTE FUNCTION trg_fn_enforce_journal_lines_immutability();
 - [x] **Commit 2: `feat(core): implement immutable Money value object using brick/math`**
   - Implement `App\Core\ValueObjects\Money`.
   - Closes `ACC-05`.
-- [ ] **Commit 3: `test(db): add failing database tests for fiscal years and accounting periods`**
+- [x] **Commit 3: `test(db): add failing database tests for fiscal years and accounting periods`**
   - Create `tests/Database/FiscalPeriodDatabaseTest.php`.
-- [ ] **Commit 4: `feat(accounting): migrations and models for fiscal_years and accounting periods`**
+- [x] **Commit 4: `feat(accounting): migrations and models for fiscal_years and accounting periods`**
   - Create migrations for `fiscal_years` and `accounting_periods` using `TenantMigration`.
   - Create models `App\Models\FiscalYear` and `App\Models\AccountingPeriod`.
   - Closes `ACC-03` (schema).
