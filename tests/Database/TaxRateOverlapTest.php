@@ -27,6 +27,8 @@ class TaxRateOverlapTest extends TestCase
             'status' => 'active',
         ]);
 
+        TenantContext::set($this->tenant);
+
         $this->company = Company::create([
             'id' => (string) Str::uuid(),
             'tenant_id' => $this->tenant->id,
@@ -35,8 +37,6 @@ class TaxRateOverlapTest extends TestCase
             'fiscal_year_start_month' => 7,
             'tax_regime' => 'standard_vat',
         ]);
-
-        TenantContext::set($this->tenant);
     }
 
     protected function tearDown(): void
