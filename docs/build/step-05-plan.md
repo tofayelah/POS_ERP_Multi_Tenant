@@ -482,9 +482,9 @@ EXECUTE FUNCTION trg_fn_enforce_journal_lines_immutability();
   - Create migration for `chart_of_accounts` with composite company keys.
   - Create model `App\Models\ChartOfAccount`.
   - Create seeder/template `App\Modules\Accounting\Database\Seeders\BangladeshRetailCoaTemplate`.
-- [ ] **Commit 7: `test(number-series): add failing concurrency and rollover tests for NumberSeriesService`**
+- [x] **Commit 7: `test(number-series): add failing concurrency and rollover tests for NumberSeriesService`**
   - Create `tests/Database/NumberSeriesConcurrencyTest.php`.
-- [ ] **Commit 8: `feat(accounting): migration, model and NumberSeriesService with SELECT FOR UPDATE`**
+- [x] **Commit 8: `feat(accounting): migration, model and NumberSeriesService with SELECT FOR UPDATE`**
   - Create migration for `number_series` with `TenantMigration`.
   - Create model `App\Models\NumberSeries`.
   - Create service `App\Modules\Accounting\Services\NumberSeriesService` and contract.
