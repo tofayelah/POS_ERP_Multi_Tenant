@@ -60,11 +60,11 @@ return new class extends Migration
      */
     public function down(): void
     {
-        DB::unprepared("
+        DB::unprepared('
             DROP TRIGGER IF EXISTS trg_price_list_item_mrp ON price_list_items;
             DROP FUNCTION IF EXISTS trg_check_price_list_item_mrp();
             DROP TRIGGER IF EXISTS trg_product_variant_mrp_reduction ON product_variants;
             DROP FUNCTION IF EXISTS trg_check_product_variant_mrp_reduction();
-        ");
+        ');
     }
 };
