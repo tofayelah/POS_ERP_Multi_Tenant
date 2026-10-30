@@ -14,14 +14,12 @@ uses(DatabaseTransactions::class);
 beforeEach(function () {
     // Ensure at least one standard plan exists for self-service sign-up
     $this->plan = Plan::firstOrCreate(
-        ['slug' => 'standard'],
+        ['code' => 'standard'],
         [
             'name' => 'Standard Retail Plan',
-            'tier' => 'standard',
-            'price_monthly' => '5000.00',
-            'price_annual' => '50000.00',
-            'currency' => 'BDT',
-            'max_companies' => 1,
+            'description' => 'Standard Retail Plan for Bangladesh',
+            'price_bdt' => '5000.00',
+            'billing_interval' => 'monthly',
             'max_branches' => 3,
             'max_terminals' => 5,
             'max_users' => 10,
@@ -40,7 +38,7 @@ test('rejects registration with reserved subdomains', function (string $reserved
         'admin_phone' => '+8801712345678',
         'admin_password' => 'SecurePass123!@#',
         'admin_password_confirmation' => 'SecurePass123!@#',
-        'plan_slug' => 'standard',
+        'plan_code' => 'standard',
     ]);
 
     $response->assertStatus(422)
@@ -68,7 +66,7 @@ test('rejects registration with invalid subdomain format', function (string $inv
         'admin_phone' => '+8801712345678',
         'admin_password' => 'SecurePass123!@#',
         'admin_password_confirmation' => 'SecurePass123!@#',
-        'plan_slug' => 'standard',
+        'plan_code' => 'standard',
     ]);
 
     $response->assertStatus(422)
@@ -92,7 +90,7 @@ test('enforces rate limits on self-service registration (5 attempts per hour per
             'admin_phone' => "+880171000000{$i}",
             'admin_password' => 'SecurePass123!@#',
             'admin_password_confirmation' => 'SecurePass123!@#',
-            'plan_slug' => 'standard',
+            'plan_code' => 'standard',
         ]);
 
         $response->assertSuccessful();
@@ -107,7 +105,7 @@ test('enforces rate limits on self-service registration (5 attempts per hour per
         'admin_phone' => '+8801710000006',
         'admin_password' => 'SecurePass123!@#',
         'admin_password_confirmation' => 'SecurePass123!@#',
-        'plan_slug' => 'standard',
+        'plan_code' => 'standard',
     ]);
 
     $response->assertStatus(429);
@@ -124,7 +122,7 @@ test('initiates registration, creates verification record, and allows email and 
         'admin_phone' => '+8801712999888',
         'admin_password' => 'SecretPassword123!',
         'admin_password_confirmation' => 'SecretPassword123!',
-        'plan_slug' => 'standard',
+        'plan_code' => 'standard',
     ]);
 
     $response->assertStatus(201)
