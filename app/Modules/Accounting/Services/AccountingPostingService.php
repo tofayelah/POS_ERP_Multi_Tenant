@@ -87,7 +87,7 @@ class AccountingPostingService implements AccountingPostingServiceContract
             fiscalYear: $fiscalYearStr
         );
 
-        $tenantId = TenantContext::getTenantId() ?? (string) Str::uuid();
+        $tenantId = TenantContext::id() ?? $period->tenant_id;
 
         // 1. Create entry in draft state (is_posted = false) to pass insert guard
         /** @var JournalEntry $entry */
