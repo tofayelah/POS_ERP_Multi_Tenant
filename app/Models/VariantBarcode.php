@@ -66,7 +66,9 @@ class VariantBarcode extends Model
             }
 
             if (empty($barcode->tenant_id) && TenantContext::has()) {
-                $barcode->tenant_id = TenantContext::id();
+                /** @var string $tenantId */
+                $tenantId = TenantContext::id();
+                $barcode->tenant_id = $tenantId;
             }
 
             if (empty($barcode->company_id) && ! empty($barcode->tenant_id)) {

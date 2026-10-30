@@ -60,6 +60,14 @@ class TenantContext
     }
 
     /**
+     * Check if an active tenant is set.
+     */
+    public static function has(): bool
+    {
+        return self::$currentTenant !== null;
+    }
+
+    /**
      * Get the active tenant ID string.
      */
     public static function id(): ?string

@@ -67,7 +67,9 @@ class PriceListItem extends Model
             }
 
             if (empty($item->tenant_id) && TenantContext::has()) {
-                $item->tenant_id = TenantContext::id();
+                /** @var string $tenantId */
+                $tenantId = TenantContext::id();
+                $item->tenant_id = $tenantId;
             }
 
             if (empty($item->company_id) && ! empty($item->tenant_id)) {
