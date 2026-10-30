@@ -524,4 +524,699 @@ class JournalImmutabilityTest extends TestCase
 
         DB::table('journal_entries')->where('id', $entryId)->update(['is_posted' => true]);
     }
+
+    public function test_reversal_without_reversed_entry_id_fails_new_21(): void
+    {
+        $reversalId = (string) Str::uuid();
+
+        DB::table('journal_entries')->insert([
+            'id' => $reversalId,
+            'tenant_id' => $this->tenant->id,
+            'company_id' => $this->company->id,
+            'period_id' => $this->openPeriod->id,
+            'entry_number' => 'REV-2026-2027-000010',
+            'posting_date' => '2026-07-16',
+            'business_date' => '2026-07-16',
+            'reference_type' => 'reversal',
+            'is_posted' => false,
+            'is_reversal' => true,
+            'reversed_entry_id' => null, // Missing target!
+            'posted_by' => $this->user->id,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('journal_lines')->insert([
+            [
+                'id' => (string) Str::uuid(),
+                'tenant_id' => $this->tenant->id,
+                'company_id' => $this->company->id,
+                'journal_entry_id' => $reversalId,
+                'account_id' => $this->revenueAccount->id,
+                'debit_amount' => 500.0000,
+                'credit_amount' => 0.0000,
+                'base_debit_amount' => 500.0000,
+                'base_credit_amount' => 0.0000,
+                'created_at' => now(),
+            ],
+            [
+                'id' => (string) Str::uuid(),
+                'tenant_id' => $this->tenant->id,
+                'company_id' => $this->company->id,
+                'journal_entry_id' => $reversalId,
+                'account_id' => $this->cashAccount->id,
+                'debit_amount' => 0.0000,
+                'credit_amount' => 500.0000,
+                'base_debit_amount' => 0.0000,
+                'base_credit_amount' => 500.0000,
+                'created_at' => now(),
+            ],
+        ]);
+
+        $this->expectException(QueryException::class);
+        $this->expectExceptionMessageMatches('/(Reversal entry must specify reversed_entry_id|Financial Integrity Violation)/i');
+
+        DB::table('journal_entries')->where('id', $reversalId)->update(['is_posted' => true]);
+    }
+
+    public function test_reversal_of_another_company_entry_fails_new_21_new_22(): void
+    {
+        // 1. Create Company B with its own period and posted entry
+        $companyB = Company::create([
+            'id' => (string) Str::uuid(),
+            'tenant_id' => $this->tenant->id,
+            'legal_name' => 'Company B',
+            'base_currency' => 'BDT',
+            'fiscal_year_start_month' => 7,
+            'tax_regime' => 'standard_vat',
+        ]);
+
+        $fyB = FiscalYear::create([
+            'id' => (string) Str::uuid(),
+            'tenant_id' => $this->tenant->id,
+            'company_id' => $companyB->id,
+            'title' => 'FY B 2026-2027',
+            'start_date' => '2026-07-01',
+            'end_date' => '2027-06-30',
+        ]);
+
+        $periodB = AccountingPeriod::create([
+            'id' => (string) Str::uuid(),
+            'tenant_id' => $this->tenant->id,
+            'company_id' => $companyB->id,
+            'fiscal_year_id' => $fyB->id,
+            'period_number' => 1,
+            'period_name' => 'July 2026 B',
+            'start_date' => '2026-07-01',
+            'end_date' => '2026-07-31',
+            'status' => 'open',
+        ]);
+
+        $acctB1 = ChartOfAccount::create([
+            'id' => (string) Str::uuid(),
+            'tenant_id' => $this->tenant->id,
+            'company_id' => $companyB->id,
+            'account_code' => '1010',
+            'account_name' => 'Cash B',
+            'account_type' => 'asset',
+        ]);
+
+        $acctB2 = ChartOfAccount::create([
+            'id' => (string) Str::uuid(),
+            'tenant_id' => $this->tenant->id,
+            'company_id' => $companyB->id,
+            'account_code' => '4010',
+            'account_name' => 'Sales B',
+            'account_type' => 'revenue',
+        ]);
+
+        $entryBId = (string) Str::uuid();
+        DB::table('journal_entries')->insert([
+            'id' => $entryBId,
+            'tenant_id' => $this->tenant->id,
+            'company_id' => $companyB->id,
+            'period_id' => $periodB->id,
+            'entry_number' => 'JV-B-000001',
+            'posting_date' => '2026-07-15',
+            'business_date' => '2026-07-15',
+            'reference_type' => 'manual',
+            'is_posted' => false,
+            'posted_by' => $this->user->id,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('journal_lines')->insert([
+            [
+                'id' => (string) Str::uuid(),
+                'tenant_id' => $this->tenant->id,
+                'company_id' => $companyB->id,
+                'journal_entry_id' => $entryBId,
+                'account_id' => $acctB1->id,
+                'debit_amount' => 500.0000,
+                'credit_amount' => 0.0000,
+                'base_debit_amount' => 500.0000,
+                'base_credit_amount' => 0.0000,
+                'created_at' => now(),
+            ],
+            [
+                'id' => (string) Str::uuid(),
+                'tenant_id' => $this->tenant->id,
+                'company_id' => $companyB->id,
+                'journal_entry_id' => $entryBId,
+                'account_id' => $acctB2->id,
+                'debit_amount' => 0.0000,
+                'credit_amount' => 500.0000,
+                'base_debit_amount' => 0.0000,
+                'base_credit_amount' => 500.0000,
+                'created_at' => now(),
+            ],
+        ]);
+
+        DB::table('journal_entries')->where('id', $entryBId)->update(['is_posted' => true]);
+
+        // 2. Company A attempts to create a reversal entry referencing Company B's entry
+        $this->expectException(QueryException::class);
+        $this->expectExceptionMessageMatches('/(foreign key|fk_journal_reversal|Cannot reverse an entry belonging to a different company|violates foreign key)/i');
+
+        DB::table('journal_entries')->insert([
+            'id' => (string) Str::uuid(),
+            'tenant_id' => $this->tenant->id,
+            'company_id' => $this->company->id, // Company A
+            'period_id' => $this->openPeriod->id,
+            'entry_number' => 'REV-A-000001',
+            'posting_date' => '2026-07-16',
+            'business_date' => '2026-07-16',
+            'reference_type' => 'reversal',
+            'is_posted' => false,
+            'is_reversal' => true,
+            'reversed_entry_id' => $entryBId, // Cross-company target!
+            'posted_by' => $this->user->id,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    public function test_unique_active_reversal_index_rejects_second_reversal_of_same_entry_new_21(): void
+    {
+        // 1. Post original entry
+        $origId = (string) Str::uuid();
+        DB::table('journal_entries')->insert([
+            'id' => $origId,
+            'tenant_id' => $this->tenant->id,
+            'company_id' => $this->company->id,
+            'period_id' => $this->openPeriod->id,
+            'entry_number' => 'JV-2026-2027-ORIG',
+            'posting_date' => '2026-07-15',
+            'business_date' => '2026-07-15',
+            'reference_type' => 'manual',
+            'is_posted' => false,
+            'posted_by' => $this->user->id,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('journal_lines')->insert([
+            [
+                'id' => (string) Str::uuid(),
+                'tenant_id' => $this->tenant->id,
+                'company_id' => $this->company->id,
+                'journal_entry_id' => $origId,
+                'account_id' => $this->cashAccount->id,
+                'debit_amount' => 500.0000,
+                'credit_amount' => 0.0000,
+                'base_debit_amount' => 500.0000,
+                'base_credit_amount' => 0.0000,
+                'created_at' => now(),
+            ],
+            [
+                'id' => (string) Str::uuid(),
+                'tenant_id' => $this->tenant->id,
+                'company_id' => $this->company->id,
+                'journal_entry_id' => $origId,
+                'account_id' => $this->revenueAccount->id,
+                'debit_amount' => 0.0000,
+                'credit_amount' => 500.0000,
+                'base_debit_amount' => 0.0000,
+                'base_credit_amount' => 500.0000,
+                'created_at' => now(),
+            ],
+        ]);
+
+        DB::table('journal_entries')->where('id', $origId)->update(['is_posted' => true]);
+
+        // 2. First reversal entry succeeds
+        $rev1Id = (string) Str::uuid();
+        DB::table('journal_entries')->insert([
+            'id' => $rev1Id,
+            'tenant_id' => $this->tenant->id,
+            'company_id' => $this->company->id,
+            'period_id' => $this->openPeriod->id,
+            'entry_number' => 'REV-2026-2027-FIRST',
+            'posting_date' => '2026-07-16',
+            'business_date' => '2026-07-16',
+            'reference_type' => 'reversal',
+            'is_posted' => false,
+            'is_reversal' => true,
+            'reversed_entry_id' => $origId,
+            'posted_by' => $this->user->id,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        // 3. Second reversal entry targeting the same entry is rejected by uq_unique_active_reversal
+        $this->expectException(QueryException::class);
+        $this->expectExceptionMessageMatches('/(uq_unique_active_reversal|unique constraint|duplicate key)/i');
+
+        DB::table('journal_entries')->insert([
+            'id' => (string) Str::uuid(),
+            'tenant_id' => $this->tenant->id,
+            'company_id' => $this->company->id,
+            'period_id' => $this->openPeriod->id,
+            'entry_number' => 'REV-2026-2027-SECOND',
+            'posting_date' => '2026-07-16',
+            'business_date' => '2026-07-16',
+            'reference_type' => 'reversal',
+            'is_posted' => false,
+            'is_reversal' => true,
+            'reversed_entry_id' => $origId, // Same target!
+            'posted_by' => $this->user->id,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    public function test_valid_reversal_succeeds_new_21(): void
+    {
+        // 1. Post original entry
+        $origId = (string) Str::uuid();
+        DB::table('journal_entries')->insert([
+            'id' => $origId,
+            'tenant_id' => $this->tenant->id,
+            'company_id' => $this->company->id,
+            'period_id' => $this->openPeriod->id,
+            'entry_number' => 'JV-ORIG-VALID',
+            'posting_date' => '2026-07-15',
+            'business_date' => '2026-07-15',
+            'reference_type' => 'manual',
+            'is_posted' => false,
+            'posted_by' => $this->user->id,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('journal_lines')->insert([
+            [
+                'id' => (string) Str::uuid(),
+                'tenant_id' => $this->tenant->id,
+                'company_id' => $this->company->id,
+                'journal_entry_id' => $origId,
+                'account_id' => $this->cashAccount->id,
+                'debit_amount' => 750.0000,
+                'credit_amount' => 0.0000,
+                'base_debit_amount' => 750.0000,
+                'base_credit_amount' => 0.0000,
+                'created_at' => now(),
+            ],
+            [
+                'id' => (string) Str::uuid(),
+                'tenant_id' => $this->tenant->id,
+                'company_id' => $this->company->id,
+                'journal_entry_id' => $origId,
+                'account_id' => $this->revenueAccount->id,
+                'debit_amount' => 0.0000,
+                'credit_amount' => 750.0000,
+                'base_debit_amount' => 0.0000,
+                'base_credit_amount' => 750.0000,
+                'created_at' => now(),
+            ],
+        ]);
+
+        DB::table('journal_entries')->where('id', $origId)->update(['is_posted' => true]);
+
+        // 2. Reversal entry with inverted debit/credit lines
+        $reversalId = (string) Str::uuid();
+        DB::table('journal_entries')->insert([
+            'id' => $reversalId,
+            'tenant_id' => $this->tenant->id,
+            'company_id' => $this->company->id,
+            'period_id' => $this->openPeriod->id,
+            'entry_number' => 'REV-VALID-001',
+            'posting_date' => '2026-07-16',
+            'business_date' => '2026-07-16',
+            'reference_type' => 'reversal',
+            'is_posted' => false,
+            'is_reversal' => true,
+            'reversed_entry_id' => $origId,
+            'posted_by' => $this->user->id,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('journal_lines')->insert([
+            [
+                'id' => (string) Str::uuid(),
+                'tenant_id' => $this->tenant->id,
+                'company_id' => $this->company->id,
+                'journal_entry_id' => $reversalId,
+                'account_id' => $this->revenueAccount->id,
+                'debit_amount' => 750.0000,
+                'credit_amount' => 0.0000,
+                'base_debit_amount' => 750.0000,
+                'base_credit_amount' => 0.0000,
+                'created_at' => now(),
+            ],
+            [
+                'id' => (string) Str::uuid(),
+                'tenant_id' => $this->tenant->id,
+                'company_id' => $this->company->id,
+                'journal_entry_id' => $reversalId,
+                'account_id' => $this->cashAccount->id,
+                'debit_amount' => 0.0000,
+                'credit_amount' => 750.0000,
+                'base_debit_amount' => 0.0000,
+                'base_credit_amount' => 750.0000,
+                'created_at' => now(),
+            ],
+        ]);
+
+        DB::table('journal_entries')->where('id', $reversalId)->update(['is_posted' => true]);
+
+        $postedReversal = DB::table('journal_entries')->where('id', $reversalId)->first();
+        $this->assertTrue((bool) $postedReversal->is_posted);
+        $this->assertTrue((bool) $postedReversal->is_reversal);
+        $this->assertSame($origId, $postedReversal->reversed_entry_id);
+    }
+
+    public function test_updating_posted_journal_entry_header_fails_new_02_new_03(): void
+    {
+        $entryId = (string) Str::uuid();
+
+        DB::table('journal_entries')->insert([
+            'id' => $entryId,
+            'tenant_id' => $this->tenant->id,
+            'company_id' => $this->company->id,
+            'period_id' => $this->openPeriod->id,
+            'entry_number' => 'JV-IMMUTABLE-HEADER',
+            'posting_date' => '2026-07-15',
+            'business_date' => '2026-07-15',
+            'reference_type' => 'manual',
+            'narration' => 'Original Narration',
+            'is_posted' => false,
+            'posted_by' => $this->user->id,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('journal_lines')->insert([
+            [
+                'id' => (string) Str::uuid(),
+                'tenant_id' => $this->tenant->id,
+                'company_id' => $this->company->id,
+                'journal_entry_id' => $entryId,
+                'account_id' => $this->cashAccount->id,
+                'debit_amount' => 500.0000,
+                'credit_amount' => 0.0000,
+                'base_debit_amount' => 500.0000,
+                'base_credit_amount' => 0.0000,
+                'created_at' => now(),
+            ],
+            [
+                'id' => (string) Str::uuid(),
+                'tenant_id' => $this->tenant->id,
+                'company_id' => $this->company->id,
+                'journal_entry_id' => $entryId,
+                'account_id' => $this->revenueAccount->id,
+                'debit_amount' => 0.0000,
+                'credit_amount' => 500.0000,
+                'base_debit_amount' => 0.0000,
+                'base_credit_amount' => 500.0000,
+                'created_at' => now(),
+            ],
+        ]);
+
+        DB::table('journal_entries')->where('id', $entryId)->update(['is_posted' => true]);
+
+        // Attempting to modify header on posted entry
+        $this->expectException(QueryException::class);
+        $this->expectExceptionMessageMatches('/(Audit Integrity Violation: Posted Journal Entry .* is immutable and cannot be updated)/i');
+
+        DB::table('journal_entries')->where('id', $entryId)->update(['narration' => 'Tampered Narration']);
+    }
+
+    public function test_updating_journal_line_entry_id_or_company_id_fails_new_02_new_13(): void
+    {
+        $entry1Id = (string) Str::uuid();
+        $entry2Id = (string) Str::uuid();
+
+        DB::table('journal_entries')->insert([
+            [
+                'id' => $entry1Id,
+                'tenant_id' => $this->tenant->id,
+                'company_id' => $this->company->id,
+                'period_id' => $this->openPeriod->id,
+                'entry_number' => 'JV-LINE-MOVE-1',
+                'posting_date' => '2026-07-15',
+                'business_date' => '2026-07-15',
+                'reference_type' => 'manual',
+                'is_posted' => false,
+                'posted_by' => $this->user->id,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'id' => $entry2Id,
+                'tenant_id' => $this->tenant->id,
+                'company_id' => $this->company->id,
+                'period_id' => $this->openPeriod->id,
+                'entry_number' => 'JV-LINE-MOVE-2',
+                'posting_date' => '2026-07-15',
+                'business_date' => '2026-07-15',
+                'reference_type' => 'manual',
+                'is_posted' => false,
+                'posted_by' => $this->user->id,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+        ]);
+
+        $lineId = (string) Str::uuid();
+        DB::table('journal_lines')->insert([
+            'id' => $lineId,
+            'tenant_id' => $this->tenant->id,
+            'company_id' => $this->company->id,
+            'journal_entry_id' => $entry1Id,
+            'account_id' => $this->cashAccount->id,
+            'debit_amount' => 500.0000,
+            'credit_amount' => 0.0000,
+            'base_debit_amount' => 500.0000,
+            'base_credit_amount' => 0.0000,
+            'created_at' => now(),
+        ]);
+
+        // 1. Moving line to another journal entry is rejected by trg_journal_lines_immutability
+        try {
+            DB::table('journal_lines')->where('id', $lineId)->update(['journal_entry_id' => $entry2Id]);
+            $this->fail('Expected exception when reassigning journal_entry_id on a line');
+        } catch (QueryException $e) {
+            $this->assertMatchesRegularExpression('/(Cannot reassign journal_entry_id on a journal line|Financial Integrity Violation)/i', $e->getMessage());
+        }
+
+        // 2. Changing company_id on a journal line is rejected by trg_journal_lines_immutability
+        try {
+            DB::table('journal_lines')->where('id', $lineId)->update(['company_id' => (string) Str::uuid()]);
+            $this->fail('Expected exception when changing company_id on a line');
+        } catch (QueryException $e) {
+            $this->assertMatchesRegularExpression('/(Cannot change company_id on a journal line|Financial Integrity Violation)/i', $e->getMessage());
+        }
+    }
+
+    public function test_posting_into_soft_closed_period_fails_acc_03(): void
+    {
+        $softClosedPeriod = AccountingPeriod::create([
+            'id' => (string) Str::uuid(),
+            'tenant_id' => $this->tenant->id,
+            'company_id' => $this->company->id,
+            'fiscal_year_id' => $this->fiscalYear->id,
+            'period_number' => 3,
+            'period_name' => 'September 2026',
+            'start_date' => '2026-09-01',
+            'end_date' => '2026-09-30',
+            'status' => 'soft-closed',
+        ]);
+
+        $entryId = (string) Str::uuid();
+        DB::table('journal_entries')->insert([
+            'id' => $entryId,
+            'tenant_id' => $this->tenant->id,
+            'company_id' => $this->company->id,
+            'period_id' => $softClosedPeriod->id,
+            'entry_number' => 'JV-SOFT-CLOSED-01',
+            'posting_date' => '2026-09-15',
+            'business_date' => '2026-09-15',
+            'reference_type' => 'manual',
+            'is_posted' => false,
+            'posted_by' => $this->user->id,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('journal_lines')->insert([
+            [
+                'id' => (string) Str::uuid(),
+                'tenant_id' => $this->tenant->id,
+                'company_id' => $this->company->id,
+                'journal_entry_id' => $entryId,
+                'account_id' => $this->cashAccount->id,
+                'debit_amount' => 500.0000,
+                'credit_amount' => 0.0000,
+                'base_debit_amount' => 500.0000,
+                'base_credit_amount' => 0.0000,
+                'created_at' => now(),
+            ],
+            [
+                'id' => (string) Str::uuid(),
+                'tenant_id' => $this->tenant->id,
+                'company_id' => $this->company->id,
+                'journal_entry_id' => $entryId,
+                'account_id' => $this->revenueAccount->id,
+                'debit_amount' => 0.0000,
+                'credit_amount' => 500.0000,
+                'base_debit_amount' => 0.0000,
+                'base_credit_amount' => 500.0000,
+                'created_at' => now(),
+            ],
+        ]);
+
+        $this->expectException(QueryException::class);
+        $this->expectExceptionMessageMatches('/(Cannot post to an accounting period that is not open|Financial Integrity Violation)/i');
+
+        DB::table('journal_entries')->where('id', $entryId)->update(['is_posted' => true]);
+    }
+
+    public function test_posting_entry_with_fewer_than_two_lines_fails_new_02(): void
+    {
+        $entryId = (string) Str::uuid();
+
+        DB::table('journal_entries')->insert([
+            'id' => $entryId,
+            'tenant_id' => $this->tenant->id,
+            'company_id' => $this->company->id,
+            'period_id' => $this->openPeriod->id,
+            'entry_number' => 'JV-ONE-LINE-FAIL',
+            'posting_date' => '2026-07-15',
+            'business_date' => '2026-07-15',
+            'reference_type' => 'manual',
+            'is_posted' => false,
+            'posted_by' => $this->user->id,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        // Only 1 line
+        DB::table('journal_lines')->insert([
+            'id' => (string) Str::uuid(),
+            'tenant_id' => $this->tenant->id,
+            'company_id' => $this->company->id,
+            'journal_entry_id' => $entryId,
+            'account_id' => $this->cashAccount->id,
+            'debit_amount' => 500.0000,
+            'credit_amount' => 0.0000,
+            'base_debit_amount' => 500.0000,
+            'base_credit_amount' => 0.0000,
+            'created_at' => now(),
+        ]);
+
+        $this->expectException(QueryException::class);
+        $this->expectExceptionMessageMatches('/(must contain at least 2 lines to post|Financial Integrity Violation)/i');
+
+        DB::table('journal_entries')->where('id', $entryId)->update(['is_posted' => true]);
+    }
+
+    public function test_journal_line_check_constraint_rejects_zero_or_both_debit_and_credit(): void
+    {
+        $entryId = (string) Str::uuid();
+
+        DB::table('journal_entries')->insert([
+            'id' => $entryId,
+            'tenant_id' => $this->tenant->id,
+            'company_id' => $this->company->id,
+            'period_id' => $this->openPeriod->id,
+            'entry_number' => 'JV-CHECK-CONSTRAINT',
+            'posting_date' => '2026-07-15',
+            'business_date' => '2026-07-15',
+            'reference_type' => 'manual',
+            'is_posted' => false,
+            'posted_by' => $this->user->id,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        // 1. Both debit and credit = 0 is rejected by chk_debit_or_credit
+        try {
+            DB::table('journal_lines')->insert([
+                'id' => (string) Str::uuid(),
+                'tenant_id' => $this->tenant->id,
+                'company_id' => $this->company->id,
+                'journal_entry_id' => $entryId,
+                'account_id' => $this->cashAccount->id,
+                'debit_amount' => 0.0000,
+                'credit_amount' => 0.0000,
+                'created_at' => now(),
+            ]);
+            $this->fail('Expected exception for debit=0 and credit=0');
+        } catch (QueryException $e) {
+            $this->assertMatchesRegularExpression('/(chk_debit_or_credit|check constraint)/i', $e->getMessage());
+        }
+
+        // 2. Both debit > 0 and credit > 0 is rejected by chk_debit_or_credit
+        try {
+            DB::table('journal_lines')->insert([
+                'id' => (string) Str::uuid(),
+                'tenant_id' => $this->tenant->id,
+                'company_id' => $this->company->id,
+                'journal_entry_id' => $entryId,
+                'account_id' => $this->cashAccount->id,
+                'debit_amount' => 100.0000,
+                'credit_amount' => 100.0000,
+                'created_at' => now(),
+            ]);
+            $this->fail('Expected exception for debit > 0 and credit > 0');
+        } catch (QueryException $e) {
+            $this->assertMatchesRegularExpression('/(chk_debit_or_credit|check constraint)/i', $e->getMessage());
+        }
+    }
+
+    public function test_draft_entry_and_lines_can_be_updated_and_deleted_allowed_path(): void
+    {
+        $entryId = (string) Str::uuid();
+
+        DB::table('journal_entries')->insert([
+            'id' => $entryId,
+            'tenant_id' => $this->tenant->id,
+            'company_id' => $this->company->id,
+            'period_id' => $this->openPeriod->id,
+            'entry_number' => 'JV-DRAFT-ALLOWED',
+            'posting_date' => '2026-07-15',
+            'business_date' => '2026-07-15',
+            'reference_type' => 'manual',
+            'narration' => 'Initial Draft',
+            'is_posted' => false,
+            'posted_by' => $this->user->id,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $lineId = (string) Str::uuid();
+        DB::table('journal_lines')->insert([
+            'id' => $lineId,
+            'tenant_id' => $this->tenant->id,
+            'company_id' => $this->company->id,
+            'journal_entry_id' => $entryId,
+            'account_id' => $this->cashAccount->id,
+            'debit_amount' => 300.0000,
+            'credit_amount' => 0.0000,
+            'base_debit_amount' => 300.0000,
+            'base_credit_amount' => 0.0000,
+            'created_at' => now(),
+        ]);
+
+        // Updating draft narration succeeds
+        DB::table('journal_entries')->where('id', $entryId)->update(['narration' => 'Revised Draft']);
+        $entry = DB::table('journal_entries')->where('id', $entryId)->first();
+        $this->assertSame('Revised Draft', $entry->narration);
+
+        // Updating line amount on draft succeeds
+        DB::table('journal_lines')->where('id', $lineId)->update(['debit_amount' => 400.0000, 'base_debit_amount' => 400.0000]);
+        $line = DB::table('journal_lines')->where('id', $lineId)->first();
+        $this->assertEquals('400.0000', $line->debit_amount);
+
+        // Deleting line on draft succeeds
+        $deletedLine = DB::table('journal_lines')->where('id', $lineId)->delete();
+        $this->assertSame(1, $deletedLine);
+
+        // Deleting draft entry succeeds
+        $deletedEntry = DB::table('journal_entries')->where('id', $entryId)->delete();
+        $this->assertSame(1, $deletedEntry);
+    }
 }
