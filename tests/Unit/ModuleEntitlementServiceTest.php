@@ -8,14 +8,10 @@ use App\Models\Company;
 use App\Models\FiscalYear;
 use App\Models\JournalEntry;
 use App\Models\Plan;
-use App\Models\PosShift;
-use App\Models\PosTerminal;
 use App\Models\Tenant;
-use App\Models\TenantMembership;
 use App\Models\TenantSubscription;
 use App\Models\User;
 use App\Modules\Billing\Contracts\ModuleEntitlementServiceContract;
-use App\Modules\Billing\Services\ModuleEntitlementService;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -117,7 +113,7 @@ test('disabling module with open documents throws ModuleHasOpenDocumentsExceptio
         'tax_regime' => 'standard',
     ]);
 
-    $fiscalYear = \App\Models\FiscalYear::create([
+    $fiscalYear = FiscalYear::create([
         'tenant_id' => $this->tenant->id,
         'company_id' => $company->id,
         'title' => 'FY 2026-2027',
@@ -126,7 +122,7 @@ test('disabling module with open documents throws ModuleHasOpenDocumentsExceptio
         'is_closed' => false,
     ]);
 
-    $period = \App\Models\AccountingPeriod::create([
+    $period = AccountingPeriod::create([
         'tenant_id' => $this->tenant->id,
         'company_id' => $company->id,
         'fiscal_year_id' => $fiscalYear->id,

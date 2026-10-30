@@ -4,6 +4,4 @@ namespace App\Core\Exceptions;
 
 use RuntimeException;
 
-class ModuleHasOpenDocumentsException extends RuntimeException
-{
-}
+class ModuleHasOpenDocumentsException extends RuntimeException {}

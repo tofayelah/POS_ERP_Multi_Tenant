@@ -103,7 +103,7 @@ class ModuleEntitlementService implements ModuleEntitlementServiceContract
         $activeDependents = $this->getActiveDependents($tenant, $moduleIdentifier);
         if (! empty($activeDependents)) {
             throw new ModuleHasActiveDependentsException(
-                "Cannot disable module [{$moduleIdentifier}] because active modules [" . implode(', ', $activeDependents) . '] depend on it (MOD-03).'
+                "Cannot disable module [{$moduleIdentifier}] because active modules [".implode(', ', $activeDependents).'] depend on it (MOD-03).'
             );
         }
 

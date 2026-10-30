@@ -2,6 +2,8 @@
 
 namespace App\Modules\Billing\Contracts;
 
+use App\Core\Exceptions\ModuleHasActiveDependentsException;
+use App\Core\Exceptions\ModuleHasOpenDocumentsException;
 use App\Models\Tenant;
 use App\Models\TenantSubscription;
 
@@ -25,8 +27,8 @@ interface ModuleEntitlementServiceContract
     /**
      * Disable a module for a tenant, guarded by active dependents and open documents checks.
      *
-     * @throws \App\Core\Exceptions\ModuleHasActiveDependentsException
-     * @throws \App\Core\Exceptions\ModuleHasOpenDocumentsException
+     * @throws ModuleHasActiveDependentsException
+     * @throws ModuleHasOpenDocumentsException
      */
     public function disable(Tenant $tenant, string $moduleIdentifier): void;
 
