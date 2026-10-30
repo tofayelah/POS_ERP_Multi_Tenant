@@ -489,9 +489,9 @@ EXECUTE FUNCTION trg_fn_enforce_journal_lines_immutability();
   - Create model `App\Models\NumberSeries`.
   - Create service `App\Modules\Accounting\Services\NumberSeriesService` and contract.
   - Closes `ACC-07`.
-- [ ] **Commit 9: `test(db): add failing review G1-G5 immutability and period rule tests for journal triggers`**
+- [x] **Commit 9: `test(db): add failing review G1-G5 immutability and period rule tests for journal triggers`**
   - Create `tests/Database/JournalImmutabilityTest.php` and `tests/Database/AccountingCompanyConsistencyTest.php`.
-- [ ] **Commit 10: `feat(accounting): migrations for journal_entries and journal_lines with section 9.2 triggers`**
+- [x] **Commit 10: `feat(accounting): migrations for journal_entries and journal_lines with section 9.2 triggers`**
   - Create migrations for `journal_entries` and `journal_lines` using `TenantMigration`.
   - Create migration `create_journal_immutability_triggers` implementing §9.2 triggers exactly as written.
   - Models `App\Models\JournalEntry` and `App\Models\JournalLine`.
