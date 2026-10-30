@@ -72,13 +72,13 @@ test('onboarding wizard provisions complete tenant and seeds default module data
 
     // 2. Verify Bangladesh Chart of Accounts seeded
     $cashAccount = ChartOfAccount::where('tenant_id', $tenant->id)
-        ->where('code', '1010')
+        ->where('account_code', '1010')
         ->first();
     $salesAccount = ChartOfAccount::where('tenant_id', $tenant->id)
-        ->where('code', '4010')
+        ->where('account_code', '4010')
         ->first();
     $vatPayableAccount = ChartOfAccount::where('tenant_id', $tenant->id)
-        ->where('code', '2020')
+        ->where('account_code', '2020')
         ->first();
 
     expect($cashAccount)->not->toBeNull()
