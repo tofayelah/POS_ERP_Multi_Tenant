@@ -80,7 +80,7 @@ class AccountingPostingService implements AccountingPostingServiceContract
         $fiscalYearStr = sprintf('%s-%s', $startYear, $endYear);
 
         // Draw sequential document number via pessimistic lock
-        $entryNumber = $this->numberSeries->nextNumber(
+        $entryNumber = $this->numberSeries->getNextNumber(
             companyId: $entryDto->companyId,
             branchId: $entryDto->branchId,
             documentType: $entryDto->documentType,
