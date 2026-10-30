@@ -41,7 +41,7 @@ return new class extends Migration
             CREATE POLICY setting_audit_logs_app_rw ON setting_audit_logs
             FOR ALL TO app_rw
             USING (tenant_id IS NULL OR tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid)
-            WITH CHECK (tenant_id IS NOT NULL AND tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid);
+            WITH CHECK (tenant_id IS NULL OR tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid);
         ");
 
         DB::connection('pgsql_owner')->statement("

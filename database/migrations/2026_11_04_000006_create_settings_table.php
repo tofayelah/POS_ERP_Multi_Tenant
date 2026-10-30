@@ -43,7 +43,7 @@ return new class extends Migration
             CREATE POLICY settings_app_rw ON settings
             FOR ALL TO app_rw
             USING (tenant_id IS NULL OR tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid)
-            WITH CHECK (tenant_id IS NOT NULL AND tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid);
+            WITH CHECK (tenant_id IS NULL OR tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid);
         ");
 
         DB::connection('pgsql_owner')->statement("

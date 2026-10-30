@@ -160,14 +160,20 @@ test('updating setting logs audit record with old and new values and invalidates
     // Value must update immediately from cache
     expect($this->settings->get('receipt.header_text', tenantId: $this->tenant->id))->toBe('Updated Header 2026');
 
-    // Verify audit log exists
-    $auditLog = SettingAuditLog::where('tenant_id', $this->tenant->id)
+    // Verify audit logs exist
+    $logs = SettingAuditLog::where('tenant_id', $this->tenant->id)
         ->where('key', 'receipt.header_text')
-        ->latest('created_at')
-        ->first();
+        ->get();
 
-    expect($auditLog)->not->toBeNull()
-        ->and($auditLog->old_value)->toBe('Original Header')
-        ->and($auditLog->new_value)->toBe('Updated Header 2026')
-        ->and($auditLog->changed_by_user_id)->toBe($this->user->id);
+    expect($logs)->toHaveCount(2);
+
+    $initialLog = $logs->firstWhere('new_value', 'Original Header');
+    expect($initialLog)->not->toBeNull()
+        ->and($initialLog->old_value)->toBeNull()
+        ->and($initialLog->changed_by_user_id)->toBe($this->user->id);
+
+    $updateLog = $logs->firstWhere('new_value', 'Updated Header 2026');
+    expect($updateLog)->not->toBeNull()
+        ->and($updateLog->old_value)->toBe('Original Header')
+        ->and($updateLog->changed_by_user_id)->toBe($this->user->id);
 });
