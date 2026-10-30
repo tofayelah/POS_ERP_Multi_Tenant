@@ -8,6 +8,7 @@ use App\Models\Company;
 use App\Models\FiscalYear;
 use App\Models\JournalEntry;
 use App\Models\Plan;
+use App\Models\PosShift;
 use App\Models\PosTerminal;
 use App\Models\TaxCode;
 use App\Models\Tenant;
@@ -16,6 +17,7 @@ use App\Modules\Accounting\Contracts\AccountingPostingServiceContract;
 use App\Modules\Accounting\DTOs\JournalEntryDTO;
 use App\Modules\Accounting\DTOs\JournalLineDTO;
 use App\Modules\Billing\Contracts\OnboardingWizardServiceContract;
+use App\Modules\Billing\Contracts\TenantLifecycleServiceContract;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -129,4 +131,23 @@ test('onboarding wizard provisions complete tenant and seeds default module data
     expect($entry)->toBeInstanceOf(JournalEntry::class)
         ->and($entry->is_posted)->toBeTrue()
         ->and($entry->lines)->toHaveCount(3);
+
+    // 5. Verify newly onboarded tenant can open a POS shift on the provisioned terminal
+    $lifecycleService = app(TenantLifecycleServiceContract::class);
+    $lifecycleService->assertCanOpenShift($tenant);
+
+    $shift = PosShift::create([
+        'tenant_id' => $tenant->id,
+        'company_id' => $company->id,
+        'branch_id' => $branch->id,
+        'terminal_id' => $terminal->id,
+        'user_id' => $user->id,
+        'status' => 'open',
+        'opened_at' => now(),
+        'opening_cash' => '1000.0000',
+    ]);
+
+    expect($shift)->toBeInstanceOf(PosShift::class)
+        ->and($shift->status)->toBe('open')
+        ->and($shift->terminal_id)->toBe($terminal->id);
 });
