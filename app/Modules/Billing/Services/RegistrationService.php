@@ -164,6 +164,7 @@ class RegistrationService implements RegistrationServiceContract
             'subdomain' => $payload['subdomain'],
             'company_name' => $payload['company_name'] ?? $payload['tenant_name'],
             'currency' => $payload['currency'] ?? 'BDT',
+            'plan_code' => $planCode,
             'plan_id' => $planId,
             'branch_name' => $payload['branch_name'] ?? 'Main Store',
             'branch_code' => $payload['branch_code'] ?? 'BR-001',

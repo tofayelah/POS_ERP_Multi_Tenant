@@ -37,12 +37,14 @@ class OnboardingWizardService implements OnboardingWizardServiceContract
     public function onboard(array $data): array
     {
         return DB::transaction(function () use ($data) {
+            $planCode = (string) ($data['plan_code'] ?? 'standard');
+
             // 1. Create Tenant
             /** @var Tenant $tenant */
             $tenant = Tenant::create([
                 'name' => (string) $data['tenant_name'],
                 'subdomain' => (string) $data['subdomain'],
-                'subscription_plan' => (string) $data['plan_code'],
+                'subscription_plan' => $planCode,
                 'status' => 'active',
                 'data_residency_region' => (string) ($data['data_residency_region'] ?? 'dhaka-1'),
             ]);
@@ -53,10 +55,10 @@ class OnboardingWizardService implements OnboardingWizardServiceContract
             }
 
             // 2. Resolve Plan and create Subscription
-            $plan = Plan::where('code', $data['plan_code'])->first();
+            $plan = Plan::where('code', $planCode)->first();
             if (! $plan) {
                 $plan = Plan::create([
-                    'code' => (string) $data['plan_code'],
+                    'code' => $planCode,
                     'name' => 'Default Starter Plan',
                     'included_modules' => ['accounting', 'tax', 'catalog', 'sales', 'pos'],
                 ]);
