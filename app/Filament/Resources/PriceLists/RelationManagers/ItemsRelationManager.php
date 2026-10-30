@@ -36,8 +36,7 @@ class ItemsRelationManager extends RelationManager
                             ->where('company_id', $owner->company_id)
                             ->pluck('name_en', 'id');
                     })
-                    ->required()
-                    ->searchable(),
+                    ->required(),
 
                 TextInput::make('unit_price')
                     ->label('Unit Selling Price / বিক্রয় মূল্য (৳)')

@@ -54,8 +54,7 @@ class VariantsRelationManager extends RelationManager
                             ->where('is_active', true)
                             ->pluck('name_en', 'id');
                     })
-                    ->required()
-                    ->searchable(),
+                    ->required(),
 
                 TextInput::make('base_uom')
                     ->label('Base UOM / মৌলিক একক')
@@ -81,6 +80,7 @@ class VariantsRelationManager extends RelationManager
                 Repeater::make('barcodes')
                     ->label('Packaging Barcodes / প্যাকেজিং বারকোড (Piece, Carton, etc.)')
                     ->relationship('barcodes')
+                    ->defaultItems(0)
                     ->schema([
                         TextInput::make('barcode')
                             ->label('Barcode / বারকোড')

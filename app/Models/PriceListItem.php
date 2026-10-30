@@ -65,6 +65,17 @@ class PriceListItem extends Model
                 }
             }
 
+            if (empty($item->tenant_id) && \App\Core\Tenancy\TenantContext::has()) {
+                $item->tenant_id = \App\Core\Tenancy\TenantContext::id();
+            }
+
+            if (empty($item->company_id) && !empty($item->tenant_id)) {
+                $company = Company::where('tenant_id', $item->tenant_id)->first();
+                if ($company) {
+                    $item->company_id = $company->id;
+                }
+            }
+
             $variant = $item->variant ?? ProductVariant::query()->find($item->variant_id);
 
             if ($variant) {

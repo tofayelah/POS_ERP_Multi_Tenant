@@ -63,6 +63,17 @@ class VariantBarcode extends Model
                     $barcode->company_id ??= $variant->company_id;
                 }
             }
+
+            if (empty($barcode->tenant_id) && \App\Core\Tenancy\TenantContext::has()) {
+                $barcode->tenant_id = \App\Core\Tenancy\TenantContext::id();
+            }
+
+            if (empty($barcode->company_id) && !empty($barcode->tenant_id)) {
+                $company = Company::where('tenant_id', $barcode->tenant_id)->first();
+                if ($company) {
+                    $barcode->company_id = $company->id;
+                }
+            }
         });
     }
 
