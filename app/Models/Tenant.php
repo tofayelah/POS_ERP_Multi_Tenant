@@ -57,6 +57,6 @@ class Tenant extends Model
     {
         return $this->hasOne(TenantSubscription::class, 'tenant_id')
             ->where('status', 'active')
-            ->latestOfMany('created_at');
+            ->latest('created_at');
     }
 }
