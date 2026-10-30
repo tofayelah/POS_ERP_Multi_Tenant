@@ -12,7 +12,6 @@ use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
-use Ramsey\Uuid\Uuid;
 use Tests\TestCase;
 
 uses(TestCase::class, DatabaseTransactions::class);
