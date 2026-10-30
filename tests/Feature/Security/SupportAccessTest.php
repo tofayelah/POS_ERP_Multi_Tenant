@@ -3,10 +3,10 @@
 namespace Tests\Feature\Security;
 
 use App\Core\Http\Middleware\VerifySupportAccessActive;
-use App\Core\Security\SupportAccessService;
-use App\Core\Tenancy\TenantContext;
 use App\Core\Security\Events\SupportAccessGranted;
 use App\Core\Security\Events\SupportAccessRevoked;
+use App\Core\Security\SupportAccessService;
+use App\Core\Tenancy\TenantContext;
 use App\Models\PlatformUser;
 use App\Models\Tenant;
 use App\Models\TenantSupportAccess;
