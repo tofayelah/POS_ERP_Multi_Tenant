@@ -365,46 +365,46 @@ erDiagram
 
 ## 6. Ordered Commits & Implementation Schedule
 
-- [ ] **Commit 1: `feat(deps): require laravel/pennant for billing-derived feature flags (MOD-04)`**
+- [x] **Commit 1: `feat(deps): require laravel/pennant for billing-derived feature flags (MOD-04)`**
   - Run `composer require laravel/pennant` on dev server, publish pennant configuration.
-- [ ] **Commit 2: `feat(billing): create plans and tenant_subscriptions schema in Super-Admin platform`**
+- [x] **Commit 2: `feat(billing): create plans and tenant_subscriptions schema in Super-Admin platform`**
   - Migrations: `create_plans_table`, `create_tenant_subscriptions_table`.
   - Models: `Plan`, `TenantSubscription`.
-- [ ] **Commit 3: `feat(pos): migration and model for pos_terminals and pos_shifts`**
+- [x] **Commit 3: `feat(pos): migration and model for pos_terminals and pos_shifts`**
   - Migrations: `create_pos_terminals_table`, `create_pos_shifts_table` with `TenantMigration`.
   - Models: `PosTerminal`, `PosShift`.
-- [ ] **Commit 4: `test(entitlements): add failing tests for module disable guards and Pennant sync (MOD-03, MOD-04)`**
+- [x] **Commit 4: `test(entitlements): add failing tests for module disable guards and Pennant sync (MOD-03, MOD-04)`**
   - Create `tests/Unit/ModuleEntitlementServiceTest.php`.
-- [ ] **Commit 5: `feat(entitlements): implement ModuleEntitlementService with disable guards and Pennant mirroring (closes MOD-03, MOD-04)`**
+- [x] **Commit 5: `feat(entitlements): implement ModuleEntitlementService with disable guards and Pennant mirroring (closes MOD-03, MOD-04)`**
   - Migration: `create_tenant_module_entitlements_table`.
   - Model: `TenantModuleEntitlement`.
   - Service: `ModuleEntitlementService`, exceptions, Pennant definitions.
-- [ ] **Commit 6: `test(lifecycle): add failing tests for tenant states active, in_arrears and suspended (TEN-11)`**
+- [x] **Commit 6: `test(lifecycle): add failing tests for tenant states active, in_arrears and suspended (TEN-11)`**
   - Create `tests/Database/TenantLifecycleTest.php`.
-- [ ] **Commit 7: `feat(lifecycle): implement TenantLifecycleService and EnforceTenantState middleware (closes TEN-11)`**
+- [x] **Commit 7: `feat(lifecycle): implement TenantLifecycleService and EnforceTenantState middleware (closes TEN-11)`**
   - Middleware: `EnforceTenantState`.
   - Update `TenantResolutionMiddleware` to allow suspended tenants for exports.
   - POS shift completion and shift open guard.
-- [ ] **Commit 8: `test(settings): add failing tests for hierarchical settings engine and cache invalidation (CORE-03)`**
+- [x] **Commit 8: `test(settings): add failing tests for hierarchical settings engine and cache invalidation (CORE-03)`**
   - Create `tests/Database/HierarchicalSettingsTest.php`.
-- [ ] **Commit 9: `feat(settings): implement HierarchicalSettingsService with audit logging and cache invalidation (closes CORE-03)`**
+- [x] **Commit 9: `feat(settings): implement HierarchicalSettingsService with audit logging and cache invalidation (closes CORE-03)`**
   - Migrations: `create_settings_table`, `create_setting_audit_logs_table`.
   - Models: `Setting`, `SettingAuditLog`.
   - Service: `HierarchicalSettingsService`.
-- [ ] **Commit 10: `test(onboarding): add failing tests for onboarding wizard and default module data seeding`**
+- [x] **Commit 10: `test(onboarding): add failing tests for onboarding wizard and default module data seeding`**
   - Create `tests/Database/OnboardingWizardTest.php`.
-- [ ] **Commit 11: `feat(onboarding): implement OnboardingWizardService and default data seeding across modules`**
+- [x] **Commit 11: `feat(onboarding): implement OnboardingWizardService and default data seeding across modules`**
   - Implement `seedDefaultData()` on `AccountingServiceProvider` and `TaxServiceProvider`.
   - Service: `OnboardingWizardService`.
-- [ ] **Commit 12: `test(registration): add failing tests for self-service sign-up, verification and rate limits`**
+- [x] **Commit 12: `test(registration): add failing tests for self-service sign-up, verification and rate limits`**
   - Create `tests/Feature/SelfServiceRegistrationTest.php`.
-- [ ] **Commit 13: `feat(registration): implement self-service registration with rate limits and verification`**
+- [x] **Commit 13: `feat(registration): implement self-service registration with rate limits and verification`**
   - Migration: `create_registration_verifications_table`.
   - Services & Controllers: `RegistrationService`, verification routes.
-- [ ] **Commit 14: `feat(filament): add PlanResource and SubscriptionResource in Super-Admin, and Onboarding page in Tenant Admin`**
+- [x] **Commit 14: `feat(filament): add PlanResource and SubscriptionResource in Super-Admin, and Onboarding page in Tenant Admin`**
   - Filament resources in Super-Admin (`platform` panel).
   - Onboarding wizard flow in Tenant Admin (`admin` panel).
-- [ ] **Commit 15: `test(all): run full verification, Pint, PHPStan Level 8, and RLS checks`**
+- [x] **Commit 15: `test(all): run full verification, Pint, PHPStan Level 8, and RLS checks`**
   - Run full test suite, `db:check-rls`, Pint, and PHPStan Level 8 on dev server CT 104.
 
 ---
