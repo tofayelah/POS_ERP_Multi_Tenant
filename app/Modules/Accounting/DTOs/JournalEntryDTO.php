@@ -7,7 +7,7 @@ use Carbon\CarbonInterface;
 readonly class JournalEntryDTO
 {
     /**
-     * @param array<int, JournalLineDTO> $lines
+     * @param  array<int, JournalLineDTO>  $lines
      */
     public function __construct(
         public string $companyId,
