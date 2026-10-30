@@ -1,5 +1,6 @@
 <?php
 
+use App\Core\Tenancy\TenantContext;
 use App\Models\Plan;
 use App\Models\Tenant;
 use App\Models\TenantSubscription;
@@ -55,7 +56,7 @@ test('can create tenant subscription linked to tenant and plan', function () {
         'data_residency_region' => 'dhaka-1',
     ]);
 
-    \App\Core\Tenancy\TenantContext::set($tenant);
+    TenantContext::set($tenant);
 
     $plan = Plan::create([
         'code' => 'enterprise_retail_'.Str::random(6),
