@@ -496,7 +496,7 @@ EXECUTE FUNCTION trg_fn_enforce_journal_lines_immutability();
   - Create migration `create_journal_immutability_triggers` implementing §9.2 triggers exactly as written.
   - Models `App\Models\JournalEntry` and `App\Models\JournalLine`.
   - Closes `NEW-21`, `ACC-03` (period validation).
-- [ ] **Commit 11: `test(posting): add tests for synchronous AccountingPostingService transaction behavior`**
+- [x] **Commit 11: `test(posting): add tests for synchronous AccountingPostingService transaction behavior`**
   - Create `tests/Unit/AccountingPostingServiceTest.php`.
 - [ ] **Commit 12: `feat(accounting): implement AccountingPostingService adhering to caller transaction constraint`**
   - Create `AccountingPostingServiceContract`, `JournalEntryDTO`, `JournalLineDTO`, and `AccountingPostingService`.
