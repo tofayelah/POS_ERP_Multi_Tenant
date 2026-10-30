@@ -5,7 +5,21 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property string $id
+ * @property string $tenant_id
+ * @property string $plan_id
+ * @property string $status
+ * @property Carbon $starts_at
+ * @property Carbon|null $ends_at
+ * @property Carbon|null $trial_ends_at
+ * @property Carbon|null $grace_period_ends_at
+ * @property Carbon $current_period_starts_at
+ * @property Carbon $current_period_ends_at
+ * @property array<int, string> $extra_modules
+ */
 class TenantSubscription extends Model
 {
     use HasUuids;
