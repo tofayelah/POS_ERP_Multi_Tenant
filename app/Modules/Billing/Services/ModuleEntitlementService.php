@@ -164,7 +164,7 @@ class ModuleEntitlementService implements ModuleEntitlementServiceContract
     {
         if ($moduleIdentifier === 'accounting') {
             $hasDraftJournals = JournalEntry::where('tenant_id', $tenant->id)
-                ->where('status', 'draft')
+                ->where('is_posted', false)
                 ->exists();
 
             if ($hasDraftJournals) {
