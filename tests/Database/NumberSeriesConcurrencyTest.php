@@ -122,8 +122,8 @@ class NumberSeriesConcurrencyTest extends TestCase
         @unlink((string) $file1);
         @unlink((string) $file2);
 
-        $this->assertCount(500, $numbers1, "Process 1 produced " . count($numbers1) . " numbers. Err: {$err1}");
-        $this->assertCount(500, $numbers2, "Process 2 produced " . count($numbers2) . " numbers. Err: {$err2}");
+        $this->assertCount(500, $numbers1, 'Process 1 produced '.count($numbers1)." numbers. Err: {$err1}");
+        $this->assertCount(500, $numbers2, 'Process 2 produced '.count($numbers2)." numbers. Err: {$err2}");
 
         $allNumbers = array_merge($numbers1, $numbers2);
         $this->assertCount(1000, $allNumbers);
