@@ -6,7 +6,19 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property string $id
+ * @property string $tenant_id
+ * @property string $company_id
+ * @property string $code
+ * @property string $name_en
+ * @property string|null $name_bn
+ * @property bool $is_active
+ * @property Carbon $created_at
+ * @property Carbon $updated_at
+ */
 class TaxCode extends Model
 {
     use HasUuids;

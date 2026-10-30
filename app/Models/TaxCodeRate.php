@@ -5,7 +5,20 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property string $id
+ * @property string $tenant_id
+ * @property string $company_id
+ * @property string $tax_code_id
+ * @property string $rate_percent
+ * @property string $supplementary_duty_percent
+ * @property Carbon|string $effective_from
+ * @property Carbon|string|null $effective_to
+ * @property Carbon $created_at
+ * @property Carbon $updated_at
+ */
 class TaxCodeRate extends Model
 {
     use HasUuids;
