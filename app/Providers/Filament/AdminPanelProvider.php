@@ -3,12 +3,14 @@
 namespace App\Providers\Filament;
 
 use App\Core\Http\Middleware\FilamentTenantContextMiddleware;
+use App\Core\Http\Middleware\SetLocaleMiddleware;
 use App\Core\Http\Middleware\VerifySupportAccessActive;
 use App\Models\Tenant;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use Filament\Navigation\MenuItem;
 use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
@@ -67,6 +69,16 @@ class AdminPanelProvider extends PanelProvider
                 AccountWidget::class,
                 FilamentInfoWidget::class,
             ])
+            ->userMenuItems([
+                'language_en' => MenuItem::make()
+                    ->label('English')
+                    ->icon('heroicon-o-globe-alt')
+                    ->url(fn (): string => request()->fullUrlWithQuery(['lang' => 'en'])),
+                'language_bn' => MenuItem::make()
+                    ->label('বাংলা')
+                    ->icon('heroicon-o-language')
+                    ->url(fn (): string => request()->fullUrlWithQuery(['lang' => 'bn'])),
+            ])
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
@@ -77,6 +89,7 @@ class AdminPanelProvider extends PanelProvider
                 SubstituteBindings::class,
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
+                SetLocaleMiddleware::class,
             ])
             ->authMiddleware([
                 Authenticate::class,
