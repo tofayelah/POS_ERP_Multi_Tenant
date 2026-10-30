@@ -44,6 +44,8 @@ class RegistrationController extends Controller
             'email_sent' => true,
             'phone_otp_sent' => true,
             'raw_otp' => app()->environment('production') ? null : $verification->raw_otp,
+            'email_token' => app()->environment('production') ? null : $verification->email_token,
+            'subdomain' => $verification->payload['subdomain'] ?? null,
         ], 201);
     }
 

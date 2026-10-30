@@ -22,16 +22,17 @@
             <p class="text-sm text-slate-400 mt-1">Multi-tenant retail management with Bangladesh NBR-compliant VAT & POS.</p>
         </div>
 
+        <!-- Step 1 Form -->
         <form id="regForm" class="space-y-4">
             <div>
                 <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Store / Tenant Name</label>
-                <input type="text" id="tenant_name" required placeholder="e.g. Fresh Supermarket" class="w-full px-4 py-2.5 rounded-lg bg-slate-900/60 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500">
+                <input type="text" id="tenant_name" required placeholder="e.g. Demo Mart" class="w-full px-4 py-2.5 rounded-lg bg-slate-900/60 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500">
             </div>
 
             <div>
                 <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Subdomain</label>
                 <div class="flex rounded-lg overflow-hidden border border-slate-700 focus-within:ring-2 focus-within:ring-sky-500">
-                    <input type="text" id="subdomain" required placeholder="freshmart" class="flex-1 px-4 py-2.5 bg-slate-900/60 text-white placeholder-slate-500 focus:outline-none lowercase">
+                    <input type="text" id="subdomain" required placeholder="demo-mart" class="flex-1 px-4 py-2.5 bg-slate-900/60 text-white placeholder-slate-500 focus:outline-none lowercase">
                     <span class="px-4 py-2.5 bg-slate-800 text-slate-400 text-sm border-l border-slate-700 select-none">.dev.kcerp.com</span>
                 </div>
                 <p class="text-xs text-slate-400 mt-1">Lowercase letters, numbers, and hyphens only.</p>
@@ -44,7 +45,7 @@
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Admin Email</label>
-                    <input type="email" id="admin_email" required placeholder="admin@freshmart.com" class="w-full px-4 py-2.5 rounded-lg bg-slate-900/60 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500">
+                    <input type="email" id="admin_email" required placeholder="admin@demomart.com" class="w-full px-4 py-2.5 rounded-lg bg-slate-900/60 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500">
                 </div>
             </div>
 
@@ -65,12 +66,32 @@
             </div>
 
             <div id="errorBox" class="hidden p-3 rounded-lg bg-red-900/30 border border-red-500/40 text-red-200 text-sm"></div>
-            <div id="successBox" class="hidden p-3 rounded-lg bg-emerald-900/30 border border-emerald-500/40 text-emerald-200 text-sm"></div>
 
             <button type="submit" id="submitBtn" class="w-full py-3 px-4 rounded-xl bg-sky-500 hover:bg-sky-400 active:bg-sky-600 text-white font-semibold shadow-lg shadow-sky-500/20 transition duration-150">
-                Create Tenant & Launch Wizard
+                Continue to Verification
             </button>
         </form>
+
+        <!-- Step 2 OTP Verification (Hidden initially) -->
+        <div id="otpSection" class="hidden space-y-4">
+            <div class="p-4 rounded-xl bg-sky-950/40 border border-sky-800/40 text-center">
+                <h2 class="text-lg font-bold text-sky-200">Verify Mobile Phone</h2>
+                <p class="text-xs text-sky-300 mt-1">We sent a 6-digit SMS verification code to your phone number.</p>
+                <div id="otpHint" class="text-xs text-amber-400 font-mono mt-2 bg-amber-950/40 py-1 px-3 rounded-lg border border-amber-800/40 inline-block"></div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Enter 6-Digit OTP</label>
+                <input type="text" id="otpInput" maxlength="6" placeholder="123456" class="w-full text-center tracking-widest text-2xl font-mono px-4 py-3 rounded-lg bg-slate-900/60 border border-slate-700 text-white focus:outline-none focus:ring-2 focus:ring-sky-500">
+            </div>
+
+            <div id="otpError" class="hidden p-3 rounded-lg bg-red-900/30 border border-red-500/40 text-red-200 text-sm"></div>
+            <div id="otpSuccess" class="hidden p-3 rounded-lg bg-emerald-900/30 border border-emerald-500/40 text-emerald-200 text-sm"></div>
+
+            <button type="button" id="verifyOtpBtn" class="w-full py-3 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 active:bg-emerald-600 text-white font-semibold shadow-lg shadow-emerald-500/20 transition duration-150">
+                Complete Registration & Launch Store
+            </button>
+        </div>
 
         <div class="mt-6 text-center text-xs text-slate-400">
             Already have an account? <a href="/admin" class="text-sky-400 hover:underline">Sign in to Tenant Admin</a>
@@ -78,13 +99,15 @@
     </div>
 
     <script>
+        let currentVerificationId = null;
+        let currentEmailToken = null;
+        let currentSubdomain = null;
+
         document.getElementById('regForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('submitBtn');
             const err = document.getElementById('errorBox');
-            const succ = document.getElementById('successBox');
             err.classList.add('hidden');
-            succ.classList.add('hidden');
             btn.disabled = true;
             btn.innerText = 'Creating tenant...';
 
@@ -111,18 +134,77 @@
                     err.innerHTML = msg;
                     err.classList.remove('hidden');
                     btn.disabled = false;
-                    btn.innerText = 'Create Tenant & Launch Wizard';
+                    btn.innerText = 'Continue to Verification';
                     return;
                 }
 
-                succ.innerHTML = data.message + (data.raw_otp ? `<br><strong>Dev OTP:</strong> ${data.raw_otp}` : '');
-                succ.classList.remove('hidden');
-                btn.innerText = 'Registration Created!';
+                currentVerificationId = data.verification_id;
+                currentEmailToken = data.email_token;
+                currentSubdomain = data.subdomain || payload.subdomain;
+
+                // Transition to OTP section
+                document.getElementById('regForm').classList.add('hidden');
+                document.getElementById('otpSection').classList.remove('hidden');
+                if (data.raw_otp) {
+                    document.getElementById('otpHint').innerHTML = `Pilot Auto-Code: <strong>${data.raw_otp}</strong>`;
+                    document.getElementById('otpInput').value = data.raw_otp;
+                }
             } catch (ex) {
                 err.innerText = 'Network error: ' + ex.message;
                 err.classList.remove('hidden');
                 btn.disabled = false;
-                btn.innerText = 'Create Tenant & Launch Wizard';
+                btn.innerText = 'Continue to Verification';
+            }
+        });
+
+        document.getElementById('verifyOtpBtn').addEventListener('click', async () => {
+            const btn = document.getElementById('verifyOtpBtn');
+            const err = document.getElementById('otpError');
+            const succ = document.getElementById('otpSuccess');
+            const otp = document.getElementById('otpInput').value.trim();
+
+            err.classList.add('hidden');
+            succ.classList.add('hidden');
+            btn.disabled = true;
+            btn.innerText = 'Verifying & Initializing Store...';
+
+            try {
+                // Verify email token if available in development
+                if (currentEmailToken) {
+                    await fetch(`/api/verify-email?token=${currentEmailToken}`);
+                }
+
+                const res = await fetch('/api/verify-phone', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    body: JSON.stringify({
+                        verification_id: currentVerificationId,
+                        otp: otp
+                    })
+                });
+
+                const data = await res.json();
+                if (!res.ok) {
+                    const msg = data.errors ? Object.values(data.errors).flat().join('<br>') : (data.message || 'OTP verification failed');
+                    err.innerHTML = msg;
+                    err.classList.remove('hidden');
+                    btn.disabled = false;
+                    btn.innerText = 'Complete Registration & Launch Store';
+                    return;
+                }
+
+                succ.innerHTML = '🎉 Store provisioned successfully! Launching your back-office...';
+                succ.classList.remove('hidden');
+                btn.innerText = 'Redirecting...';
+
+                setTimeout(() => {
+                    window.location.href = `/admin/${currentSubdomain}`;
+                }, 1200);
+            } catch (ex) {
+                err.innerText = 'Verification error: ' + ex.message;
+                err.classList.remove('hidden');
+                btn.disabled = false;
+                btn.innerText = 'Complete Registration & Launch Store';
             }
         });
     </script>
