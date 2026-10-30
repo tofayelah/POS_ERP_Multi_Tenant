@@ -4,14 +4,17 @@ use App\Models\Plan;
 use App\Models\Tenant;
 use App\Models\TenantSubscription;
 use Illuminate\Database\QueryException;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Str;
 use Ramsey\Uuid\Uuid;
 use Tests\TestCase;
 
-uses(TestCase::class);
+uses(TestCase::class, DatabaseTransactions::class);
 
 test('can create billing plan with modules and limits', function () {
+    $code = 'retail_standard_'.Str::random(6);
     $plan = Plan::create([
-        'code' => 'retail_standard',
+        'code' => $code,
         'name' => 'Retail Standard Plan',
         'description' => 'For growing multi-branch retailers in Bangladesh',
         'price_bdt' => '4999.0000',
@@ -30,28 +33,30 @@ test('can create billing plan with modules and limits', function () {
 });
 
 test('duplicate plan code is rejected', function () {
+    $code = 'unique_plan_'.Str::random(6);
     Plan::create([
-        'code' => 'unique_plan',
+        'code' => $code,
         'name' => 'First Plan',
     ]);
 
     expect(fn () => Plan::create([
-        'code' => 'unique_plan',
+        'code' => $code,
         'name' => 'Second Plan',
     ]))->toThrow(QueryException::class);
 });
 
 test('can create tenant subscription linked to tenant and plan', function () {
+    $subdomain = 'apex_'.Str::random(6);
     $tenant = Tenant::create([
         'name' => 'Apex Retail Ltd',
-        'subdomain' => 'apex',
+        'subdomain' => $subdomain,
         'subscription_plan' => 'retail_standard',
         'status' => 'active',
         'data_residency_region' => 'dhaka-1',
     ]);
 
     $plan = Plan::create([
-        'code' => 'enterprise_retail',
+        'code' => 'enterprise_retail_'.Str::random(6),
         'name' => 'Enterprise Retail',
         'price_bdt' => '9999.0000',
         'included_modules' => ['accounting', 'tax', 'catalog', 'sales', 'pos', 'inventory'],
@@ -75,7 +80,7 @@ test('can create tenant subscription linked to tenant and plan', function () {
 
 test('subscription referencing nonexistent tenant is rejected', function () {
     $plan = Plan::create([
-        'code' => 'basic',
+        'code' => 'basic_'.Str::random(6),
         'name' => 'Basic',
     ]);
 
