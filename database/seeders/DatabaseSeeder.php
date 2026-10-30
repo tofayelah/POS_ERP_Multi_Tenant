@@ -18,6 +18,8 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
+        $this->call(PlanSeeder::class);
+
         // 1. Create Default Tenant
         $tenant = Tenant::firstOrCreate(
             ['subdomain' => 'sonarmart'],
