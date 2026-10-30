@@ -1,16 +1,13 @@
 <?php
 
-use Illuminate\Database\Migrations\Migration;
+use App\Core\Database\TenantMigration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
+return new class extends TenantMigration
 {
     public function up(): void
     {
-        Schema::create('tenant_subscriptions', function (Blueprint $table) {
-            $table->uuid('id')->primary();
-            $table->foreignUuid('tenant_id')->constrained('tenants')->restrictOnDelete();
+        $this->createTenantTable('tenant_subscriptions', function (Blueprint $table) {
             $table->foreignUuid('plan_id')->constrained('plans')->restrictOnDelete();
             $table->string('status', 30)->default('active');
             $table->timestampTz('starts_at');
@@ -28,6 +25,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('tenant_subscriptions');
+        $this->dropTenantTable('tenant_subscriptions');
     }
 };
