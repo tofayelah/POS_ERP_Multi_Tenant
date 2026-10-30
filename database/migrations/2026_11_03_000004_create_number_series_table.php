@@ -8,6 +8,17 @@ return new class extends TenantMigration
 {
     public function up(): void
     {
+        DB::connection('pgsql_owner')->statement("
+            DO $$
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1 FROM pg_constraint WHERE conname = 'uq_branches_company_id'
+                ) THEN
+                    ALTER TABLE branches ADD CONSTRAINT uq_branches_company_id UNIQUE (tenant_id, company_id, id);
+                END IF;
+            END $$;
+        ");
+
         $this->createTenantTable('number_series', function (Blueprint $table) {
             $table->uuid('company_id');
             $table->uuid('branch_id')->nullable();
