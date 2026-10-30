@@ -2,6 +2,7 @@
 
 use App\Core\Database\TenantMigration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 
 return new class extends TenantMigration
 {
@@ -45,7 +46,7 @@ return new class extends TenantMigration
         });
 
         // Add check constraint debit > 0 xor credit > 0
-        \Illuminate\Support\Facades\DB::connection('pgsql_owner')->statement('
+        DB::connection('pgsql_owner')->statement('
             ALTER TABLE journal_lines
             ADD CONSTRAINT chk_debit_or_credit
             CHECK (

@@ -7,8 +7,6 @@ use App\Models\AccountingPeriod;
 use App\Models\ChartOfAccount;
 use App\Models\Company;
 use App\Models\FiscalYear;
-use App\Models\JournalEntry;
-use App\Models\JournalLine;
 use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Database\QueryException;
