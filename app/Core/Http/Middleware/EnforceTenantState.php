@@ -5,6 +5,8 @@ namespace App\Core\Http\Middleware;
 use App\Core\Tenancy\TenantContext;
 use App\Models\Tenant;
 use Closure;
+use Filament\Support\Facades\FilamentView;
+use Filament\View\PanelsRenderHook;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -29,6 +31,12 @@ class EnforceTenantState
         }
 
         if ($tenant instanceof Tenant && $tenant->status === 'suspended') {
+            // Register suspension banner in Filament panel layout
+            FilamentView::registerRenderHook(
+                PanelsRenderHook::BODY_START,
+                fn () => view('filament.components.suspended-banner', ['tenant' => $tenant])
+            );
+
             // 1. Safe methods (GET, HEAD, OPTIONS) are allowed for read & statutory reporting (TEN-11)
             if ($request->isMethodSafe()) {
                 return $next($request);

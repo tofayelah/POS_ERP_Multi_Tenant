@@ -18,6 +18,8 @@ class TenantSubscriptionResource extends Resource
 {
     protected static ?string $model = TenantSubscription::class;
 
+    protected static ?string $slug = 'subscriptions';
+
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-arrow-path';
 
     protected static ?string $navigationLabel = 'Subscriptions';
