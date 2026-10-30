@@ -476,9 +476,9 @@ EXECUTE FUNCTION trg_fn_enforce_journal_lines_immutability();
   - Create migrations for `fiscal_years` and `accounting_periods` using `TenantMigration`.
   - Create models `App\Models\FiscalYear` and `App\Models\AccountingPeriod`.
   - Closes `ACC-03` (schema).
-- [ ] **Commit 5: `test(coa): add failing database tests for chart of accounts and Bangladesh template`**
+- [x] **Commit 5: `test(coa): add failing database tests for chart of accounts and Bangladesh template`**
   - Create `tests/Database/ChartOfAccountsDatabaseTest.php`.
-- [ ] **Commit 6: `feat(accounting): migration and model for chart_of_accounts and Bangladesh retail COA template`**
+- [x] **Commit 6: `feat(accounting): migration and model for chart_of_accounts and Bangladesh retail COA template`**
   - Create migration for `chart_of_accounts` with composite company keys.
   - Create model `App\Models\ChartOfAccount`.
   - Create seeder/template `App\Modules\Accounting\Database\Seeders\BangladeshRetailCoaTemplate`.
