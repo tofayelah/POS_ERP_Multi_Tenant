@@ -2,10 +2,13 @@
 
 namespace App\Core\Security;
 
+use App\Core\Security\Events\SupportAccessGranted;
+use App\Core\Security\Events\SupportAccessRevoked;
 use App\Models\PlatformUser;
 use App\Models\Tenant;
 use App\Models\TenantSupportAccess;
 use App\Models\User;
+use Illuminate\Support\Facades\Log;
 use Ramsey\Uuid\Uuid;
 
 class SupportAccessService
@@ -32,7 +35,7 @@ class SupportAccessService
         $now = now();
         $expiresAt = (clone $now)->addMinutes($durationMinutes);
 
-        return TenantSupportAccess::create([
+        $access = TenantSupportAccess::create([
             'id' => (string) Uuid::uuid7(),
             'tenant_id' => $tenant->id,
             'platform_user_id' => $platformUser->id,
@@ -43,6 +46,21 @@ class SupportAccessService
             'is_read_only' => $isReadOnly,
             'revoked_at' => null,
         ]);
+
+        Log::info('AUDIT: Support access granted', [
+            'access_id' => $access->id,
+            'tenant_id' => $tenant->id,
+            'platform_user_id' => $platformUser->id,
+            'granted_by_user_id' => $grantedBy->id,
+            'ticket_reference' => $ticketReference,
+            'granted_at' => $now->toIso8601String(),
+            'expires_at' => $expiresAt->toIso8601String(),
+            'is_read_only' => $isReadOnly,
+        ]);
+
+        SupportAccessGranted::dispatch($access);
+
+        return $access;
     }
 
     /**
@@ -53,5 +71,13 @@ class SupportAccessService
         $access->update([
             'revoked_at' => now(),
         ]);
+
+        Log::info('AUDIT: Support access revoked', [
+            'access_id' => $access->id,
+            'tenant_id' => $access->tenant_id,
+            'revoked_at' => now()->toIso8601String(),
+        ]);
+
+        SupportAccessRevoked::dispatch($access);
     }
 }

@@ -4,6 +4,8 @@ namespace App\Core\Http\Middleware;
 
 use App\Models\TenantSupportAccess;
 use Closure;
+use Filament\Support\Facades\FilamentView;
+use Filament\View\PanelsRenderHook;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -32,6 +34,12 @@ class VerifySupportAccessActive
         if ($access->is_read_only && ! in_array($request->method(), ['GET', 'HEAD', 'OPTIONS'], true)) {
             abort(403, 'Support access elevation is strictly read-only.');
         }
+
+        // Register warning banner in Filament panel layout
+        FilamentView::registerRenderHook(
+            PanelsRenderHook::BODY_START,
+            fn () => view('filament.components.support-banner', ['access' => $access])
+        );
 
         return $next($request);
     }

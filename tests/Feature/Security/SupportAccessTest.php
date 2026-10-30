@@ -5,11 +5,16 @@ namespace Tests\Feature\Security;
 use App\Core\Http\Middleware\VerifySupportAccessActive;
 use App\Core\Security\SupportAccessService;
 use App\Core\Tenancy\TenantContext;
+use App\Core\Security\Events\SupportAccessGranted;
+use App\Core\Security\Events\SupportAccessRevoked;
 use App\Models\PlatformUser;
 use App\Models\Tenant;
 use App\Models\TenantSupportAccess;
 use App\Models\User;
+use Filament\Support\Facades\FilamentView;
+use Filament\View\PanelsRenderHook;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Hash;
 use Ramsey\Uuid\Uuid;
 use Spatie\Permission\Models\Role;
@@ -181,5 +186,86 @@ class SupportAccessTest extends TestCase
         $this->expectExceptionMessage('Support access elevation is strictly read-only.');
 
         $middleware->handle($postRequest, fn () => response('OK'));
+    }
+
+    /**
+     * Review SEC-02:
+     * Support access requires explicit Tenant Owner consent and rejects non-owners.
+     */
+    public function test_support_access_requires_tenant_owner_consent(): void
+    {
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Only a Tenant Owner can grant support access.');
+
+        // Staff (non-owner) attempts to grant support access
+        $this->service->grant(
+            $this->tenant,
+            $this->supportEngineer,
+            $this->regularUser,
+            'TICKET-NON-OWNER',
+            60
+        );
+    }
+
+    /**
+     * Review SEC-02:
+     * Active support access registers and renders the prominent warning banner.
+     */
+    public function test_support_access_renders_warning_banner_when_active(): void
+    {
+        $access = $this->service->grant(
+            $this->tenant,
+            $this->supportEngineer,
+            $this->owner,
+            'TICKET-BANNER-1',
+            60,
+            true
+        );
+
+        session(['active_support_access_id' => $access->id]);
+
+        $middleware = new VerifySupportAccessActive;
+        $request = Request::create('/admin/acme', 'GET');
+        $request->setLaravelSession(session()->driver());
+
+        $middleware->handle($request, fn () => response('OK'));
+
+        // Render hook for BODY_START should produce HTML containing ticket and read-only mode
+        $bannerHtml = FilamentView::renderHook(PanelsRenderHook::BODY_START);
+
+        $this->assertStringContainsString('TICKET-BANNER-1', (string) $bannerHtml);
+        $this->assertStringContainsString('Active Support Access Session', (string) $bannerHtml);
+        $this->assertStringContainsString('Read-Only Mode', (string) $bannerHtml);
+    }
+
+    /**
+     * Review SEC-02:
+     * Support access grant and revocation leave immutable audit entries.
+     */
+    public function test_support_access_leaves_audit_entry_on_grant_and_revocation(): void
+    {
+        Event::fake([
+            SupportAccessGranted::class,
+            SupportAccessRevoked::class,
+        ]);
+
+        $access = $this->service->grant(
+            $this->tenant,
+            $this->supportEngineer,
+            $this->owner,
+            'TICKET-AUDIT-99',
+            120,
+            true
+        );
+
+        Event::assertDispatched(SupportAccessGranted::class, function ($event) use ($access) {
+            return $event->access->id === $access->id && $event->access->ticket_reference === 'TICKET-AUDIT-99';
+        });
+
+        $this->service->revoke($access);
+
+        Event::assertDispatched(SupportAccessRevoked::class, function ($event) use ($access) {
+            return $event->access->id === $access->id && $event->access->revoked_at !== null;
+        });
     }
 }
