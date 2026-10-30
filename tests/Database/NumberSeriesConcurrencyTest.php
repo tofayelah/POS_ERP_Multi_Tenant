@@ -86,11 +86,15 @@ class NumberSeriesConcurrencyTest extends TestCase
         $cmd1 = "DB_DATABASE={$db} DB_USERNAME={$dbUser} {$phpBinary} {$scriptPath} {$this->tenant->id} {$this->company->id} {$file1} 500";
         $cmd2 = "DB_DATABASE={$db} DB_USERNAME={$dbUser} {$phpBinary} {$scriptPath} {$this->tenant->id} {$this->company->id} {$file2} 500";
 
-        // Spawn both parallel processes with environment variables
-        $env = array_merge($_SERVER, [
-            'DB_DATABASE' => $db,
-            'DB_USERNAME' => $dbUser,
-        ]);
+        // Spawn both parallel processes with scalar environment variables
+        $env = [];
+        foreach ($_SERVER as $k => $v) {
+            if (is_string($v) || is_numeric($v)) {
+                $env[$k] = (string) $v;
+            }
+        }
+        $env['DB_DATABASE'] = $db;
+        $env['DB_USERNAME'] = $dbUser;
 
         $p1 = proc_open($cmd1, [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes1, base_path(), $env);
         $p2 = proc_open($cmd2, [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes2, base_path(), $env);
