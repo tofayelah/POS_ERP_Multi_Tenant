@@ -5,9 +5,11 @@ namespace App\Modules\Billing\Providers;
 use App\Models\Tenant;
 use App\Modules\Billing\Contracts\HierarchicalSettingsServiceContract;
 use App\Modules\Billing\Contracts\ModuleEntitlementServiceContract;
+use App\Modules\Billing\Contracts\OnboardingWizardServiceContract;
 use App\Modules\Billing\Contracts\TenantLifecycleServiceContract;
 use App\Modules\Billing\Services\HierarchicalSettingsService;
 use App\Modules\Billing\Services\ModuleEntitlementService;
+use App\Modules\Billing\Services\OnboardingWizardService;
 use App\Modules\Billing\Services\TenantLifecycleService;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Pennant\Feature;
@@ -43,6 +45,11 @@ class BillingServiceProvider extends ServiceProvider
         $this->app->singleton(
             HierarchicalSettingsServiceContract::class,
             HierarchicalSettingsService::class
+        );
+
+        $this->app->singleton(
+            OnboardingWizardServiceContract::class,
+            OnboardingWizardService::class
         );
     }
 
