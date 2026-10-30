@@ -56,11 +56,9 @@ class PriceListItem extends Model
     protected static function booted(): void
     {
         static::saving(function (PriceListItem $item) {
-            if ($item->priceList) {
-                $item->tenant_id ??= $item->priceList->tenant_id;
-                $item->company_id ??= $item->priceList->company_id;
-            } elseif ($item->price_list_id) {
-                $list = PriceList::query()->find($item->price_list_id);
+            if ($item->price_list_id) {
+                /** @var PriceList|null $list */
+                $list = $item->priceList ?? PriceList::query()->find($item->price_list_id);
                 if ($list) {
                     $item->tenant_id ??= $list->tenant_id;
                     $item->company_id ??= $list->company_id;

@@ -8,6 +8,7 @@ use App\Filament\Resources\PriceLists\Pages\ListPriceLists;
 use App\Filament\Resources\PriceLists\RelationManagers\ItemsRelationManager;
 use App\Models\Company;
 use App\Models\PriceList;
+use App\Models\Tenant;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -39,11 +40,17 @@ class PriceListResource extends Resource
                 Select::make('company_id')
                     ->label('Company / কোম্পানি')
                     ->options(function () {
+                        /** @var Tenant|null $tenant */
                         $tenant = Filament::getTenant();
 
                         return $tenant ? Company::where('tenant_id', $tenant->id)->pluck('legal_name', 'id') : [];
                     })
-                    ->default(fn () => Filament::getTenant()?->companies()->first()?->id)
+                    ->default(function () {
+                        /** @var Tenant|null $tenant */
+                        $tenant = Filament::getTenant();
+
+                        return $tenant?->companies()->first()?->id;
+                    })
                     ->required(),
 
                 TextInput::make('code')

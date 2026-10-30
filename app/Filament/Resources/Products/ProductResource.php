@@ -9,6 +9,7 @@ use App\Filament\Resources\Products\RelationManagers\VariantsRelationManager;
 use App\Models\Category;
 use App\Models\Company;
 use App\Models\Product;
+use App\Models\Tenant;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -40,16 +41,23 @@ class ProductResource extends Resource
                 Select::make('company_id')
                     ->label('Company / কোম্পানি')
                     ->options(function () {
+                        /** @var Tenant|null $tenant */
                         $tenant = Filament::getTenant();
 
                         return $tenant ? Company::where('tenant_id', $tenant->id)->pluck('legal_name', 'id') : [];
                     })
-                    ->default(fn () => Filament::getTenant()?->companies()->first()?->id)
+                    ->default(function () {
+                        /** @var Tenant|null $tenant */
+                        $tenant = Filament::getTenant();
+
+                        return $tenant?->companies()->first()?->id;
+                    })
                     ->required(),
 
                 Select::make('category_id')
                     ->label('Category / শ্রেণী')
                     ->options(function () {
+                        /** @var Tenant|null $tenant */
                         $tenant = Filament::getTenant();
 
                         return $tenant ? Category::where('tenant_id', $tenant->id)->pluck('name_en', 'id') : [];

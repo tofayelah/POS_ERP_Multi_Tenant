@@ -55,11 +55,9 @@ class VariantBarcode extends Model
     protected static function booted(): void
     {
         static::saving(function (VariantBarcode $barcode) {
-            if ($barcode->variant) {
-                $barcode->tenant_id ??= $barcode->variant->tenant_id;
-                $barcode->company_id ??= $barcode->variant->company_id;
-            } elseif ($barcode->variant_id) {
-                $variant = ProductVariant::query()->find($barcode->variant_id);
+            if ($barcode->variant_id) {
+                /** @var ProductVariant|null $variant */
+                $variant = $barcode->variant ?? ProductVariant::query()->find($barcode->variant_id);
                 if ($variant) {
                     $barcode->tenant_id ??= $variant->tenant_id;
                     $barcode->company_id ??= $variant->company_id;

@@ -6,6 +6,7 @@ use App\Filament\Resources\UnitConversions\Pages\CreateUnitConversion;
 use App\Filament\Resources\UnitConversions\Pages\EditUnitConversion;
 use App\Filament\Resources\UnitConversions\Pages\ListUnitConversions;
 use App\Models\Company;
+use App\Models\Tenant;
 use App\Models\UnitConversion;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
@@ -35,11 +36,17 @@ class UnitConversionResource extends Resource
                 Select::make('company_id')
                     ->label('Company / কোম্পানি')
                     ->options(function () {
+                        /** @var Tenant|null $tenant */
                         $tenant = Filament::getTenant();
 
                         return $tenant ? Company::where('tenant_id', $tenant->id)->pluck('legal_name', 'id') : [];
                     })
-                    ->default(fn () => Filament::getTenant()?->companies()->first()?->id)
+                    ->default(function () {
+                        /** @var Tenant|null $tenant */
+                        $tenant = Filament::getTenant();
+
+                        return $tenant?->companies()->first()?->id;
+                    })
                     ->required(),
 
                 TextInput::make('from_uom')
