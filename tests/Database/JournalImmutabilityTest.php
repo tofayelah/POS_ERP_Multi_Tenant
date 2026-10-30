@@ -111,7 +111,7 @@ class JournalImmutabilityTest extends TestCase
             'id' => (string) Str::uuid(),
             'name' => 'Accountant User',
             'email' => 'accountant-'.Str::random(6).'@example.com',
-            'password' => bcrypt('password'),
+            'password' => 'password',
         ]);
     }
 

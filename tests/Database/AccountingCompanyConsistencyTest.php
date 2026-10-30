@@ -133,7 +133,7 @@ class AccountingCompanyConsistencyTest extends TestCase
             'id' => (string) Str::uuid(),
             'name' => 'Accountant',
             'email' => 'acct-'.Str::random(6).'@example.com',
-            'password' => bcrypt('password'),
+            'password' => 'password',
         ]);
     }
 
