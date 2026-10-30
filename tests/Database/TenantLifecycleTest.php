@@ -100,10 +100,14 @@ test('enforce tenant state middleware allows GET exports but blocks mutations wh
 
     // 2. POST mutations must be blocked with HTTP 403
     $postReq = Request::create("https://{$this->subdomain}.kcerp.com/products", 'POST', ['name' => 'New Product']);
-    $postResponse = $middleware->handle($postReq, function ($req) {
-        return new Response('MUTATION_SHOULD_NOT_HAPPEN');
-    });
-    expect($postResponse->getStatusCode())->toBe(403);
+    try {
+        $middleware->handle($postReq, function ($req) {
+            return new Response('MUTATION_SHOULD_NOT_HAPPEN');
+        });
+        $this->fail('Expected HttpException 403');
+    } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+        expect($e->getStatusCode())->toBe(403);
+    }
 });
 
 test('suspended tenant allows active in-flight POS shift to close, but blocks opening new shifts (TEN-11)', function () {
