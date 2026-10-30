@@ -10,7 +10,7 @@ class BangladeshRetailCoaTemplate
     /**
      * Seed standard Bangladesh Retail Chart of Accounts for a company.
      *
-     * @return array<string, ChartOfAccount>
+     * @return array<array-key, ChartOfAccount>
      */
     public function seedForCompany(string $tenantId, string $companyId): array
     {
