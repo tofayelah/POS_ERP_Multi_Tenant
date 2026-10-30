@@ -3,11 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Plan;
-use App\Models\RegistrationVerification;
 use App\Modules\Billing\Contracts\RegistrationServiceContract;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Illuminate\View\View;
 
 class RegistrationController extends Controller
