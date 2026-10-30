@@ -1,6 +1,7 @@
 <?php
 
 use App\Modules\Accounting\Providers\AccountingServiceProvider;
+use App\Modules\Billing\Providers\BillingServiceProvider;
 use App\Modules\Catalog\Providers\CatalogServiceProvider;
 use App\Modules\Inventory\Providers\InventoryServiceProvider;
 use App\Modules\Pos\Providers\PosServiceProvider;
@@ -20,6 +21,7 @@ return [
     HorizonServiceProvider::class,
 
     // Core Modular Architecture Providers
+    BillingServiceProvider::class,
     AccountingServiceProvider::class,
     TaxServiceProvider::class,
     CatalogServiceProvider::class,
