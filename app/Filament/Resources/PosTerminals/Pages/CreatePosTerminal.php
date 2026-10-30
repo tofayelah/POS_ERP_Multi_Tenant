@@ -12,8 +12,9 @@ class CreatePosTerminal extends CreateRecord
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        $branch = Branch::find($data['branch_id']);
-        if ($branch) {
+        /** @var Branch|null $branch */
+        $branch = Branch::where('id', $data['branch_id'])->first();
+        if ($branch instanceof Branch) {
             $data['company_id'] = $branch->company_id;
         }
 

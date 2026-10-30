@@ -115,17 +115,17 @@ class TenantResource extends Resource
                     })
                     ->visible(fn (Tenant $record): bool => $record->status !== 'suspended'),
 
-                Action::make('activate')
-                    ->label('Activate')
+                Action::make('reinstate')
+                    ->label('Reinstate / Activate')
                     ->icon('heroicon-o-play')
                     ->color('success')
                     ->requiresConfirmation()
-                    ->modalHeading('Activate Tenant')
-                    ->modalDescription('Activate tenant and restore full POS & back-office access.')
+                    ->modalHeading('Reinstate Tenant')
+                    ->modalDescription('Reinstate tenant and restore full POS & back-office access.')
                     ->action(function (Tenant $record): void {
-                        app(TenantLifecycleServiceContract::class)->activate($record);
+                        app(TenantLifecycleServiceContract::class)->reinstate($record);
                         Notification::make()
-                            ->title('Tenant Activated')
+                            ->title('Tenant Reinstated')
                             ->body("{$record->name} has been restored to active status.")
                             ->success()
                             ->send();
