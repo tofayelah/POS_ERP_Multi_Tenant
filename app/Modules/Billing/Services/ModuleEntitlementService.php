@@ -47,7 +47,14 @@ class ModuleEntitlementService implements ModuleEntitlementServiceContract
     public function syncFromSubscription(TenantSubscription $subscription): void
     {
         $tenant = $subscription->tenant;
+        if (! $tenant) {
+            return;
+        }
+
         $plan = $subscription->plan;
+        if (! $plan) {
+            return;
+        }
 
         $planModules = (array) ($plan->included_modules ?? []);
         $extraModules = (array) ($subscription->extra_modules ?? []);
