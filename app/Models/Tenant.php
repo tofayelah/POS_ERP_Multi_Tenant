@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
 
 /**
@@ -39,5 +40,23 @@ class Tenant extends Model
     public function companies(): HasMany
     {
         return $this->hasMany(Company::class, 'tenant_id');
+    }
+
+    /**
+     * @return HasMany<TenantSubscription, $this>
+     */
+    public function subscriptions(): HasMany
+    {
+        return $this->hasMany(TenantSubscription::class, 'tenant_id');
+    }
+
+    /**
+     * @return HasOne<TenantSubscription, $this>
+     */
+    public function activeSubscription(): HasOne
+    {
+        return $this->hasOne(TenantSubscription::class, 'tenant_id')
+            ->where('status', 'active')
+            ->latestOfMany();
     }
 }
