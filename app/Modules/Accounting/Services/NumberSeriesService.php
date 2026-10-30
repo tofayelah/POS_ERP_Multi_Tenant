@@ -8,7 +8,6 @@ use App\Modules\Accounting\Contracts\NumberSeriesContract;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
-use Throwable;
 
 class NumberSeriesService implements NumberSeriesContract
 {
@@ -48,45 +47,43 @@ class NumberSeriesService implements NumberSeriesContract
         if (! $series) {
             $prefix = $this->defaultPrefixes[$documentType] ?? strtoupper(substr($documentType, 0, 4));
 
-            try {
-                $series = NumberSeries::create([
-                    'id' => (string) Str::uuid(),
-                    'tenant_id' => $tenantId,
-                    'company_id' => $companyId,
-                    'branch_id' => $branchId,
-                    'document_type' => $documentType,
-                    'prefix' => $prefix,
-                    'fiscal_year' => $fiscalYear,
-                    'current_number' => 0,
-                    'padding' => 6,
-                ]);
-            } catch (Throwable) {
-                // If a concurrent process inserted the series row simultaneously, query it with lock
-                /** @var NumberSeries $series */
-                $series = NumberSeries::query()
-                    ->where('tenant_id', $tenantId)
-                    ->where('company_id', $companyId)
-                    ->when($branchId, fn ($q) => $q->where('branch_id', $branchId), fn ($q) => $q->whereNull('branch_id'))
-                    ->where('document_type', $documentType)
-                    ->where('fiscal_year', $fiscalYear)
-                    ->lockForUpdate()
-                    ->firstOrFail();
-            }
+            // Use insertOrIgnore (INSERT ... ON CONFLICT DO NOTHING) so PostgreSQL transaction is never aborted
+            DB::table('number_series')->insertOrIgnore([
+                'id' => (string) Str::uuid(),
+                'tenant_id' => $tenantId,
+                'company_id' => $companyId,
+                'branch_id' => $branchId,
+                'document_type' => $documentType,
+                'prefix' => $prefix,
+                'fiscal_year' => $fiscalYear,
+                'current_number' => 0,
+                'padding' => 6,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            /** @var NumberSeries $series */
+            $series = NumberSeries::query()
+                ->where('tenant_id', $tenantId)
+                ->where('company_id', $companyId)
+                ->when($branchId, fn ($q) => $q->where('branch_id', $branchId), fn ($q) => $q->whereNull('branch_id'))
+                ->where('document_type', $documentType)
+                ->where('fiscal_year', $fiscalYear)
+                ->lockForUpdate()
+                ->firstOrFail();
         }
 
-        // Re-lock and increment inside caller's transaction
+        // Increment inside caller's transaction while row is locked
         DB::table('number_series')
             ->where('id', $series->id)
             ->increment('current_number');
 
-        /** @var NumberSeries $freshSeries */
-        $freshSeries = NumberSeries::query()
+        $freshNumber = DB::table('number_series')
             ->where('id', $series->id)
-            ->lockForUpdate()
-            ->firstOrFail();
+            ->value('current_number');
 
-        $formattedSeq = str_pad((string) $freshSeries->current_number, $freshSeries->padding, '0', STR_PAD_LEFT);
+        $formattedSeq = str_pad((string) $freshNumber, $series->padding, '0', STR_PAD_LEFT);
 
-        return "{$freshSeries->prefix}-{$freshSeries->fiscal_year}-{$formattedSeq}";
+        return "{$series->prefix}-{$series->fiscal_year}-{$formattedSeq}";
     }
 }

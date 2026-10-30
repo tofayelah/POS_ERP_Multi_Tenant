@@ -80,13 +80,20 @@ class NumberSeriesConcurrencyTest extends TestCase
 
         $phpBinary = PHP_BINARY;
         $scriptPath = base_path('tests/Fixtures/draw_numbers.php');
+        $db = config('database.connections.pgsql.database', 'erp_test');
+        $dbUser = config('database.connections.pgsql.username', 'app_rw');
 
-        $cmd1 = escapeshellcmd("{$phpBinary} {$scriptPath} {$this->tenant->id} {$this->company->id} {$file1} 500");
-        $cmd2 = escapeshellcmd("{$phpBinary} {$scriptPath} {$this->tenant->id} {$this->company->id} {$file2} 500");
+        $cmd1 = "DB_DATABASE={$db} DB_USERNAME={$dbUser} {$phpBinary} {$scriptPath} {$this->tenant->id} {$this->company->id} {$file1} 500";
+        $cmd2 = "DB_DATABASE={$db} DB_USERNAME={$dbUser} {$phpBinary} {$scriptPath} {$this->tenant->id} {$this->company->id} {$file2} 500";
 
-        // Spawn both parallel processes
-        $p1 = proc_open($cmd1, [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes1);
-        $p2 = proc_open($cmd2, [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes2);
+        // Spawn both parallel processes with environment variables
+        $env = array_merge($_SERVER, [
+            'DB_DATABASE' => $db,
+            'DB_USERNAME' => $dbUser,
+        ]);
+
+        $p1 = proc_open($cmd1, [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes1, base_path(), $env);
+        $p2 = proc_open($cmd2, [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes2, base_path(), $env);
 
         $this->assertIsResource($p1);
         $this->assertIsResource($p2);
@@ -106,14 +113,17 @@ class NumberSeriesConcurrencyTest extends TestCase
         $this->assertSame(0, $exit1, "Process 1 failed with error: {$err1} output: {$out1}");
         $this->assertSame(0, $exit2, "Process 2 failed with error: {$err2} output: {$out2}");
 
-        $numbers1 = json_decode((string) file_get_contents((string) $file1), true) ?: [];
-        $numbers2 = json_decode((string) file_get_contents((string) $file2), true) ?: [];
+        $raw1 = file_exists((string) $file1) ? (string) file_get_contents((string) $file1) : '';
+        $raw2 = file_exists((string) $file2) ? (string) file_get_contents((string) $file2) : '';
+
+        $numbers1 = json_decode($raw1, true) ?: [];
+        $numbers2 = json_decode($raw2, true) ?: [];
 
         @unlink((string) $file1);
         @unlink((string) $file2);
 
-        $this->assertCount(500, $numbers1);
-        $this->assertCount(500, $numbers2);
+        $this->assertCount(500, $numbers1, "Process 1 produced " . count($numbers1) . " numbers. Err: {$err1}");
+        $this->assertCount(500, $numbers2, "Process 2 produced " . count($numbers2) . " numbers. Err: {$err2}");
 
         $allNumbers = array_merge($numbers1, $numbers2);
         $this->assertCount(1000, $allNumbers);
