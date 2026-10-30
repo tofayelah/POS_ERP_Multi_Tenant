@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Core\Tenancy\TenantContext;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -64,11 +65,11 @@ class VariantBarcode extends Model
                 }
             }
 
-            if (empty($barcode->tenant_id) && \App\Core\Tenancy\TenantContext::has()) {
-                $barcode->tenant_id = \App\Core\Tenancy\TenantContext::id();
+            if (empty($barcode->tenant_id) && TenantContext::has()) {
+                $barcode->tenant_id = TenantContext::id();
             }
 
-            if (empty($barcode->company_id) && !empty($barcode->tenant_id)) {
+            if (empty($barcode->company_id) && ! empty($barcode->tenant_id)) {
                 $company = Company::where('tenant_id', $barcode->tenant_id)->first();
                 if ($company) {
                     $barcode->company_id = $company->id;

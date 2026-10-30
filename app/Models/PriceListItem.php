@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Core\Tenancy\TenantContext;
 use App\Modules\Catalog\Exceptions\MrpCeilingExceededException;
 use Brick\Math\BigDecimal;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -65,11 +66,11 @@ class PriceListItem extends Model
                 }
             }
 
-            if (empty($item->tenant_id) && \App\Core\Tenancy\TenantContext::has()) {
-                $item->tenant_id = \App\Core\Tenancy\TenantContext::id();
+            if (empty($item->tenant_id) && TenantContext::has()) {
+                $item->tenant_id = TenantContext::id();
             }
 
-            if (empty($item->company_id) && !empty($item->tenant_id)) {
+            if (empty($item->company_id) && ! empty($item->tenant_id)) {
                 $company = Company::where('tenant_id', $item->tenant_id)->first();
                 if ($company) {
                     $item->company_id = $company->id;
