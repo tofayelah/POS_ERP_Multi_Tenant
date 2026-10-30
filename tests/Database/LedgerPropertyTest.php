@@ -314,8 +314,8 @@ class LedgerPropertyTest extends TestCase
         $targetIdx = mt_rand(0, count($lines) - 1);
         $targetLine = $lines[$targetIdx];
 
-        if ($targetLine->debitAmount->isGreaterThan(Money::zero())) {
-            $newDebit = (mt_rand(0, 1) === 1 || $targetLine->debitAmount->isLessThan($imbalanceAmount))
+        if ($targetLine->debitAmount->isPositive()) {
+            $newDebit = (mt_rand(0, 1) === 1 || $targetLine->debitAmount->lessThan($imbalanceAmount))
                 ? $targetLine->debitAmount->add($imbalanceAmount)
                 : $targetLine->debitAmount->subtract($imbalanceAmount);
 
@@ -335,7 +335,7 @@ class LedgerPropertyTest extends TestCase
                 lineDescription: $targetLine->lineDescription.' (unbalanced)',
             );
         } else {
-            $newCredit = (mt_rand(0, 1) === 1 || $targetLine->creditAmount->isLessThan($imbalanceAmount))
+            $newCredit = (mt_rand(0, 1) === 1 || $targetLine->creditAmount->lessThan($imbalanceAmount))
                 ? $targetLine->creditAmount->add($imbalanceAmount)
                 : $targetLine->creditAmount->subtract($imbalanceAmount);
 
