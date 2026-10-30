@@ -84,7 +84,7 @@ test('enforces rate limits on self-service registration (5 attempts per hour per
     for ($i = 1; $i <= 5; $i++) {
         $response = $this->postJson('/api/register', [
             'tenant_name' => "Tenant Rate {$i}",
-            'subdomain' => "rate-test-{$i}-".Str::random(4),
+            'subdomain' => strtolower("rate-test-{$i}-".Str::random(4)),
             'admin_name' => "User {$i}",
             'admin_email' => "rate{$i}@example.com",
             'admin_phone' => "+880171000000{$i}",
@@ -99,7 +99,7 @@ test('enforces rate limits on self-service registration (5 attempts per hour per
     // 6th attempt from same IP must be throttled with HTTP 429
     $response = $this->postJson('/api/register', [
         'tenant_name' => 'Tenant Rate 6',
-        'subdomain' => 'rate-test-6-'.Str::random(4),
+        'subdomain' => strtolower('rate-test-6-'.Str::random(4)),
         'admin_name' => 'User 6',
         'admin_email' => 'rate6@example.com',
         'admin_phone' => '+8801710000006',
@@ -112,7 +112,7 @@ test('enforces rate limits on self-service registration (5 attempts per hour per
 });
 
 test('initiates registration, creates verification record, and allows email and phone verification', function () {
-    $subdomain = 'demo-mart-'.Str::random(4);
+    $subdomain = strtolower('demo-mart-'.Str::random(4));
     $response = $this->postJson('/api/register', [
         'tenant_name' => 'Demo Mart Global',
         'subdomain' => $subdomain,
