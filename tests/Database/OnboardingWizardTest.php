@@ -105,19 +105,19 @@ test('onboarding wizard provisions complete tenant and seeds default module data
                 accountId: $cashAccount->id,
                 debitAmount: Money::of('1150.00'),
                 creditAmount: Money::zero(),
-                narration: 'Cash received'
+                lineDescription: 'Cash received'
             ),
             new JournalLineDTO(
                 accountId: $salesAccount->id,
                 debitAmount: Money::zero(),
                 creditAmount: Money::of('1000.00'),
-                narration: 'Revenue'
+                lineDescription: 'Revenue'
             ),
             new JournalLineDTO(
                 accountId: $vatPayableAccount->id,
                 debitAmount: Money::zero(),
                 creditAmount: Money::of('150.00'),
-                narration: 'Output VAT'
+                lineDescription: 'Output VAT'
             ),
         ]
     );
