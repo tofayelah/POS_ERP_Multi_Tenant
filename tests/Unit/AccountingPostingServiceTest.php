@@ -189,8 +189,13 @@ class AccountingPostingServiceTest extends TestCase
         // Verify lines persisted in DB
         $lines = JournalLine::where('journal_entry_id', $entry->id)->get();
         $this->assertCount(2, $lines);
-        $this->assertEquals('1250.5000', $lines[0]->debit_amount);
-        $this->assertEquals('1250.5000', $lines[1]->credit_amount);
+
+        $debitLine = JournalLine::where('journal_entry_id', $entry->id)->where('account_id', $this->cashAccount->id)->firstOrFail();
+        $creditLine = JournalLine::where('journal_entry_id', $entry->id)->where('account_id', $this->salesAccount->id)->firstOrFail();
+        $this->assertEquals('1250.5000', $debitLine->debit_amount);
+        $this->assertEquals('0.0000', $debitLine->credit_amount);
+        $this->assertEquals('0.0000', $creditLine->debit_amount);
+        $this->assertEquals('1250.5000', $creditLine->credit_amount);
     }
 
     public function test_caller_transaction_rollback_reverts_journal_and_lines(): void
