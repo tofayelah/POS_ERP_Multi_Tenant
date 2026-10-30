@@ -95,11 +95,13 @@ test('onboarding wizard provisions complete tenant and seeds default module data
     $dto = new JournalEntryDTO(
         companyId: $company->id,
         periodId: $openPeriod->id,
+        documentType: 'manual_journal',
         postingDate: $openPeriod->start_date->format('Y-m-d'),
         businessDate: $openPeriod->start_date->format('Y-m-d'),
         referenceType: 'onboarding_test',
-        narration: 'First journal of newly onboarded tenant',
+        referenceId: null,
         postedBy: $user->id,
+        narration: 'First journal of newly onboarded tenant',
         lines: [
             new JournalLineDTO(
                 accountId: $cashAccount->id,
