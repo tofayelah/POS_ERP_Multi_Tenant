@@ -4,10 +4,15 @@ namespace Database\Seeders;
 
 use App\Core\Tenancy\TenantContext;
 use App\Models\Branch;
+use App\Models\Category;
 use App\Models\Company;
 use App\Models\PlatformUser;
+use App\Models\PriceList;
+use App\Models\TaxCode;
+use App\Models\TaxCodeRate;
 use App\Models\Tenant;
 use App\Models\TenantMembership;
+use App\Models\UnitConversion;
 use App\Models\User;
 use App\Models\UserLocationScope;
 use Illuminate\Database\Seeder;
@@ -272,7 +277,7 @@ class DemoTenantSeeder extends Seeder
             ];
 
             foreach ($taxCodesData as $tcData) {
-                $tc = \App\Models\TaxCode::firstOrCreate(
+                $tc = TaxCode::firstOrCreate(
                     [
                         'tenant_id' => $tenant->id,
                         'company_id' => $companyRetail->id,
@@ -286,7 +291,7 @@ class DemoTenantSeeder extends Seeder
                     ]
                 );
 
-                \App\Models\TaxCodeRate::firstOrCreate(
+                TaxCodeRate::firstOrCreate(
                     [
                         'tenant_id' => $tenant->id,
                         'company_id' => $companyRetail->id,
@@ -303,7 +308,7 @@ class DemoTenantSeeder extends Seeder
             }
 
             // 7. Seed Standard Categories
-            $catGrocery = \App\Models\Category::firstOrCreate(
+            $catGrocery = Category::firstOrCreate(
                 [
                     'tenant_id' => $tenant->id,
                     'company_id' => $companyRetail->id,
@@ -317,7 +322,7 @@ class DemoTenantSeeder extends Seeder
                 ]
             );
 
-            \App\Models\Category::firstOrCreate(
+            Category::firstOrCreate(
                 [
                     'tenant_id' => $tenant->id,
                     'company_id' => $companyRetail->id,
@@ -333,7 +338,7 @@ class DemoTenantSeeder extends Seeder
             );
 
             // 8. Seed Unit Conversions (Carton to Piece)
-            \App\Models\UnitConversion::firstOrCreate(
+            UnitConversion::firstOrCreate(
                 [
                     'tenant_id' => $tenant->id,
                     'company_id' => $companyRetail->id,
@@ -347,7 +352,7 @@ class DemoTenantSeeder extends Seeder
             );
 
             // 9. Seed Retail Tax-Inclusive Price List
-            \App\Models\PriceList::firstOrCreate(
+            PriceList::firstOrCreate(
                 [
                     'tenant_id' => $tenant->id,
                     'company_id' => $companyRetail->id,
