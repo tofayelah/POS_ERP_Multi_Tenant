@@ -7,6 +7,18 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property string $id
+ * @property string $tenant_id
+ * @property string $company_id
+ * @property string $name
+ * @property string $code
+ * @property bool $is_active
+ * @property \Illuminate\Support\Carbon $created_at
+ * @property \Illuminate\Support\Carbon $updated_at
+ * @property-read Tenant $tenant
+ * @property-read Company $company
+ */
 class Branch extends Model
 {
     use HasLocationScope, HasUuids;
