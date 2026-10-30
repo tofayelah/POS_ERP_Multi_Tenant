@@ -53,8 +53,8 @@ class AccountingPostingService implements AccountingPostingServiceContract
 
         foreach ($entryDto->lines as $line) {
             $exchangeRate = BigDecimal::of($line->exchangeRate ?? '1.000000');
-            $baseDebit = $line->debitAmount->getAmount()->multipliedBy($exchangeRate);
-            $baseCredit = $line->creditAmount->getAmount()->multipliedBy($exchangeRate);
+            $baseDebit = $line->debitAmount->getBigDecimal()->multipliedBy($exchangeRate);
+            $baseCredit = $line->creditAmount->getBigDecimal()->multipliedBy($exchangeRate);
 
             $totalDebits = $totalDebits->plus($baseDebit);
             $totalCredits = $totalCredits->plus($baseCredit);
@@ -111,8 +111,8 @@ class AccountingPostingService implements AccountingPostingServiceContract
         // 2. Insert lines
         foreach ($entryDto->lines as $lineDto) {
             $exchangeRate = BigDecimal::of($lineDto->exchangeRate ?? '1.000000');
-            $baseDebit = $lineDto->debitAmount->getAmount()->multipliedBy($exchangeRate)->toScale(4);
-            $baseCredit = $lineDto->creditAmount->getAmount()->multipliedBy($exchangeRate)->toScale(4);
+            $baseDebit = $lineDto->debitAmount->getBigDecimal()->multipliedBy($exchangeRate)->toScale(4);
+            $baseCredit = $lineDto->creditAmount->getBigDecimal()->multipliedBy($exchangeRate)->toScale(4);
 
             JournalLine::create([
                 'id' => (string) Str::uuid(),
@@ -120,8 +120,8 @@ class AccountingPostingService implements AccountingPostingServiceContract
                 'company_id' => $entryDto->companyId,
                 'journal_entry_id' => $entry->id,
                 'account_id' => $lineDto->accountId,
-                'debit_amount' => (string) $lineDto->debitAmount->getAmount()->toScale(4),
-                'credit_amount' => (string) $lineDto->creditAmount->getAmount()->toScale(4),
+                'debit_amount' => (string) $lineDto->debitAmount->getBigDecimal()->toScale(4),
+                'credit_amount' => (string) $lineDto->creditAmount->getBigDecimal()->toScale(4),
                 'currency' => $lineDto->currency ?? 'BDT',
                 'exchange_rate' => (string) $exchangeRate->toScale(6),
                 'base_debit_amount' => (string) $baseDebit,
