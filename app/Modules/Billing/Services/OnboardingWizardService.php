@@ -28,8 +28,7 @@ class OnboardingWizardService implements OnboardingWizardServiceContract
 {
     public function __construct(
         protected ModuleEntitlementServiceContract $entitlementService
-    ) {
-    }
+    ) {}
 
     /**
      * @param  array<string, mixed>  $data
