@@ -47,5 +47,7 @@ CLAUDE.md
 # Test and build output
 tests/Browser/Screenshots
 /playwright-report
+/recordings/
+/screenshots/
 .scratch/
 /*.txt
