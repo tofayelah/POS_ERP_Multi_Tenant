@@ -61,6 +61,22 @@ class ProductVariant extends Model
         ];
     }
 
+    protected static function booted(): void
+    {
+        static::saving(function (ProductVariant $variant) {
+            if ($variant->product) {
+                $variant->tenant_id ??= $variant->product->tenant_id;
+                $variant->company_id ??= $variant->product->company_id;
+            } elseif ($variant->product_id) {
+                $product = Product::query()->find($variant->product_id);
+                if ($product) {
+                    $variant->tenant_id ??= $product->tenant_id;
+                    $variant->company_id ??= $product->company_id;
+                }
+            }
+        });
+    }
+
     /**
      * @return BelongsTo<Tenant, $this>
      */
