@@ -15,7 +15,7 @@ return [
     |
     */
 
-    'default' => env('PENNANT_STORE', 'database'),
+    'default' => env('PENNANT_STORE', 'array'),
 
     /*
     |--------------------------------------------------------------------------
