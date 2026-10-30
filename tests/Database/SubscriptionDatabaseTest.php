@@ -4,10 +4,10 @@ use App\Models\Plan;
 use App\Models\Tenant;
 use App\Models\TenantSubscription;
 use Illuminate\Database\QueryException;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Ramsey\Uuid\Uuid;
+use Tests\TestCase;
 
-uses(RefreshDatabase::class);
+uses(TestCase::class);
 
 test('can create billing plan with modules and limits', function () {
     $plan = Plan::create([
