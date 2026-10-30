@@ -1,8 +1,14 @@
 <?php
 
+use App\Core\Tenancy\TenantContext;
+use App\Models\Tenant;
+use App\Modules\Accounting\Contracts\NumberSeriesContract;
+use Illuminate\Contracts\Console\Kernel;
+use Illuminate\Support\Facades\DB;
+
 require __DIR__.'/../../vendor/autoload.php';
 $app = require_once __DIR__.'/../../bootstrap/app.php';
-$kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
+$kernel = $app->make(Kernel::class);
 $kernel->bootstrap();
 
 $tenantId = $argv[1] ?? '';
@@ -10,20 +16,20 @@ $companyId = $argv[2] ?? '';
 $outputFile = $argv[3] ?? '';
 $count = isset($argv[4]) ? (int) $argv[4] : 500;
 
-$tenant = App\Models\Tenant::find($tenantId);
+$tenant = Tenant::find($tenantId);
 if (! $tenant) {
     fwrite(STDERR, "Tenant not found: {$tenantId}\n");
     exit(1);
 }
 
-App\Core\Tenancy\TenantContext::set($tenant);
+TenantContext::set($tenant);
 
-/** @var App\Modules\Accounting\Contracts\NumberSeriesContract $service */
-$service = app(App\Modules\Accounting\Contracts\NumberSeriesContract::class);
+/** @var NumberSeriesContract $service */
+$service = app(NumberSeriesContract::class);
 
 $numbers = [];
 for ($i = 0; $i < $count; $i++) {
-    Illuminate\Support\Facades\DB::transaction(function () use ($service, $companyId, &$numbers) {
+    DB::transaction(function () use ($service, $companyId, &$numbers) {
         $numbers[] = $service->getNextNumber($companyId, null, 'journal', '2026-2027');
     });
 }
