@@ -79,5 +79,3 @@ test('no float appears in money or accounting code (ACC-05)', function () {
 
     expect(count($files))->toBeGreaterThan(0);
 });
-
-
