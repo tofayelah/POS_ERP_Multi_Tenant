@@ -225,4 +225,3 @@ if ($mode === 'hold_locks') {
 
     exit(0);
 }
-
