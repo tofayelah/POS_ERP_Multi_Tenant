@@ -45,12 +45,7 @@ class InventoryFilamentResourcesTest extends TestCase
             'status' => 'active',
         ]);
 
-        $this->tenantB = Tenant::create([
-            'id' => (string) Str::uuid(),
-            'name' => 'Tenant B',
-            'subdomain' => 'tenant-b-'.Str::random(6),
-            'status' => 'active',
-        ]);
+        TenantContext::set($this->tenantA);
 
         $this->companyA = Company::create([
             'id' => (string) Str::uuid(),
@@ -60,6 +55,15 @@ class InventoryFilamentResourcesTest extends TestCase
             'fiscal_year_start_month' => 7,
             'tax_regime' => 'standard_vat',
         ]);
+
+        $this->tenantB = Tenant::create([
+            'id' => (string) Str::uuid(),
+            'name' => 'Tenant B',
+            'subdomain' => 'tenant-b-'.Str::random(6),
+            'status' => 'active',
+        ]);
+
+        TenantContext::set($this->tenantB);
 
         $this->companyB = Company::create([
             'id' => (string) Str::uuid(),
