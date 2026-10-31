@@ -363,7 +363,7 @@ Each commit follows the non-negotiable rule: **write failing test first on dev s
   - Transactional movement posting ensuring balances are updated atomically in the same database transaction.
 - **Verification:** Run `php artisan test tests/Database/StockLedgerPropertyTest.php`.
 
-### Commit 5: Sorted Row Locking, Deadlock Prevention & Multi-Process Concurrency Test (§13.1, §16.2)
+### Commit 5: Sorted Row Locking, Deadlock Prevention & Multi-Process Concurrency Test (§13.1, §16.2) [x] (Done - commit `b80c17d`)
 - **Review IDs Closed:** `INV-05`, `QA-01`
 - **Failing Tests First:**
   - `tests/Concurrency/ParallelPosCheckoutTest.php`:
