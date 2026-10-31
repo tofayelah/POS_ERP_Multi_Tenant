@@ -15,7 +15,6 @@ use App\Modules\Inventory\Contracts\StockMovementServiceContract;
 use App\Modules\Inventory\Contracts\StockReservationServiceContract;
 use App\Modules\Inventory\DTOs\StockMovementDTO;
 use App\Modules\Inventory\Exceptions\InsufficientStockException;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Tests\TestCase;

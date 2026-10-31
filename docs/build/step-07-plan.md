@@ -392,7 +392,7 @@ Each commit follows the non-negotiable rule: **write failing test first on dev s
   - Service: `app/Modules/Inventory/Services/CostingService.php` implementing `CostingServiceContract`.
 - **Verification:** Run `php artisan test tests/Unit/CostingServiceTest.php`.
 
-### Commit 7: Document-Linked Stock Reservations with Expiry
+### Commit 7: Document-Linked Stock Reservations with Expiry [x] (Done - commit `e476ef7`)
 - **Review IDs Closed:** `INV-04`
 - **Failing Tests First:**
   - `tests/Database/StockReservationTest.php`:
