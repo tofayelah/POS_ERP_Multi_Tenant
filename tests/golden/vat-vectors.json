@@ -1,0 +1,7 @@
+[
+  { "id": "incl-exempt-rice",  "basis": "tax_inclusive", "gross": "450.00", "vat_rate": "0",  "expect": { "net": "450.00", "vat": "0.00" } },
+  { "id": "incl-5pct-oil",     "basis": "tax_inclusive", "gross": "280.00", "vat_rate": "5",  "expect": { "net": "266.67", "vat": "13.33" } },
+  { "id": "incl-15pct-soap-x2","basis": "tax_inclusive", "gross": "130.00", "vat_rate": "15", "expect": { "net": "113.04", "vat": "16.96" } },
+  { "id": "basket-total",      "basis": "tax_inclusive", "lines": ["incl-exempt-rice", "incl-5pct-oil", "incl-15pct-soap-x2"],
+    "expect": { "gross": "860.00", "net": "829.71", "vat": "30.29" } }
+]
