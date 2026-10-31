@@ -137,6 +137,28 @@ if ($mode === 'setup') {
     exit(0);
 }
 
+if ($mode === 'query_locks') {
+    $targetPid = (int) ($argv[2] ?? 0);
+
+    $locks = DB::select("
+        SELECT
+            l.pid,
+            l.locktype,
+            c.relname AS relation,
+            l.page,
+            l.tuple,
+            l.mode,
+            l.granted
+        FROM pg_locks l
+        LEFT JOIN pg_class c ON l.relation = c.oid
+        WHERE l.pid = ?
+        ORDER BY l.locktype, c.relname, l.mode
+    ", [$targetPid]);
+
+    echo json_encode($locks, JSON_PRETTY_PRINT)."\n";
+    exit(0);
+}
+
 if ($mode === 'hold_locks') {
     $tenantId = $argv[2];
     $companyId = $argv[3];
@@ -203,3 +225,4 @@ if ($mode === 'hold_locks') {
 
     exit(0);
 }
+
