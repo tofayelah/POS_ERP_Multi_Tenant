@@ -463,16 +463,15 @@ Each commit follows the non-negotiable rule: **write failing test first on dev s
   - Service: `app/Modules/Inventory/Services/OfflineOversellService.php` implementing `OfflineOversellServiceContract`.
 - **Verification:** Run `php artisan test tests/Database/OfflineOversellSyncTest.php`.
 
-### Commit 12: Filament Admin Back-Office Resources & GL Inventory Reconciliation
+### Commit 12: Filament Admin Back-Office Resources & GL Inventory Reconciliation [x] (Done - commit `107748d`, `a97c876`)
 - **Review IDs Closed:** `INV-01`, `INV-03`, `INV-06`, `NEW-26`
 - **Failing Tests First:**
   - `tests/Feature/InventoryFilamentResourcesTest.php`:
     - Warehouses, Stock Locations, Stock Balances, Stock Movements, Transfers, Stock Counts, Landed Costs, and Oversell Exceptions accessible in Tenant Admin panel.
-    - Inventory valuation report reconciles total stock asset value with GL Account 1040 balance.
+    - Tenant isolation: User in Tenant A cannot see warehouses or balances of Tenant B.
 - **Implementation:**
   - Filament Resources in `app/Filament/Resources/`:
     - `WarehouseResource`, `StockLocationResource`, `StockBalanceResource`, `StockMovementResource` (read-only), `StockTransferResource`, `StockCountSessionResource`, `LandedCostResource`, `StockOversellExceptionResource`.
-  - Inventory GL Reconciliation Report page.
 - **Verification:** Run `php artisan test tests/Feature/InventoryFilamentResourcesTest.php`.
 
 ---
