@@ -14,6 +14,7 @@ class InventoryServiceProvider extends AbstractModuleServiceProvider
 
         $this->app->singleton(StockMovementServiceContract::class, StockMovementService::class);
     }
+
     public function getIdentifier(): string
     {
         return 'inventory';

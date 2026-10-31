@@ -17,6 +17,5 @@ readonly class StockMovementDTO
         public ?string $batchNumber = null,
         public ?string $expiryDate = null,
         public ?string $movementDate = null,
-    ) {
-    }
+    ) {}
 }

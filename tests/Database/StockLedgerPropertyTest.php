@@ -7,7 +7,6 @@ use App\Models\Company;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\StockBalance;
-use App\Models\StockLocation;
 use App\Models\StockMovement;
 use App\Models\TaxCode;
 use App\Models\Tenant;

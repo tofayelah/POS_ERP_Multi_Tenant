@@ -351,7 +351,7 @@ Each commit follows the non-negotiable rule: **write failing test first on dev s
   - Model: `app/Models/StockBalance.php`.
 - **Verification:** Run `php artisan test tests/Database/StockBalanceDatabaseTest.php`.
 
-### Commit 4: Mathematical Ledger Property Test (1,000 Movements Invariant)
+### Commit 4: Mathematical Ledger Property Test (1,000 Movements Invariant) [x] (Done - commit `ac0781e`, `9817fcb`)
 - **Review IDs Closed:** `INV-01`, `INV-02`
 - **Failing Tests First:**
   - `tests/Database/StockLedgerPropertyTest.php`:
