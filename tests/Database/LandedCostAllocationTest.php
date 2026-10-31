@@ -267,9 +267,9 @@ class LandedCostAllocationTest extends TestCase
         $this->assertCount(2, $journal->lines);
 
         $debitLine = $journal->lines->where('account_id', $this->cogsAccount->id)->firstOrFail();
-        $this->assertEquals('150.00', $debitLine->debit_amount);
+        $this->assertEquals('150.0000', $debitLine->debit_amount);
 
         $creditLine = $journal->lines->where('account_id', $this->apAccrualAccount->id)->firstOrFail();
-        $this->assertEquals('150.00', $creditLine->credit_amount);
+        $this->assertEquals('150.0000', $creditLine->credit_amount);
     }
 }
