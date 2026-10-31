@@ -3,8 +3,8 @@
 namespace Tests\Database;
 
 use App\Core\Tenancy\TenantContext;
-use App\Models\Account;
 use App\Models\AccountingPeriod;
+use App\Models\ChartOfAccount;
 use App\Models\Company;
 use App\Models\FiscalYear;
 use App\Models\JournalEntry;
@@ -37,9 +37,9 @@ class LandedCostAllocationTest extends TestCase
 
     protected StockMovementServiceContract $movementService;
 
-    protected Account $cogsAccount;
+    protected ChartOfAccount $cogsAccount;
 
-    protected Account $apAccrualAccount;
+    protected ChartOfAccount $apAccrualAccount;
 
     protected AccountingPeriod $period;
 
@@ -118,29 +118,27 @@ class LandedCostAllocationTest extends TestCase
             'company_id' => $this->company->id,
             'fiscal_year_id' => $fy->id,
             'period_number' => 5,
-            'name' => 'November 2026',
+            'period_name' => 'November 2026',
             'start_date' => Carbon::parse('2026-11-01'),
             'end_date' => Carbon::parse('2026-11-30'),
             'status' => 'open',
         ]);
 
-        $this->cogsAccount = Account::create([
+        $this->cogsAccount = ChartOfAccount::create([
             'tenant_id' => $this->tenant->id,
             'company_id' => $this->company->id,
-            'code' => '5010',
-            'name' => 'Cost of Goods Sold',
-            'type' => 'expense',
-            'currency' => 'BDT',
+            'account_code' => '5010',
+            'account_name' => 'Cost of Goods Sold',
+            'account_type' => 'expense',
             'is_active' => true,
         ]);
 
-        $this->apAccrualAccount = Account::create([
+        $this->apAccrualAccount = ChartOfAccount::create([
             'tenant_id' => $this->tenant->id,
             'company_id' => $this->company->id,
-            'code' => '2010',
-            'name' => 'Accounts Payable Accrual',
-            'type' => 'liability',
-            'currency' => 'BDT',
+            'account_code' => '2010',
+            'account_name' => 'Accounts Payable Accrual',
+            'account_type' => 'liability',
             'is_active' => true,
         ]);
 
