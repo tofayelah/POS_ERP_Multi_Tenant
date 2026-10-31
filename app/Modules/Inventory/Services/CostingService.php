@@ -72,8 +72,8 @@ class CostingService implements CostingServiceContract
             ->where('product_variant_id', $productVariantId)
             ->when($batchNumber, fn ($q) => $q->where('batch_number', $batchNumber), fn ($q) => $q->whereNull('batch_number'))
             ->where('quantity_remaining', '>', 0)
-            ->orderBy('receipt_date', 'ASC')
-            ->orderBy('created_at', 'ASC')
+            ->orderBy('receipt_date', 'asc')
+            ->orderBy('created_at', 'asc')
             ->lockForUpdate()
             ->get();
 

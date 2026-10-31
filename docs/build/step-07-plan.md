@@ -379,7 +379,7 @@ Each commit follows the non-negotiable rule: **write failing test first on dev s
   - CLI command for test worker: `app/Console/Commands/SimulatePosCheckoutCommand.php`.
 - **Verification:** Run `php artisan test tests/Concurrency/ParallelPosCheckoutTest.php` and `tests/Concurrency/ForcedDeadlockRetryTest.php`.
 
-### Commit 6: FIFO Cost Layers Engine & WAC True-Up
+### Commit 6: FIFO Cost Layers Engine & WAC True-Up [x] (Done - commit `b968b16`)
 - **Review IDs Closed:** `INV-01`, `INV-06`
 - **Failing Tests First:**
   - `tests/Unit/CostingServiceTest.php`:
