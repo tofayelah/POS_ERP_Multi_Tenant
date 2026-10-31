@@ -463,7 +463,7 @@ Each commit follows the non-negotiable rule: **write failing test first on dev s
   - Service: `app/Modules/Inventory/Services/OfflineOversellService.php` implementing `OfflineOversellServiceContract`.
 - **Verification:** Run `php artisan test tests/Database/OfflineOversellSyncTest.php`.
 
-### Commit 12: Filament Admin Back-Office Resources & GL Inventory Reconciliation [x] (Done - commit `107748d`, `a97c876`)
+### Commit 12: Filament Admin Back-Office Resources [x] (Done - commit `107748d`, `a97c876`)
 - **Review IDs Closed:** `INV-01`, `INV-03`, `INV-06`, `NEW-26`
 - **Failing Tests First:**
   - `tests/Feature/InventoryFilamentResourcesTest.php`:
@@ -473,6 +473,36 @@ Each commit follows the non-negotiable rule: **write failing test first on dev s
   - Filament Resources in `app/Filament/Resources/`:
     - `WarehouseResource`, `StockLocationResource`, `StockBalanceResource`, `StockMovementResource` (read-only), `StockTransferResource`, `StockCountSessionResource`, `LandedCostResource`, `StockOversellExceptionResource`.
 - **Verification:** Run `php artisan test tests/Feature/InventoryFilamentResourcesTest.php`.
+
+### Commit 13: General Ledger Inventory Asset Reconciliation (Closing Item 4 of Step 7 Checklist & INV-01) [ ]
+- **Review IDs Closed:** `INV-01`, `NEW-22`
+- **Architectural Rules Enforced:**
+  - Non-negotiable Rule 6: Money uses `Brick\Math\BigDecimal` and half-up rounding to 2 places. No floats anywhere in financial calculations.
+  - Non-negotiable Rule 7: GL posting happens synchronously in the same database transaction as the stock movement, never in a background job.
+  - Stack Rule: Inventory interacts with Accounting strictly via `app/Modules/Accounting/Contracts/AccountingPostingServiceContract`.
+- **Failing Tests First:**
+  - `tests/Database/InventoryGlReconciliationTest.php`:
+    - Test 1: Purchase receipt of 100 units @ 150 BDT posts double-entry journal (`DR 1040 Merchandise Inventory / CR 2010 Accounts Payable`), and `InventoryGlReconciliationService::getReconciliationReport()` reports `isReconciled = true` with zero variance.
+    - Test 2: Sale of 30 units records COGS journal (`DR 5010 COGS / CR 1040 Merchandise Inventory`), leaving stock valuation and Account 1040 net debit balance exactly matching at 10,500.00 BDT.
+    - Test 3: Stock count adjustment (physical write-down of 5 units) posts adjustment journal (`DR 5030 Inventory Adjustment / CR 1040 Merchandise Inventory`), keeping stock valuation and Account 1040 net balance reconciled.
+    - Test 4: Landed cost allocation to in-stock units updates WAC and posts balancing GL journal (`DR 1040 / CR 2010`), leaving zero reconciliation variance.
+    - Test 5: Reconciler flags any discrepancy (`isReconciled = false`) if an unbacked manual journal is posted directly to Account 1040.
+- **Implementation:**
+  - Contract: `app/Modules/Inventory/Contracts/InventoryGlReconciliationContract.php`:
+    - `getReconciliationReport(string $companyId): InventoryReconciliationDTO`
+    - `postInventoryGlJournal(StockMovement $movement, ?string $userId = null): ?JournalEntry`
+  - DTO: `app/Modules/Inventory/DTOs/InventoryReconciliationDTO.php`:
+    - `companyId`, `stockValuation`, `glBalance`, `variance`, `isReconciled`, `asOf`
+  - Service: `app/Modules/Inventory/Services/InventoryGlReconciliationService.php`:
+    - Implements `InventoryGlReconciliationContract`.
+    - Automatically discovers open `AccountingPeriod` for movement date.
+    - Resolves account IDs for codes `1040` (Merchandise Inventory), `2010` (Accounts Payable / Clearing), `5010` (COGS), and `5030` (Inventory Adjustment).
+    - Calls `AccountingPostingServiceContract::post()` in caller's active transaction.
+  - Integration in `StockMovementService`:
+    - Optional synchronous trigger in `StockMovementService::recordMovement()` when company has active accounting chart of accounts.
+- **Verification:**
+  - Run `php artisan test tests/Database/InventoryGlReconciliationTest.php` on dev server (CT 104).
+  - Run Pint and PHPStan level 8.
 
 ---
 
