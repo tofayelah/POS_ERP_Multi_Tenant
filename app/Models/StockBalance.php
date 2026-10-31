@@ -78,7 +78,7 @@ class StockBalance extends Model
         $onHand = BigDecimal::of($this->quantity_on_hand ?? '0.0000');
         $reserved = BigDecimal::of($this->quantity_reserved ?? '0.0000');
 
-        return (string) $onHand->minus($reserved)->toScale(4, RoundingMode::HALF_UP);
+        return (string) $onHand->minus($reserved)->toScale(4, RoundingMode::HalfUp);
     }
 
     /**
