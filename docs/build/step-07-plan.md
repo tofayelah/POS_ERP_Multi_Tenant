@@ -324,7 +324,7 @@ Each commit follows the non-negotiable rule: **write failing test first on dev s
   - Enforce `LocationScope` and composite foreign keys.
 - **Verification:** Run `php artisan test tests/Database/WarehouseDatabaseTest.php` and `php artisan db:check-rls`.
 
-### Commit 2: Append-Only Stock Movements Ledger with Immutability Trigger
+### Commit 2: Append-Only Stock Movements Ledger with Immutability Trigger [x] (Done - commit `cbe2486`)
 - **Review IDs Closed:** `INV-01`, `NEW-23`
 - **Failing Tests First:**
   - `tests/Database/StockMovementImmutabilityTest.php`:

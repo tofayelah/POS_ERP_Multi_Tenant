@@ -8,6 +8,7 @@ use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\StockLocation;
 use App\Models\StockMovement;
+use App\Models\TaxCode;
 use App\Models\Tenant;
 use App\Models\Warehouse;
 use Illuminate\Database\QueryException;
@@ -68,7 +69,7 @@ class StockMovementImmutabilityTest extends TestCase
             'is_active' => true,
         ]);
 
-        $taxCode = \App\Models\TaxCode::create([
+        $taxCode = TaxCode::create([
             'tenant_id' => $this->tenant->id,
             'company_id' => $this->company->id,
             'code' => 'VAT-15',
