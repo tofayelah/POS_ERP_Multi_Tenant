@@ -68,12 +68,21 @@ class StockMovementImmutabilityTest extends TestCase
             'is_active' => true,
         ]);
 
+        $taxCode = \App\Models\TaxCode::create([
+            'tenant_id' => $this->tenant->id,
+            'company_id' => $this->company->id,
+            'code' => 'VAT-15',
+            'name' => 'Standard VAT 15%',
+            'tax_type' => 'standard_vat',
+            'is_active' => true,
+        ]);
+
         $product = Product::create([
             'tenant_id' => $this->tenant->id,
             'company_id' => $this->company->id,
-            'name' => 'Test Product',
             'code' => 'PROD-01',
-            'type' => 'goods',
+            'name_en' => 'Test Product',
+            'base_uom' => 'Pcs',
             'is_active' => true,
         ]);
 
@@ -81,10 +90,12 @@ class StockMovementImmutabilityTest extends TestCase
             'tenant_id' => $this->tenant->id,
             'company_id' => $this->company->id,
             'product_id' => $product->id,
+            'tax_code_id' => $taxCode->id,
             'sku' => 'SKU-001',
-            'name' => 'Test Variant Standard',
+            'name_en' => 'Test Variant Standard',
+            'base_uom' => 'Pcs',
             'cost_price' => '100.0000',
-            'retail_price' => '150.0000',
+            'mrp' => '150.0000',
             'is_active' => true,
         ]);
     }
