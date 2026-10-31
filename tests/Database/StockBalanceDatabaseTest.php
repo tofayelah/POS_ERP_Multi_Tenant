@@ -11,7 +11,6 @@ use App\Models\StockLocation;
 use App\Models\TaxCode;
 use App\Models\Tenant;
 use App\Models\Warehouse;
-use App\Modules\Inventory\Exceptions\InsufficientStockException;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;

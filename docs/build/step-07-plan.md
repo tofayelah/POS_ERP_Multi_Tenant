@@ -338,7 +338,7 @@ Each commit follows the non-negotiable rule: **write failing test first on dev s
   - Model: `app/Models/StockMovement.php`.
 - **Verification:** Run `php artisan test tests/Database/StockMovementImmutabilityTest.php`.
 
-### Commit 3: Stock Balances Projected Cache with ADR-016 Constraint
+### Commit 3: Stock Balances Projected Cache with ADR-016 Constraint [x] (Done - commit `218543c`, `d0f241a`)
 - **Review IDs Closed:** `INV-02`, `INV-03`, `NEW-26`
 - **Failing Tests First:**
   - `tests/Database/StockBalanceDatabaseTest.php`:
