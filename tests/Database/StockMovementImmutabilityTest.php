@@ -72,7 +72,7 @@ class StockMovementImmutabilityTest extends TestCase
             'tenant_id' => $this->tenant->id,
             'company_id' => $this->company->id,
             'code' => 'VAT-15',
-            'name' => 'Standard VAT 15%',
+            'name_en' => 'Standard VAT 15%',
             'tax_type' => 'standard_vat',
             'is_active' => true,
         ]);
