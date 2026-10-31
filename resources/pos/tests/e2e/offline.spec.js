@@ -58,8 +58,8 @@ test.describe('Offline POS Shell & Cashier Flow (Step 8, POS-04, POS-07, POS-08,
 
   test('full cashier day flow: float, discount ceilings, mid-sale reload, pin lockout, denomination count', async ({ page, context }) => {
     // Automatically accept any browser alert dialogs
-    page.on('dialog', async (dialog) => {
-      await dialog.accept();
+    page.on('dialog', (dialog) => {
+      dialog.accept().catch(() => {});
     });
 
     await page.goto('/pos');
@@ -210,8 +210,8 @@ test.describe('Offline POS Shell & Cashier Flow (Step 8, POS-04, POS-07, POS-08,
   });
 
   test('returns and refunds: offline return requires supervisor PIN and creates linked credit note (NEW-32)', async ({ page, context }) => {
-    page.on('dialog', async (dialog) => {
-      await dialog.accept();
+    page.on('dialog', (dialog) => {
+      dialog.accept().catch(() => {});
     });
 
     await page.goto('/pos');
