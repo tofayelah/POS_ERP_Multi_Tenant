@@ -309,7 +309,7 @@ Retail outlets perform cycle counts during business hours without halting tradin
 
 Each commit follows the non-negotiable rule: **write failing test first on dev server, see it fail, implement, verify pass, run Pint & PHPStan, tick commit.**
 
-### Commit 1: Warehouses & Stock Locations Schema & Scoping
+### Commit 1: Warehouses & Stock Locations Schema & Scoping [x] (Done - commit `01be3e3`, `81634b7`)
 - **Review IDs Closed:** `INV-03`
 - **Failing Tests First:**
   - `tests/Database/WarehouseDatabaseTest.php`:
