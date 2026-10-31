@@ -523,7 +523,7 @@
                 syncStatusText: 'Synced',
 
                 // Security & Lockout
-                showPinModal: true,
+                showPinModal: false,
                 enteredPin: '',
                 failedPinCount: 0,
                 isLocked: false,
@@ -602,6 +602,8 @@
                     const activeShift = await db.shifts.where('status').equals('open').first();
                     if (activeShift) {
                         this.shiftOpen = true;
+                        this.showPinModal = false;
+                        this.showShiftModal = false;
                         this.openingFloat = activeShift.opening_float;
                         
                         // Resilient Shift Cash: Compute directly from Dexie sales to survive reload
@@ -610,8 +612,8 @@
                         this.shiftCashSales = Math.max(activeShift.cash_sales || 0, totalFromSales);
                         this.calculateShiftTotals();
                     } else {
-                        // Prompt to open shift
-                        this.showShiftModal = true;
+                        // Prompt for PIN sign-in
+                        this.showPinModal = true;
                     }
                 },
 
