@@ -474,7 +474,7 @@ Each commit follows the non-negotiable rule: **write failing test first on dev s
     - `WarehouseResource`, `StockLocationResource`, `StockBalanceResource`, `StockMovementResource` (read-only), `StockTransferResource`, `StockCountSessionResource`, `LandedCostResource`, `StockOversellExceptionResource`.
 - **Verification:** Run `php artisan test tests/Feature/InventoryFilamentResourcesTest.php`.
 
-### Commit 13: General Ledger Inventory Asset Reconciliation (Closing Item 4 of Step 7 Checklist & INV-01) [ ]
+### Commit 13: General Ledger Inventory Asset Reconciliation (Closing Item 4 of Step 7 Checklist & INV-01) [x] (Done - commit `9a1bbfe`, `b142bc7`)
 - **Review IDs Closed:** `INV-01`, `NEW-22`
 - **Architectural Rules Enforced:**
   - Non-negotiable Rule 6: Money uses `Brick\Math\BigDecimal` and half-up rounding to 2 places. No floats anywhere in financial calculations.
