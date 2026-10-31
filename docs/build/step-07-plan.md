@@ -447,7 +447,7 @@ Each commit follows the non-negotiable rule: **write failing test first on dev s
   - Service: `app/Modules/Inventory/Services/LandedCostService.php` implementing `LandedCostServiceContract`.
 - **Verification:** Run `php artisan test tests/Database/LandedCostAllocationTest.php`.
 
-### Commit 11: ADR-016 Offline Oversell Sync & Supervisor Exception Queue
+### Commit 11: ADR-016 Offline Oversell Sync & Supervisor Exception Queue [x] (Done - commit `e35e8b2`)
 - **Review IDs Closed:** `NEW-26`
 - **Failing Tests First:**
   - `tests/Database/OfflineOversellSyncTest.php`:
