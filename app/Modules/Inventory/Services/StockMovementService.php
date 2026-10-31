@@ -21,7 +21,7 @@ class StockMovementService implements StockMovementServiceContract
      */
     public function recordMovement(StockMovementDTO $dto): StockMovement
     {
-        if (! DB::connection()->isInTransaction()) {
+        if (DB::transactionLevel() === 0) {
             throw new RuntimeException('Stock movement must be recorded within an active database transaction.');
         }
 
