@@ -25,7 +25,10 @@ class StockMovementService implements StockMovementServiceContract
             throw new RuntimeException('Stock movement must be recorded within an active database transaction.');
         }
 
-        $tenantId = TenantContext::getTenantId();
+        $tenantId = TenantContext::id();
+        if (! $tenantId) {
+            throw new RuntimeException('Tenant context must be active to record stock movements.');
+        }
 
         if ($dto->movementType === 'OFFLINE_OVERSELL') {
             DB::statement("SELECT set_config('app.allow_negative_stock', 'true', true)");
