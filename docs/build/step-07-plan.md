@@ -435,7 +435,7 @@ Each commit follows the non-negotiable rule: **write failing test first on dev s
   - Service: `app/Modules/Inventory/Services/StockTransferService.php` implementing `StockTransferServiceContract`.
 - **Verification:** Run `php artisan test tests/Database/StockTransferTest.php`.
 
-### Commit 10: Landed Cost Allocation & Late-Arrival Cost Adjustment
+### Commit 10: Landed Cost Allocation & Late-Arrival Cost Adjustment [x] (Done - commit `e7dc26c`)
 - **Review IDs Closed:** `INV-06`
 - **Failing Tests First:**
   - `tests/Database/LandedCostAllocationTest.php`:
