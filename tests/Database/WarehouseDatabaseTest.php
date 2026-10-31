@@ -9,7 +9,6 @@ use App\Models\StockLocation;
 use App\Models\Tenant;
 use App\Models\Warehouse;
 use Illuminate\Database\QueryException;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
