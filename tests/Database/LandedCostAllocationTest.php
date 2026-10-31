@@ -107,7 +107,7 @@ class LandedCostAllocationTest extends TestCase
         $fy = FiscalYear::create([
             'tenant_id' => $this->tenant->id,
             'company_id' => $this->company->id,
-            'name' => 'FY 2026-2027',
+            'title' => 'FY 2026-2027',
             'start_date' => Carbon::parse('2026-07-01'),
             'end_date' => Carbon::parse('2027-06-30'),
             'is_closed' => false,
