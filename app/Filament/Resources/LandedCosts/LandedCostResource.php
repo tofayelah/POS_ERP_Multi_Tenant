@@ -42,7 +42,12 @@ class LandedCostResource extends Resource
 
                         return $tenant ? Company::where('tenant_id', $tenant->id)->pluck('legal_name', 'id') : [];
                     })
-                    ->default(fn () => Filament::getTenant()?->companies()->first()?->id)
+                    ->default(function () {
+                        /** @var Tenant|null $tenant */
+                        $tenant = Filament::getTenant();
+
+                        return $tenant ? Company::where('tenant_id', $tenant->id)->first()?->id : null;
+                    })
                     ->required(),
 
                 Select::make('cost_type')
