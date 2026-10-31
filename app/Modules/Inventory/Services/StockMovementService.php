@@ -10,7 +10,7 @@ use App\Modules\Inventory\DTOs\StockMovementDTO;
 use App\Modules\Inventory\Exceptions\InsufficientStockException;
 use Brick\Math\BigDecimal;
 use Brick\Math\RoundingMode;
-use Carbon\Carbon;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
