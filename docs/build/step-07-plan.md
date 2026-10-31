@@ -407,7 +407,7 @@ Each commit follows the non-negotiable rule: **write failing test first on dev s
   - Command: `app/Console/Commands/ReleaseExpiredReservationsCommand.php`.
 - **Verification:** Run `php artisan test tests/Database/StockReservationTest.php`.
 
-### Commit 8: Stock Count Sessions with In-Flight Movement Tracking
+### Commit 8: Stock Count Sessions with In-Flight Movement Tracking [x] (Done - commit `6445426`)
 - **Review IDs Closed:** `INV-06`
 - **Failing Tests First:**
   - `tests/Database/StockCountSessionTest.php`:

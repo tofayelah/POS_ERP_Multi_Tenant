@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Core\Scoping\HasLocationScope;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -25,7 +26,7 @@ use Illuminate\Support\Carbon;
  * @property-read Tenant $tenant
  * @property-read Company $company
  * @property-read Warehouse $warehouse
- * @property-read \Illuminate\Database\Eloquent\Collection<int, StockCountLine> $lines
+ * @property-read Collection<int, StockCountLine> $lines
  */
 class StockCountSession extends Model
 {
