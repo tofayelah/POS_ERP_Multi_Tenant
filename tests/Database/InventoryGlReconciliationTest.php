@@ -213,7 +213,7 @@ class InventoryGlReconciliationTest extends TestCase
 
             $journal = $this->reconciliationService->postInventoryGlJournal($movement, $this->user->id);
             $this->assertNotNull($journal);
-            $this->assertEquals('posted', $journal->status);
+            $this->assertTrue($journal->is_posted);
         });
 
         $report = $this->reconciliationService->getReconciliationReport($this->company->id);
