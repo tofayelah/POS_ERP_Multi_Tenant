@@ -5,8 +5,10 @@ namespace App\Modules\Inventory\Providers;
 use App\Core\Providers\AbstractModuleServiceProvider;
 use App\Modules\Inventory\Contracts\CostingServiceContract;
 use App\Modules\Inventory\Contracts\StockMovementServiceContract;
+use App\Modules\Inventory\Contracts\StockReservationServiceContract;
 use App\Modules\Inventory\Services\CostingService;
 use App\Modules\Inventory\Services\StockMovementService;
+use App\Modules\Inventory\Services\StockReservationService;
 
 class InventoryServiceProvider extends AbstractModuleServiceProvider
 {
@@ -16,6 +18,7 @@ class InventoryServiceProvider extends AbstractModuleServiceProvider
 
         $this->app->singleton(StockMovementServiceContract::class, StockMovementService::class);
         $this->app->singleton(CostingServiceContract::class, CostingService::class);
+        $this->app->singleton(StockReservationServiceContract::class, StockReservationService::class);
     }
 
     public function getIdentifier(): string
