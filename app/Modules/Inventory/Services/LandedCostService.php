@@ -125,7 +125,7 @@ class LandedCostService implements LandedCostServiceContract
                 $onHand = $balance ? BigDecimal::of($balance->quantity_on_hand) : BigDecimal::zero();
                 $allocatedAmount = BigDecimal::of($allocation->allocated_amount);
 
-                if ($onHand->isPositive()) {
+                if ($balance && $onHand->isPositive()) {
                     // Goods on hand: capitalize landed cost into inventory asset and update WAC
                     $costPerUnit = $allocatedAmount->dividedBy($onHand, 4, RoundingMode::HalfUp);
                     $currentWac = BigDecimal::of($balance->weighted_avg_cost ?? '0.0000');
