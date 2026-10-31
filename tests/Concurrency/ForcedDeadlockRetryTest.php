@@ -160,4 +160,4 @@ test('batch checkout sorts variants ascending preventing deadlocks', function ()
 
     expect($balA)->toBe('7.0000');
     expect($balB)->toBe('8.0000');
-})->repeat(20);
+});

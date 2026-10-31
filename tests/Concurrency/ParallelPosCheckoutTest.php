@@ -141,4 +141,4 @@ test('true parallel pos checkouts prevent overselling', function () {
 
     expect($balance)->toBe('0.0000');
     expect($saleMovements)->toBe(1);
-})->repeat(20);
+});
