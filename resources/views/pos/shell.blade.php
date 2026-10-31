@@ -162,6 +162,9 @@
                     <button @click="openDiscountModal()" id="btn-open-discount" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded font-bold shadow-sm">
                         [F3] Apply Discount
                     </button>
+                    <button @click="openReturnModal()" id="btn-open-return" class="bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded font-bold shadow-sm">
+                        [F6] Return / Refund
+                    </button>
                     <button @click="clearCart()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1.5 rounded font-bold">
                         [Esc] Clear Cart
                     </button>
@@ -352,40 +355,74 @@
         </div>
     </div>
 
-    <!-- 4. Tender & Payment Modal -->
+    <!-- 4. Tender & Payment Modal (Multi-tender: Cash, bKash, Nagad, Card) -->
     <div x-show="showTenderModal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center z-50">
         <div class="bg-white rounded-xl shadow-2xl p-6 w-[480px] max-w-full border border-gray-300">
             <h3 class="text-base font-bold text-slate-900 mb-1">Tender Payment</h3>
-            <p class="text-xs text-gray-500 mb-4">Total Amount Payable: <span class="font-bold text-emerald-600 font-mono text-sm" x-text="'৳' + totals.payable"></span></p>
+            <p class="text-xs text-gray-500 mb-3">Total Amount Payable: <span class="font-bold text-emerald-600 font-mono text-sm" x-text="'৳' + totals.payable"></span></p>
 
-            <div class="mb-4">
-                <label class="block text-xs font-semibold text-gray-700 mb-1">Cash Tendered (BDT)</label>
-                <div class="relative">
-                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center font-mono font-bold text-gray-500">৳</span>
-                    <input type="number" 
-                           id="tendered-amount-input"
-                           x-model="tenderedAmount" 
-                           @input="calculateChange()"
-                           placeholder="0.00" 
-                           class="w-full pl-8 pr-4 py-2.5 border-2 border-slate-700 rounded-lg text-xl font-mono font-bold focus:outline-none">
+            <!-- Payment Mode Tabs -->
+            <div class="flex border-b border-gray-200 mb-4 text-xs font-bold">
+                <button type="button" @click="paymentMethod = 'CASH'; tenderError = ''" id="tender-tab-cash" class="px-3.5 py-1.5 border-b-2" :class="paymentMethod === 'CASH' ? 'border-emerald-600 text-emerald-700' : 'border-transparent text-gray-500'">Cash</button>
+                <button type="button" @click="paymentMethod = 'BKASH'; tenderError = ''" id="tender-tab-bkash" class="px-3.5 py-1.5 border-b-2" :class="paymentMethod === 'BKASH' ? 'border-pink-600 text-pink-700' : 'border-transparent text-gray-500'">bKash</button>
+                <button type="button" @click="paymentMethod = 'NAGAD'; tenderError = ''" id="tender-tab-nagad" class="px-3.5 py-1.5 border-b-2" :class="paymentMethod === 'NAGAD' ? 'border-orange-600 text-orange-700' : 'border-transparent text-gray-500'">Nagad</button>
+                <button type="button" @click="paymentMethod = 'CARD'; tenderError = ''" id="tender-tab-card" class="px-3.5 py-1.5 border-b-2" :class="paymentMethod === 'CARD' ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-500'">Card (POS)</button>
+            </div>
+
+            <!-- Error Banner -->
+            <div x-show="tenderError" class="mb-4 p-2.5 bg-red-100 border border-red-300 rounded text-red-800 text-xs font-bold" id="tender-error-alert" x-text="tenderError"></div>
+
+            <!-- Cash Tender Section -->
+            <div x-show="paymentMethod === 'CASH'">
+                <div class="mb-4">
+                    <label class="block text-xs font-semibold text-gray-700 mb-1">Cash Tendered (BDT)</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center font-mono font-bold text-gray-500">৳</span>
+                        <input type="number" 
+                               id="tendered-amount-input"
+                               x-model="tenderedAmount" 
+                               @input="calculateChange()"
+                               placeholder="0.00" 
+                               class="w-full pl-8 pr-4 py-2.5 border-2 border-slate-700 rounded-lg text-xl font-mono font-bold focus:outline-none">
+                    </div>
+                </div>
+
+                <!-- Quick Denomination Shortcuts -->
+                <div class="grid grid-cols-4 gap-2 mb-4">
+                    <button @click="setTenderExact()" class="py-2 bg-gray-100 hover:bg-gray-200 rounded text-xs font-bold">Exact</button>
+                    <button @click="setTender(500)" class="py-2 bg-gray-100 hover:bg-gray-200 rounded text-xs font-bold font-mono">৳500</button>
+                    <button @click="setTender(1000)" class="py-2 bg-gray-100 hover:bg-gray-200 rounded text-xs font-bold font-mono">৳1000</button>
+                    <button @click="setTender(2000)" class="py-2 bg-gray-100 hover:bg-gray-200 rounded text-xs font-bold font-mono">৳2000</button>
+                </div>
+
+                <!-- Change Calculation Box -->
+                <div class="bg-slate-50 border border-slate-200 rounded-lg p-3.5 mb-5 flex justify-between items-center">
+                    <div>
+                        <span class="text-xs text-gray-500 uppercase font-bold block">Change Due (Rounded ৳1)</span>
+                        <span class="text-[11px] text-gray-400">Cash drawer kicks automatically</span>
+                    </div>
+                    <span class="text-2xl font-black font-mono text-slate-900" id="change-due-display" x-text="'৳' + changeDue">৳0.00</span>
                 </div>
             </div>
 
-            <!-- Quick Denomination Shortcuts -->
-            <div class="grid grid-cols-4 gap-2 mb-4">
-                <button @click="setTenderExact()" class="py-2 bg-gray-100 hover:bg-gray-200 rounded text-xs font-bold">Exact</button>
-                <button @click="setTender(500)" class="py-2 bg-gray-100 hover:bg-gray-200 rounded text-xs font-bold font-mono">৳500</button>
-                <button @click="setTender(1000)" class="py-2 bg-gray-100 hover:bg-gray-200 rounded text-xs font-bold font-mono">৳1000</button>
-                <button @click="setTender(2000)" class="py-2 bg-gray-100 hover:bg-gray-200 rounded text-xs font-bold font-mono">৳2000</button>
-            </div>
-
-            <!-- Change Calculation Box -->
-            <div class="bg-slate-50 border border-slate-200 rounded-lg p-3.5 mb-5 flex justify-between items-center">
-                <div>
-                    <span class="text-xs text-gray-500 uppercase font-bold block">Change Due (Rounded ৳1)</span>
-                    <span class="text-[11px] text-gray-400">Cash drawer kicks automatically</span>
+            <!-- Non-Cash MFS/Card Section -->
+            <div x-show="paymentMethod !== 'CASH'" class="mb-5">
+                <div class="p-3 bg-slate-50 border rounded-lg mb-3 text-xs flex justify-between items-center">
+                    <span class="font-bold text-slate-900" x-text="paymentMethod + ' Amount Payable'"></span>
+                    <span class="font-mono font-bold text-emerald-600 text-sm" x-text="'৳' + totals.payable"></span>
                 </div>
-                <span class="text-2xl font-black font-mono text-slate-900" id="change-due-display" x-text="'৳' + changeDue">৳0.00</span>
+                <div class="mb-2">
+                    <label class="block text-xs font-semibold text-gray-700 mb-1">
+                        Manual Reference / TrxID <span x-show="!isOnline" class="text-red-600 font-bold">(Mandatory Offline)</span>
+                    </label>
+                    <input type="text" 
+                           id="mfs-reference-input" 
+                           data-testid="mfs-reference"
+                           x-model="mfsReferenceInput" 
+                           placeholder="e.g. TRX-987654321 or Auth Code" 
+                           class="w-full px-3 py-2 border-2 border-slate-700 rounded-lg text-sm font-mono focus:outline-none">
+                    <p class="text-[11px] text-gray-500 mt-1">When network is disconnected, manual TrxID or approval code is required for offline audit reconciliation.</p>
+                </div>
             </div>
 
             <div class="flex justify-end space-x-2">
@@ -402,7 +439,63 @@
         </div>
     </div>
 
-    <!-- 5. Receipt Toast Notification -->
+    <!-- 5. Return / Refund Modal (Supervisor Authorization Required) -->
+    <div x-show="showReturnModal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center z-50">
+        <div class="bg-white rounded-xl shadow-2xl p-6 w-[480px] max-w-full border border-gray-300">
+            <h3 class="text-base font-bold text-slate-900 mb-1">Process Return & Refund (Supervisor Required)</h3>
+            <p class="text-xs text-gray-500 mb-4">Creates a linked credit note in offline sales queue</p>
+
+            <div x-show="returnError" class="mb-4 p-2.5 bg-red-100 border border-red-300 rounded text-red-800 text-xs font-bold" id="return-error-alert" x-text="returnError"></div>
+
+            <div class="mb-3">
+                <label class="block text-xs font-semibold text-gray-700 mb-1">Supervisor PIN (Required)</label>
+                <input type="password" 
+                       id="return-supervisor-pin" 
+                       x-model="returnSupervisorPin" 
+                       placeholder="••••" 
+                       class="w-full px-3 py-2 border-2 border-slate-700 rounded-lg font-mono text-center tracking-widest text-lg focus:outline-none">
+            </div>
+
+            <div class="mb-3">
+                <label class="block text-xs font-semibold text-gray-700 mb-1">Original Invoice Reference</label>
+                <input type="text" 
+                       id="return-invoice-ref" 
+                       x-model="returnInvoiceRef" 
+                       placeholder="e.g. INV-DHA01-T01-123456" 
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs font-mono focus:outline-none">
+            </div>
+
+            <div class="mb-3">
+                <label class="block text-xs font-semibold text-gray-700 mb-1">Refund Amount (BDT)</label>
+                <input type="number" 
+                       id="return-amount-input" 
+                       x-model="returnAmountInput" 
+                       placeholder="280.00" 
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-mono font-bold focus:outline-none">
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-xs font-semibold text-gray-700 mb-1">Mandatory Reason Code</label>
+                <select x-model="returnReasonCode" id="return-reason-select" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs focus:outline-none">
+                    <option value="DAMAGED_GOODS">Damaged / Defective Goods</option>
+                    <option value="EXPIRED">Expired Product</option>
+                    <option value="CUSTOMER_RETURN">Customer Changed Mind</option>
+                    <option value="WRONG_ITEM">Wrong Item Billed</option>
+                </select>
+            </div>
+
+            <div class="flex justify-end space-x-2">
+                <button @click="showReturnModal = false; returnError = ''" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg text-xs font-bold">
+                    Cancel
+                </button>
+                <button @click="processReturnRefund()" id="btn-confirm-return" class="bg-amber-600 hover:bg-amber-700 text-white px-5 py-2 rounded-lg text-xs font-bold">
+                    Authorize Credit Note
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 6. Receipt Toast Notification -->
     <div x-show="showReceiptToast" 
          x-transition:enter="transition ease-out duration-300"
          x-transition:enter-start="opacity-0 transform translate-y-4"
@@ -415,11 +508,11 @@
             <span>✓ Transaction Completed</span>
         </div>
         <div class="text-gray-300 font-mono text-[11px]">Invoice: <span class="text-white font-bold" x-text="lastSaleInvoice"></span></div>
-        <div class="text-gray-300 font-mono text-[11px]">Total: <span class="text-emerald-300 font-bold" x-text="'৳' + lastSaleTotal"></span> (Cash Tendered: <span x-text="'৳' + lastSaleTendered"></span>)</div>
+        <div class="text-gray-300 font-mono text-[11px]">Total: <span class="text-emerald-300 font-bold" x-text="'৳' + lastSaleTotal"></span> (Method: <span x-text="lastSalePaymentMethod"></span>)</div>
         <div class="text-emerald-400 text-[10px] mt-1" x-text="isOnline ? '✓ Online Sync Queued' : '✓ Stored Offline in Dexie.js (Pending Sync)'"></div>
     </div>
 
-    <!-- 6. Close Shift Denomination Modal -->
+    <!-- 7. Close Shift Denomination Modal -->
     <div x-show="showShiftCloseModal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center z-50">
         <div class="bg-white rounded-xl shadow-2xl p-6 w-[560px] max-w-full border border-gray-300 max-h-[90vh] overflow-y-auto">
             <h3 class="text-base font-bold text-slate-900 mb-1">Close Register Shift #42</h3>
@@ -492,7 +585,7 @@
         db.version(1).stores({
             catalog: 'variant_id, barcode, sku, name_en, mrp_price, tax_rate, tax_type',
             carts: 'id, updated_at',
-            pending_sales: 'id, invoice_number, shift_id, subtotal, discount, vat, payable, created_at, status',
+            pending_sales: 'id, type, invoice_number, shift_id, subtotal, discount, vat, payable, payment_method, created_at, status',
             shifts: 'id, terminal_id, opened_at, closed_at, opening_float, cash_sales, expected_cash, actual_cash, variance, status'
         });
 
@@ -567,14 +660,28 @@
 
                 // Tender & Sales
                 showTenderModal: false,
+                paymentMethod: 'CASH',
+                mfsReferenceInput: '',
+                tenderError: '',
                 tenderedAmount: '',
                 changeDue: '0.00',
                 showReceiptToast: false,
                 lastSaleInvoice: '',
                 lastSaleTotal: '',
                 lastSaleTendered: '',
+                lastSalePaymentMethod: 'CASH',
+
+                // Returns & Refunds (§11.2, NEW-32)
+                showReturnModal: false,
+                returnSupervisorPin: '',
+                returnInvoiceRef: '',
+                returnAmountInput: '',
+                returnReasonCode: 'DAMAGED_GOODS',
+                returnError: '',
 
                 async initApp() {
+                    window.__posApp = this;
+
                     // Register Service Worker for true offline shell loading
                     if ('serviceWorker' in navigator) {
                         try {
@@ -608,8 +715,10 @@
                         
                         // Resilient Shift Cash: Compute directly from Dexie sales to survive reload
                         const shiftSales = await db.pending_sales.where('shift_id').equals(this.shiftId).toArray();
-                        const totalFromSales = shiftSales.reduce((acc, s) => acc + (parseFloat(s.payable) || 0), 0);
-                        this.shiftCashSales = Math.max(activeShift.cash_sales || 0, totalFromSales);
+                        const totalCashSales = shiftSales
+                            .filter(s => !s.payment_method || s.payment_method === 'CASH')
+                            .reduce((acc, s) => acc + (parseFloat(s.payable) || 0), 0);
+                        this.shiftCashSales = Math.max(activeShift.cash_sales || 0, totalCashSales);
                         this.calculateShiftTotals();
                     } else {
                         // Prompt for PIN sign-in
@@ -885,6 +994,9 @@
 
                 // --- TENDER & COMPLETION ---
                 openTenderModal() {
+                    this.tenderError = '';
+                    this.paymentMethod = 'CASH';
+                    this.mfsReferenceInput = '';
                     this.tenderedAmount = Math.ceil(parseFloat(this.totals.payable));
                     this.calculateChange();
                     this.showTenderModal = true;
@@ -904,6 +1016,14 @@
                     this.changeDue = (change >= 0 ? change : 0).toFixed(2);
                 },
                 async completeSale() {
+                    // MFS / Card Offline Validation Rule (§11.2, NEW-32)
+                    if (this.paymentMethod !== 'CASH') {
+                        if (!this.isOnline && !this.mfsReferenceInput.trim()) {
+                            this.tenderError = 'Manual reference / TrxID is required for offline ' + this.paymentMethod + ' payments.';
+                            return;
+                        }
+                    }
+
                     const invoiceNo = 'INV-DHA01-T01-' + String(Date.now()).slice(-6);
                     const saleTotal = this.totals.payable;
 
@@ -916,22 +1036,29 @@
                         discount: this.totals.discount,
                         vat: this.totals.vat,
                         payable: saleTotal,
+                        payment_method: this.paymentMethod,
+                        mfs_reference: this.mfsReferenceInput.trim(),
                         created_at: new Date().toISOString(),
-                        status: this.isOnline ? 'synced' : 'pending_sync'
+                        status: this.isOnline 
+                            ? 'synced' 
+                            : (this.paymentMethod === 'CASH' ? 'pending_sync' : 'pending_verification')
                     };
                     await db.pending_sales.add(saleRecord);
 
-                    // Update shift cash sales in memory and Dexie shifts table
-                    this.shiftCashSales += parseFloat(saleTotal);
-                    await db.shifts.where('status').equals('open').modify({
-                        cash_sales: this.shiftCashSales
-                    });
-                    this.calculateShiftTotals();
+                    // If cash, update shift cash drawer
+                    if (this.paymentMethod === 'CASH') {
+                        this.shiftCashSales += parseFloat(saleTotal);
+                        await db.shifts.where('status').equals('open').modify({
+                            cash_sales: this.shiftCashSales
+                        });
+                        this.calculateShiftTotals();
+                    }
 
                     // Toast
                     this.lastSaleInvoice = invoiceNo;
                     this.lastSaleTotal = saleTotal;
-                    this.lastSaleTendered = this.tenderedAmount;
+                    this.lastSaleTendered = this.paymentMethod === 'CASH' ? this.tenderedAmount : saleTotal;
+                    this.lastSalePaymentMethod = this.paymentMethod;
                     this.showReceiptToast = true;
                     setTimeout(() => { this.showReceiptToast = false; }, 4000);
 
@@ -946,6 +1073,59 @@
                     }
                 },
 
+                // --- RETURNS & REFUNDS (§11.2, NEW-32) ---
+                openReturnModal() {
+                    this.returnSupervisorPin = '';
+                    this.returnInvoiceRef = '';
+                    this.returnAmountInput = '';
+                    this.returnReasonCode = 'DAMAGED_GOODS';
+                    this.returnError = '';
+                    this.showReturnModal = true;
+                },
+                async processReturnRefund() {
+                    if (this.returnSupervisorPin !== '9999') {
+                        this.returnError = 'Supervisor PIN required to authorize returns and credit notes.';
+                        return;
+                    }
+                    if (!this.returnInvoiceRef.trim()) {
+                        this.returnError = 'Original invoice reference is mandatory for returns.';
+                        return;
+                    }
+                    const amount = parseFloat(this.returnAmountInput);
+                    if (isNaN(amount) || amount <= 0) {
+                        this.returnError = 'Valid refund amount is required.';
+                        return;
+                    }
+
+                    const cnInvoice = 'CN-DHA01-T01-' + String(Date.now()).slice(-6);
+                    await db.pending_sales.add({
+                        id: 'cn-' + Date.now(),
+                        type: 'CREDIT_NOTE',
+                        invoice_number: cnInvoice,
+                        original_invoice: this.returnInvoiceRef.trim(),
+                        reason_code: this.returnReasonCode,
+                        shift_id: this.shiftId,
+                        subtotal: (-amount).toFixed(2),
+                        discount: '0.00',
+                        vat: '0.00',
+                        payable: (-amount).toFixed(2),
+                        payment_method: 'CASH',
+                        created_at: new Date().toISOString(),
+                        status: this.isOnline ? 'synced' : 'pending_sync'
+                    });
+
+                    // Subtract refund from drawer cash
+                    this.shiftCashSales = Math.max(0, this.shiftCashSales - amount);
+                    await db.shifts.where('status').equals('open').modify({
+                        cash_sales: this.shiftCashSales
+                    });
+                    this.calculateShiftTotals();
+
+                    this.showReturnModal = false;
+                    alert('Credit Note ' + cnInvoice + ' created successfully for refund of ৳' + amount.toFixed(2));
+                    await this.updatePendingSalesCount();
+                },
+
                 // --- NETWORK & SYNC ---
                 toggleNetwork() {
                     this.isOnline = !this.isOnline;
@@ -956,7 +1136,7 @@
                     }
                 },
                 async updatePendingSalesCount() {
-                    this.pendingSalesCount = await db.pending_sales.where('status').equals('pending_sync').count();
+                    this.pendingSalesCount = await db.pending_sales.where('status').anyOf(['pending_sync', 'pending_verification']).count();
                     if (this.pendingSalesCount > 0) {
                         this.syncStatusText = `${this.pendingSalesCount} sale waiting`;
                     } else {
@@ -964,7 +1144,7 @@
                     }
                 },
                 async syncOfflineSales() {
-                    const pending = await db.pending_sales.where('status').equals('pending_sync').toArray();
+                    const pending = await db.pending_sales.where('status').anyOf(['pending_sync', 'pending_verification']).toArray();
                     if (pending.length === 0) {
                         this.syncStatusText = 'Synced';
                         return;
@@ -992,6 +1172,52 @@
                 }
             };
         }
+
+        // Global Terminal Keyboard Shortcut & Security Manager (§11.1, POS-11, NEW-32)
+        window.addEventListener('keydown', (e) => {
+            // Prohibited browser function keys in kiosk mode
+            const prohibitedKeys = ['F10', 'F11', 'F12', 'F5'];
+            if (prohibitedKeys.includes(e.key) || 
+                ((e.ctrlKey || e.metaKey) && ['r', 'R', 'p', 'P', 'u', 'U'].includes(e.key))) {
+                e.preventDefault();
+                e.stopPropagation();
+                window.__preventedShortcut = e.key;
+                return false;
+            }
+
+            // Dedicated POS shortcut keys
+            if (e.key === 'F1') {
+                e.preventDefault();
+                document.getElementById('barcode-input')?.focus();
+            } else if (e.key === 'F3') {
+                e.preventDefault();
+                if (window.__posApp) window.__posApp.openDiscountModal();
+            } else if (e.key === 'F6') {
+                e.preventDefault();
+                if (window.__posApp) window.__posApp.openReturnModal();
+            } else if (e.key === 'F7') {
+                e.preventDefault();
+                if (window.__posApp) window.__posApp.openTenderModal();
+            } else if (e.key === 'F9') {
+                e.preventDefault();
+                if (window.__posApp && window.__posApp.showTenderModal) {
+                    window.__posApp.completeSale();
+                }
+            } else if (e.key === 'Escape') {
+                if (window.__posApp) {
+                    window.__posApp.showDiscountModal = false;
+                    window.__posApp.showTenderModal = false;
+                    window.__posApp.showReturnModal = false;
+                    window.__posApp.showShiftCloseModal = false;
+                    window.__posApp.scanQuery = '';
+                }
+            }
+        });
+
+        window.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            window.__preventedContextMenu = true;
+        });
     </script>
 </body>
 </html>

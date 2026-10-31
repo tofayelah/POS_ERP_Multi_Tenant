@@ -175,4 +175,118 @@ test.describe('Offline POS Shell & Cashier Flow (Step 8, POS-04, POS-07, POS-08,
     await expect(page.getByTestId('sync-status')).toHaveText('Synced', { timeout: 30000 });
   });
 
+  test('no shortcut key opens a browser feature on a terminal (POS-11, NEW-32)', async ({ page }) => {
+    await page.goto('/pos');
+    await page.getByLabel('Cashier PIN').fill('4821');
+    await page.keyboard.press('Enter');
+
+    // 1. Test F10, F11, F12, F5 suppression (prevented via e.preventDefault())
+    for (const key of ['F10', 'F11', 'F12', 'F5']) {
+      await page.keyboard.press(key);
+      const prevented = await page.evaluate(() => window.__preventedShortcut);
+      expect(prevented).toBe(key);
+    }
+
+    // 2. Test Ctrl+R and Ctrl+P suppression
+    await page.keyboard.press('Control+r');
+    let prevented = await page.evaluate(() => window.__preventedShortcut);
+    expect(['r', 'R']).toContain(prevented);
+
+    await page.keyboard.press('Control+p');
+    prevented = await page.evaluate(() => window.__preventedShortcut);
+    expect(['p', 'P']).toContain(prevented);
+
+    // 3. Test POS shortcut routing: F1 focuses barcode input
+    await page.keyboard.press('F1');
+    await expect(page.getByTestId('scan')).toBeFocused();
+
+    // 4. Test POS shortcut routing: F3 opens discount modal
+    await page.keyboard.press('F3');
+    await expect(page.locator('#discount-input')).toBeVisible();
+
+    // 5. Test Escape closes modals
+    await page.keyboard.press('Escape');
+    await expect(page.locator('#discount-input')).not.toBeVisible();
+  });
+
+  test('returns and refunds: offline return requires supervisor PIN and creates linked credit note (NEW-32)', async ({ page, context }) => {
+    page.on('dialog', async (dialog) => {
+      await dialog.accept();
+    });
+
+    await page.goto('/pos');
+    await page.getByLabel('Cashier PIN').fill('4821');
+    await page.keyboard.press('Enter');
+
+    // Go offline
+    await context.setOffline(true);
+
+    // Open Return / Refund modal
+    await page.locator('#btn-open-return').click();
+    await expect(page.locator('#return-supervisor-pin')).toBeVisible();
+
+    // 1. Cashier attempts return without supervisor PIN -> Refused
+    await page.locator('#return-supervisor-pin').fill('4821'); // Cashier PIN
+    await page.locator('#return-invoice-ref').fill('INV-DHA01-T01-123456');
+    await page.locator('#return-amount-input').fill('280.00');
+    await page.locator('#btn-confirm-return').click();
+
+    await expect(page.locator('#return-error-alert')).toBeVisible();
+    await expect(page.locator('#return-error-alert')).toContainText('Supervisor PIN required');
+
+    // 2. Authorize with Supervisor PIN (9999) -> Accepted
+    await page.locator('#return-supervisor-pin').fill('9999');
+    await page.locator('#btn-confirm-return').click();
+
+    // 3. Verify Credit Note saved in Dexie pending_sales
+    const creditNote = await page.evaluate(async () => {
+      const db = new Dexie('pos_db');
+      await db.open();
+      return await db.pending_sales.where('type').equals('CREDIT_NOTE').first();
+    });
+
+    expect(creditNote).toBeTruthy();
+    expect(creditNote.type).toBe('CREDIT_NOTE');
+    expect(creditNote.original_invoice).toBe('INV-DHA01-T01-123456');
+    expect(creditNote.payable).toBe('-280.00');
+    expect(creditNote.reason_code).toBe('DAMAGED_GOODS');
+  });
+
+  test('offline MFS rules: bKash/Nagad/Card require manual reference and are marked pending_verification (NEW-32)', async ({ page, context }) => {
+    await page.goto('/pos');
+    await page.getByLabel('Cashier PIN').fill('4821');
+    await page.keyboard.press('Enter');
+
+    // Go offline
+    await context.setOffline(true);
+
+    // Add Mustard Oil (৳280) to cart
+    await page.locator('#btn-quick-oil').click();
+
+    // Open tender modal and switch to bKash
+    await page.getByRole('button', { name: 'Cash' }).click();
+    await page.locator('#tender-tab-bkash').click();
+
+    // 1. Try to complete sale offline without manual TrxID -> Refused
+    await page.getByRole('button', { name: 'Complete sale' }).click();
+    await expect(page.locator('#tender-error-alert')).toBeVisible();
+    await expect(page.locator('#tender-error-alert')).toContainText('Manual reference / TrxID is required for offline BKASH payments');
+
+    // 2. Provide manual TrxID -> Accepted
+    await page.getByTestId('mfs-reference').fill('TRX-BKASH-778899');
+    await page.getByRole('button', { name: 'Complete sale' }).click();
+
+    // 3. Verify sale saved in Dexie with status pending_verification
+    const mfsSale = await page.evaluate(async () => {
+      const db = new Dexie('pos_db');
+      await db.open();
+      return await db.pending_sales.where('payment_method').equals('BKASH').first();
+    });
+
+    expect(mfsSale).toBeTruthy();
+    expect(mfsSale.payment_method).toBe('BKASH');
+    expect(mfsSale.mfs_reference).toBe('TRX-BKASH-778899');
+    expect(mfsSale.status).toBe('pending_verification');
+  });
+
 });
