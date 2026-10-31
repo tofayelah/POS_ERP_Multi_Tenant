@@ -582,6 +582,7 @@
     <script>
         // 1. Initialize Dexie DB
         const db = new Dexie('pos_db');
+        window.db = db;
         db.version(1).stores({
             catalog: 'variant_id, barcode, sku, name_en, mrp_price, tax_rate, tax_type',
             carts: 'id, updated_at',

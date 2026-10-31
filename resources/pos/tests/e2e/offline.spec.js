@@ -240,9 +240,7 @@ test.describe('Offline POS Shell & Cashier Flow (Step 8, POS-04, POS-07, POS-08,
 
     // 3. Verify Credit Note saved in Dexie pending_sales
     const creditNote = await page.evaluate(async () => {
-      const db = new Dexie('pos_db');
-      await db.open();
-      return await db.pending_sales.where('type').equals('CREDIT_NOTE').first();
+      return await window.db.pending_sales.where('type').equals('CREDIT_NOTE').first();
     });
 
     expect(creditNote).toBeTruthy();
@@ -278,9 +276,7 @@ test.describe('Offline POS Shell & Cashier Flow (Step 8, POS-04, POS-07, POS-08,
 
     // 3. Verify sale saved in Dexie with status pending_verification
     const mfsSale = await page.evaluate(async () => {
-      const db = new Dexie('pos_db');
-      await db.open();
-      return await db.pending_sales.where('payment_method').equals('BKASH').first();
+      return await window.db.pending_sales.where('payment_method').equals('BKASH').first();
     });
 
     expect(mfsSale).toBeTruthy();
