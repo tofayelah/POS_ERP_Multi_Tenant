@@ -140,7 +140,7 @@ if ($mode === 'setup') {
 if ($mode === 'query_locks') {
     $targetPid = (int) ($argv[2] ?? 0);
 
-    $locks = DB::select("
+    $locks = DB::select('
         SELECT
             l.pid,
             l.locktype,
@@ -153,7 +153,7 @@ if ($mode === 'query_locks') {
         LEFT JOIN pg_class c ON l.relation = c.oid
         WHERE l.pid = ?
         ORDER BY l.locktype, c.relname, l.mode
-    ", [$targetPid]);
+    ', [$targetPid]);
 
     echo json_encode($locks, JSON_PRETTY_PRINT)."\n";
     exit(0);
@@ -198,7 +198,7 @@ if ($mode === 'hold_locks') {
         ),
     ];
 
-    DB::transaction(function () use ($service, $reverseDtos) {
+    DB::transaction(function () use ($reverseDtos) {
         // Enforce Section 13.1 ascending sort
         usort($reverseDtos, fn ($a, $b) => strcmp($a->productVariantId, $b->productVariantId));
 
@@ -210,7 +210,7 @@ if ($mode === 'hold_locks') {
                 ->lockForUpdate()
                 ->first();
 
-            echo "LOCKED_STEP_".($idx + 1).": Variant={$dto->productVariantId}, BalanceID={$balance?->id}\n";
+            echo 'LOCKED_STEP_'.($idx + 1).": Variant={$dto->productVariantId}, BalanceID={$balance?->id}\n";
         }
 
         $pid = DB::selectOne('SELECT pg_backend_pid() AS pid')->pid;
