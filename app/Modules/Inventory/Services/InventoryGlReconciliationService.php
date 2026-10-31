@@ -112,7 +112,7 @@ class InventoryGlReconciliationService implements InventoryGlReconciliationContr
         }
 
         // Discover active open accounting period
-        $movementDate = $movement->movement_date ? Carbon::parse($movement->movement_date) : Carbon::now();
+        $movementDate = Carbon::parse($movement->movement_date);
         $period = AccountingPeriod::where('company_id', $companyId)
             ->where('status', 'open')
             ->where('start_date', '<=', $movementDate->toDateString())
@@ -135,7 +135,8 @@ class InventoryGlReconciliationService implements InventoryGlReconciliationContr
         }
 
         $moneyAmount = Money::of((string) $totalCost);
-        $postedUserId = $userId ?? User::first()?->id ?? (string) Str::uuid();
+        $firstUser = User::first();
+        $postedUserId = $userId ?? ($firstUser ? $firstUser->id : (string) Str::uuid());
 
         $lines = [];
         $narration = 'Inventory stock movement GL recognition';
