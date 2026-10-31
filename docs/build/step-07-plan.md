@@ -422,7 +422,7 @@ Each commit follows the non-negotiable rule: **write failing test first on dev s
   - Service: `app/Modules/Inventory/Services/StockCountService.php` implementing `StockCountServiceContract`.
 - **Verification:** Run `php artisan test tests/Database/StockCountSessionTest.php`.
 
-### Commit 9: Inter-Branch Stock Transfers (Document Now, Mushak 6.5 Later)
+### Commit 9: Inter-Branch Stock Transfers (Document Now, Mushak 6.5 Later) [x] (Done - commit `cebf270`)
 - **Review IDs Closed:** `INV-03`
 - **Failing Tests First:**
   - `tests/Database/StockTransferTest.php`:
