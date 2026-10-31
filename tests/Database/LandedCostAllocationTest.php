@@ -263,7 +263,7 @@ class LandedCostAllocationTest extends TestCase
             ->where('reference_id', $landedCost->id)
             ->firstOrFail();
 
-        $this->assertEquals('posted', $journal->status);
+        $this->assertTrue($journal->is_posted);
         $this->assertCount(2, $journal->lines);
 
         $debitLine = $journal->lines->where('account_id', $this->cogsAccount->id)->firstOrFail();
