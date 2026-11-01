@@ -3,11 +3,14 @@ package main
 import (
 	"context"
 	"errors"
+	"net/http"
 	"strings"
 	"testing"
 	"time"
 
 	"bridge/pkg/sdc"
+
+	"github.com/gorilla/websocket"
 )
 
 // 1. Successful SDC fiscalization
