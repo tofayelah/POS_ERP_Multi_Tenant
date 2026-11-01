@@ -108,8 +108,8 @@ class LandedCostAllocationTest extends TestCase
             'tenant_id' => $this->tenant->id,
             'company_id' => $this->company->id,
             'title' => 'FY 2026-2027',
-            'start_date' => Carbon::parse('2026-07-01'),
-            'end_date' => Carbon::parse('2027-06-30'),
+            'start_date' => Carbon::now()->startOfYear()->toDateString(),
+            'end_date' => Carbon::now()->endOfYear()->toDateString(),
             'is_closed' => false,
         ]);
 
@@ -117,10 +117,10 @@ class LandedCostAllocationTest extends TestCase
             'tenant_id' => $this->tenant->id,
             'company_id' => $this->company->id,
             'fiscal_year_id' => $fy->id,
-            'period_number' => 4,
-            'period_name' => 'October 2026',
-            'start_date' => Carbon::parse('2026-10-01'),
-            'end_date' => Carbon::parse('2026-10-31'),
+            'period_number' => 1,
+            'period_name' => Carbon::now()->format('F Y'),
+            'start_date' => Carbon::now()->startOfMonth()->toDateString(),
+            'end_date' => Carbon::now()->endOfMonth()->toDateString(),
             'status' => 'open',
         ]);
 
