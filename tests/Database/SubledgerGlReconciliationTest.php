@@ -12,6 +12,7 @@ use App\Models\Customer;
 use App\Models\FiscalYear;
 use App\Models\JournalEntry;
 use App\Models\Payment;
+use App\Models\SalesInvoice;
 use App\Models\SubledgerOpenItem;
 use App\Models\Supplier;
 use App\Models\SupplierBill;
@@ -265,6 +266,25 @@ class SubledgerGlReconciliationTest extends TestCase
 
                         $invId = (string) Str::uuid();
                         $invNumber = "INV-SIM-{$step}";
+
+                        // Create Sales Invoice record
+                        SalesInvoice::create([
+                            'id' => $invId,
+                            'tenant_id' => $this->tenant->id,
+                            'company_id' => $this->company->id,
+                            'branch_id' => $this->branch->id,
+                            'customer_id' => $customer->id,
+                            'invoice_number' => $invNumber,
+                            'invoice_date' => $today,
+                            'business_date' => $today,
+                            'subtotal' => $amountStr,
+                            'discount_amount' => '0.0000',
+                            'supplementary_duty_amount' => '0.0000',
+                            'tax_amount' => '0.0000',
+                            'total_payable' => $amountStr,
+                            'payment_status' => 'unpaid',
+                            'status' => 'issued',
+                        ]);
 
                         // Create open item
                         SubledgerOpenItem::create([
