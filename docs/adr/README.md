@@ -34,3 +34,4 @@ Each record uses the following standardized structure:
 - [ADR-015 (Infrastructure): In-House Proxmox Private Cloud Containerization for Development and Staging](ADR-015-proxmox-staging-containerization.md)
 - [ADR-016: Offline POS Oversell Reconciliation and Supervised Exception Handling](ADR-016-offline-oversell.md)
 - [ADR-017: Statutory Sales Invoice Immutability, Void Flow & Fiscal Enrichment Hardening](ADR-017-invoice-immutability.md)
+- [ADR-018: Bangladesh VAT & Tax Rounding Specification, Cash Tender Adjustment, and Golden Vectors](ADR-018-tax-rounding.md)

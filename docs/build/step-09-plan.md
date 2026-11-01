@@ -193,9 +193,9 @@ sequenceDiagram
   - File: `docs/adr/ADR-017-invoice-immutability.md`.
 
 #### Stream E · Prompt 9B (Tax Calculator & Golden Vectors)
-- [ ] **Commit 4 (Implementation & Test):** `feat(tax): build TaxCalculator engine and VAT golden test vectors (NEW-08, NEW-29, TAX-03)`
+- [x] **Commit 4 (Implementation & Test):** `feat(tax): build TaxCalculator engine and VAT golden test vectors (NEW-08, NEW-29, TAX-03)`
   - Files: `app/Modules/Tax/TaxCalculator.php`, `tests/golden/vat-vectors.json`, `tests/Unit/TaxCalculatorTest.php`.
-- [ ] **Commit 5 (ADR):** `docs(adr): record ADR-018 tax rounding rules (NEW-08)`
+- [x] **Commit 5 (ADR):** `docs(adr): record ADR-018 tax rounding rules (NEW-08)`
   - File: `docs/adr/ADR-018-tax-rounding.md`.
 
 #### Stream E · Prompt 9C (Issue, Post & Mushak Registers)
