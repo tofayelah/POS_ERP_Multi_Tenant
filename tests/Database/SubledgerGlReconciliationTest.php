@@ -360,7 +360,7 @@ class SubledgerGlReconciliationTest extends TestCase
                                 amount: (string) $totalPayment->getBigDecimal(),
                                 paymentDate: $today,
                                 reference: "SIM-PAY-{$step}",
-                                createdBy: $this->creatorUser->id,
+                                postedBy: $this->creatorUser->id,
                                 allocations: $allocations
                             );
 
