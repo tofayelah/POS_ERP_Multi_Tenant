@@ -441,4 +441,47 @@ class InvoiceImmutabilityTest extends TestCase
             'subtotal' => 999.0000,
         ]);
     }
+
+    /**
+     * Void flow: draft invoices cannot be deleted, but may be transitioned to cancelled (voided).
+     */
+    public function test_t6_void_flow_allows_cancelling_draft_but_blocks_deletion(): void
+    {
+        $invoiceId = (string) Str::uuid();
+        $invoiceNumber = 'INV-VOID-'.Str::random(6);
+
+        DB::table('sales_invoices')->insert([
+            'id' => $invoiceId,
+            'tenant_id' => $this->tenant->id,
+            'company_id' => $this->company->id,
+            'branch_id' => $this->branch->id,
+            'invoice_number' => $invoiceNumber,
+            'invoice_date' => Carbon::today()->toDateString(),
+            'business_date' => Carbon::today()->toDateString(),
+            'status' => 'draft',
+            'subtotal' => 100.0000,
+            'discount_amount' => 0.0000,
+            'supplementary_duty_amount' => 0.0000,
+            'tax_amount' => 15.0000,
+            'total_payable' => 115.0000,
+            'payment_status' => 'paid',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        // 1. Direct deletion of draft is rejected (preserves sequence)
+        try {
+            DB::table('sales_invoices')->where('id', $invoiceId)->delete();
+            $this->fail('Draft deletion should have thrown QueryException');
+        } catch (QueryException $e) {
+            $this->assertStringContainsString('void flow', $e->getMessage());
+        }
+
+        // 2. Void flow: update status to cancelled is permitted
+        DB::table('sales_invoices')->where('id', $invoiceId)->update(['status' => 'cancelled']);
+
+        $invoice = SalesInvoice::findOrFail($invoiceId);
+        $this->assertEquals('cancelled', $invoice->status);
+        $this->assertEquals($invoiceNumber, $invoice->invoice_number);
+    }
 }

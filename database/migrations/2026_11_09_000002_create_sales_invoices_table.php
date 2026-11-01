@@ -22,7 +22,7 @@ return new class extends TenantMigration
             $table->date('invoice_date');
             $table->date('business_date');
             $table->uuid('customer_id')->nullable();
-            $table->string('status', 30)->default('issued');
+            $table->string('status', 30)->default('draft');
             $table->decimal('subtotal', 18, 4);
             $table->decimal('discount_amount', 18, 4)->default(0.0000);
             $table->decimal('supplementary_duty_amount', 18, 4)->default(0.0000);
