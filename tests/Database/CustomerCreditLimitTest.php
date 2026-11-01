@@ -184,9 +184,10 @@ class CustomerCreditLimitTest extends TestCase
             'id' => (string) Str::uuid(),
             'tenant_id' => $this->tenant->id,
             'company_id' => $this->company->id,
-            'name' => 'Standard Commodity',
-            'type' => 'standard',
-            'tax_code_id' => $this->taxCode->id,
+            'code' => 'PROD-01',
+            'name_en' => 'Standard Commodity',
+            'base_uom' => 'Pcs',
+            'is_active' => true,
         ]);
 
         $this->variant = ProductVariant::create([
@@ -194,10 +195,12 @@ class CustomerCreditLimitTest extends TestCase
             'tenant_id' => $this->tenant->id,
             'company_id' => $this->company->id,
             'product_id' => $product->id,
+            'tax_code_id' => $this->taxCode->id,
             'sku' => 'SKU-COMM-01',
-            'name' => 'Standard Commodity 1kg',
-            'retail_price' => '100.00',
-            'wholesale_price' => '80.00',
+            'name_en' => 'Standard Commodity 1kg',
+            'base_uom' => 'Pcs',
+            'mrp' => '100.0000',
+            'cost_price' => '80.0000',
             'is_active' => true,
         ]);
 
