@@ -3,6 +3,7 @@
 namespace Tests\Database;
 
 use App\Core\Tenancy\TenantContext;
+use App\Core\ValueObjects\Money;
 use App\Models\AccountingPeriod;
 use App\Models\Branch;
 use App\Models\ChartOfAccount;
@@ -176,6 +177,7 @@ class VdsWithholdingCertificateTest extends TestCase
             'customer_id' => $customer->id,
             'invoice_number' => 'INV-2026-00860',
             'invoice_date' => Carbon::today()->toDateString(),
+            'business_date' => Carbon::today()->toDateString(),
             'due_date' => Carbon::today()->addDays(30)->toDateString(),
             'subtotal' => '829.7100',
             'total_vat' => '30.2900',
@@ -282,8 +284,10 @@ class VdsWithholdingCertificateTest extends TestCase
         $this->assertEquals('860.0000', (string) $arLine->credit_amount);
 
         // Double entry check: Total Debits == Total Credits == ৳860.00
-        $this->assertEquals('860.0000', (string) $journal->total_debit);
-        $this->assertEquals('860.0000', (string) $journal->total_credit);
+        $totalDebit = $lines->reduce(fn (Money $carry, $line) => $carry->add(Money::of((string) $line->debit_amount)), Money::zero('BDT'));
+        $totalCredit = $lines->reduce(fn (Money $carry, $line) => $carry->add(Money::of((string) $line->credit_amount)), Money::zero('BDT'));
+        $this->assertEquals('860.0000', (string) $totalDebit->getBigDecimal());
+        $this->assertEquals('860.0000', (string) $totalCredit->getBigDecimal());
     }
 
     public function test_supplier_payment_with_vds_withholding_issues_mushak_6_6_and_clears_ap_and_posts_gl(): void
@@ -409,8 +413,10 @@ class VdsWithholdingCertificateTest extends TestCase
         $this->assertEquals('15000.0000', (string) $vdsLine->credit_amount);
 
         // Double entry balance
-        $this->assertEquals('100000.0000', (string) $journal->total_debit);
-        $this->assertEquals('100000.0000', (string) $journal->total_credit);
+        $totalDebit = $lines->reduce(fn (Money $carry, $line) => $carry->add(Money::of((string) $line->debit_amount)), Money::zero('BDT'));
+        $totalCredit = $lines->reduce(fn (Money $carry, $line) => $carry->add(Money::of((string) $line->credit_amount)), Money::zero('BDT'));
+        $this->assertEquals('100000.0000', (string) $totalDebit->getBigDecimal());
+        $this->assertEquals('100000.0000', (string) $totalCredit->getBigDecimal());
     }
 
     public function test_vds_deduction_cannot_exceed_open_item_balance(): void
@@ -432,6 +438,7 @@ class VdsWithholdingCertificateTest extends TestCase
             'customer_id' => $customer->id,
             'invoice_number' => 'INV-2026-OVER',
             'invoice_date' => Carbon::today()->toDateString(),
+            'business_date' => Carbon::today()->toDateString(),
             'due_date' => Carbon::today()->addDays(30)->toDateString(),
             'subtotal' => '1000.0000',
             'total_vat' => '50.0000',
