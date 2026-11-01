@@ -33,3 +33,4 @@ Each record uses the following standardized structure:
 - [ADR-015: Identity, Multi-Tenant Memberships, Platform Separation and Authoritative Context](ADR-015-identity-and-tenancy.md)
 - [ADR-015 (Infrastructure): In-House Proxmox Private Cloud Containerization for Development and Staging](ADR-015-proxmox-staging-containerization.md)
 - [ADR-016: Offline POS Oversell Reconciliation and Supervised Exception Handling](ADR-016-offline-oversell.md)
+- [ADR-017: Statutory Sales Invoice Immutability, Void Flow & Fiscal Enrichment Hardening](ADR-017-invoice-immutability.md)

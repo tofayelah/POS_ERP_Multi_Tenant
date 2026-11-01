@@ -174,7 +174,7 @@ sequenceDiagram
 ### Commit Checklist
 
 #### Stream E · Prompt 9A (Invoice Immutability Triggers)
-- [ ] **Commit 1 (Test First):** `test(tax): add failing database tests for invoice immutability flaws T1, T2, T4, T5, T6 (NEW-24, NEW-27)`
+- [x] **Commit 1 (Test First):** `test(tax): add failing database tests for invoice immutability flaws T1, T2, T4, T5, T6 (NEW-24, NEW-27)`
   - File: `tests/Database/InvoiceImmutabilityTest.php`.
   - Tests covering:
     - `T1`: Inserting an invoice without an explicit status creates a draft, and lines can be attached to it.
@@ -182,14 +182,14 @@ sequenceDiagram
     - `T4`: Fiscal enrichment rejects modifying status, invoice number, dates, customer, discounts, duty, or totals.
     - `T5`: Updating `sales_invoice_id` on a line to move it to another invoice is rejected.
     - `T6`: Updating or deleting a cancelled invoice is rejected; void flow cancels a draft.
-- [ ] **Commit 2 (Implementation):** `feat(tax): build sales invoices and lines with hardened triggers (NEW-24, NEW-27)`
+- [x] **Commit 2 (Implementation):** `feat(tax): build sales invoices and lines with hardened triggers (NEW-24, NEW-27)`
   - Files:
     - `database/migrations/2026_11_09_000001_create_customers_table.php`
     - `database/migrations/2026_11_09_000002_create_sales_invoices_table.php`
     - `database/migrations/2026_11_09_000003_create_sales_invoice_lines_table.php`
     - `database/migrations/2026_11_09_000004_create_sales_invoice_immutability_triggers.php`
     - Models: `App\Models\Customer`, `App\Models\SalesInvoice`, `App\Models\SalesInvoiceLine`.
-- [ ] **Commit 3 (ADR):** `docs(adr): record ADR-017 invoice immutability and statutory audit triggers (NEW-24, NEW-27)`
+- [x] **Commit 3 (ADR):** `docs(adr): record ADR-017 invoice immutability and statutory audit triggers (NEW-24, NEW-27)`
   - File: `docs/adr/ADR-017-invoice-immutability.md`.
 
 #### Stream E · Prompt 9B (Tax Calculator & Golden Vectors)
