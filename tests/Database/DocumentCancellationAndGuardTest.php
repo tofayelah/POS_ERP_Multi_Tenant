@@ -114,6 +114,13 @@ class DocumentCancellationAndGuardTest extends TestCase
             'current_balance' => '0.0000',
         ]);
 
+        $this->user = User::create([
+            'id' => (string) Str::uuid(),
+            'name' => 'Guard Officer',
+            'email' => 'officer-'.Str::random(6).'@example.com',
+            'password' => 'secret123',
+        ]);
+
         $this->supplier = Supplier::create([
             'id' => (string) Str::uuid(),
             'tenant_id' => $this->tenant->id,
@@ -121,14 +128,7 @@ class DocumentCancellationAndGuardTest extends TestCase
             'name' => 'Guard Supplier',
             'email' => 'guardsup-'.Str::random(6).'@example.com',
             'currency' => 'BDT',
-            'created_by' => (string) Str::uuid(),
-        ]);
-
-        $this->user = User::create([
-            'id' => (string) Str::uuid(),
-            'name' => 'Guard Officer',
-            'email' => 'officer-'.Str::random(6).'@example.com',
-            'password' => 'secret123',
+            'created_by' => $this->user->id,
         ]);
 
         $this->fiscalYear = FiscalYear::create([
