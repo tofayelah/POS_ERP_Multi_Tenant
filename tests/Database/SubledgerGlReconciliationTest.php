@@ -28,7 +28,6 @@ use App\Modules\Accounting\Subledger\Contracts\SupplierPaymentVoucherContract;
 use App\Modules\Accounting\Subledger\DTOs\AllocationItemDTO;
 use App\Modules\Accounting\Subledger\DTOs\CreateSupplierVoucherDTO;
 use App\Modules\Accounting\Subledger\DTOs\RecordPaymentDTO;
-use Brick\Math\BigDecimal;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -213,7 +212,7 @@ class SubledgerGlReconciliationTest extends TestCase
                 'tenant_id' => $this->tenant->id,
                 'company_id' => $this->company->id,
                 'name' => "Supplier {$i}",
-                'code' => "SUP-".str_pad((string) $i, 3, '0', STR_PAD_LEFT),
+                'code' => 'SUP-'.str_pad((string) $i, 3, '0', STR_PAD_LEFT),
                 'credit_period_days' => 30,
                 'created_by' => $this->creatorUser->id,
                 'is_active' => true,
