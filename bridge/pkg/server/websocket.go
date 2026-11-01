@@ -1,11 +1,15 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"log"
 	"net"
 	"net/http"
 	"time"
+
+	"bridge/pkg/sdc"
 
 	"github.com/gorilla/websocket"
 )
@@ -140,8 +144,74 @@ func (s *Server) handleClientMessage(conn *websocket.Conn, messageType int, payl
 			return
 		}
 		_ = conn.WriteJSON(map[string]interface{}{"status": "ok"})
+	case "sdc_status":
+		client := s.GetSDCClient()
+		if client == nil {
+			_ = conn.WriteJSON(map[string]interface{}{"status": "error", "error": "sdc client not initialized"})
+			return
+		}
+		status, err := client.Status(context.Background())
+		if err != nil {
+			_ = conn.WriteJSON(map[string]interface{}{"status": "error", "error": err.Error(), "connected": false})
+			return
+		}
+		_ = conn.WriteJSON(map[string]interface{}{
+			"status":        "ok",
+			"connected":     status.Connected,
+			"device_serial": status.DeviceSerial,
+			"model":         status.Model,
+			"firmware":      status.Firmware,
+		})
+	case "fiscalize":
+		client := s.GetSDCClient()
+		if client == nil {
+			_ = conn.WriteJSON(map[string]interface{}{"status": "error", "error": "sdc client not initialized"})
+			return
+		}
+		dataMap, ok := msg["data"].(map[string]interface{})
+		if !ok {
+			_ = conn.WriteJSON(map[string]string{"status": "error", "error": "missing fiscal data payload"})
+			return
+		}
+		req := sdc.FiscalRequest{
+			InvoiceNumber: getString(dataMap, "invoice_number"),
+			TotalPayable:  getString(dataMap, "total_payable"),
+			VATAmount:     getString(dataMap, "vat_amount"),
+			SDAmount:      getString(dataMap, "sd_amount"),
+			CustomerBIN:   getString(dataMap, "customer_bin"),
+			Timestamp:     time.Now().UTC().Format(time.RFC3339),
+		}
+
+		resp, err := client.Fiscalize(context.Background(), req)
+		if err != nil {
+			isTimeout := errors.Is(err, sdc.ErrSDCTimeout) || errors.Is(err, context.DeadlineExceeded)
+			_ = conn.WriteJSON(map[string]interface{}{
+				"status":                 "error",
+				"error":                  err.Error(),
+				"is_provisional":         isTimeout,
+				"provisional_disclaimer": sdc.GenerateProvisionalNotice(req.InvoiceNumber),
+			})
+			return
+		}
+
+		_ = conn.WriteJSON(map[string]interface{}{
+			"status":             "ok",
+			"sdc_invoice_number": resp.SDCInvoiceNumber,
+			"fiscal_signature":   resp.FiscalSignature,
+			"sdc_device_serial":  resp.SDCDeviceSerial,
+			"fiscal_timestamp":   resp.FiscalTimestamp,
+			"qr_code_data":       resp.QRCodeData,
+			"is_provisional":     false,
+		})
 	default:
 		log.Printf("[BRIDGE] Unknown action received: %s", action)
 		_ = conn.WriteJSON(map[string]string{"status": "error", "error": "unsupported action: " + action})
 	}
+}
+
+func getString(m map[string]interface{}, key string) string {
+	if v, ok := m[key].(string); ok {
+		return v
+	}
+	return ""
 }

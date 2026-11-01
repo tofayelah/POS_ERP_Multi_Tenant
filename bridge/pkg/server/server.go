@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"bridge/pkg/config"
+	"bridge/pkg/sdc"
 )
 
 // ErrServerClosed is returned when Close is called.
@@ -21,11 +22,26 @@ type Server struct {
 	shiftOpen   bool
 	diagnostics map[string]interface{}
 	rateLimiter *RateLimiter
+	sdcClient   *sdc.Client
 }
 
 // Handler returns the underlying http.Handler for testing.
 func (s *Server) Handler() http.Handler {
 	return s.httpServer.Handler
+}
+
+// SetSDCClient sets custom SDC client (e.g. test fake or emulator).
+func (s *Server) SetSDCClient(client *sdc.Client) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.sdcClient = client
+}
+
+// GetSDCClient returns the active SDC client.
+func (s *Server) GetSDCClient() *sdc.Client {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.sdcClient
 }
 
 // SetDiagnostics stores hardware diagnostic details.
@@ -45,6 +61,7 @@ func NewServer(cfg *config.Config) *Server {
 		cfg:         cfg,
 		shiftOpen:   false,
 		rateLimiter: NewRateLimiter(cfg.RateLimitMaxFails, cfg.RateLimitWindow),
+		sdcClient:   sdc.NewClient(sdc.NewVendorEmulator("NBR-EFD-0042"), cfg.SDCTimeout),
 	}
 
 	mux := http.NewServeMux()

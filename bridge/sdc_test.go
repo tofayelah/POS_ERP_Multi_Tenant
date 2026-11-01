@@ -120,3 +120,75 @@ func TestSDC_VendorEmulatorRoundTrip(t *testing.T) {
 		t.Errorf("expected valid signature, got %s", resp.FiscalSignature)
 	}
 }
+
+// 4. Milestone M4: SDC Emulator round-trip over WebSocket
+func TestSDC_WebSocketRoundTrip(t *testing.T) {
+	_, ts := newTestBridgeServer(t)
+	wsURL := "ws" + strings.TrimPrefix(ts.URL, "http") + "/ws"
+
+	header := http.Header{}
+	header.Set("Origin", testValidOrigin)
+
+	dialer := websocket.Dialer{}
+	conn, _, err := dialer.Dial(wsURL, header)
+	if err != nil {
+		t.Fatalf("failed to dial websocket: %v", err)
+	}
+	defer conn.Close()
+
+	// 1. Authenticate
+	auth := map[string]string{"action": "auth", "token": testValidToken}
+	if err := conn.WriteJSON(auth); err != nil {
+		t.Fatalf("auth write failed: %v", err)
+	}
+	var authResp map[string]interface{}
+	if err := conn.ReadJSON(&authResp); err != nil || authResp["status"] != "authenticated" {
+		t.Fatalf("auth failed: %v", authResp)
+	}
+
+	// 2. Query SDC status over WebSocket
+	if err := conn.WriteJSON(map[string]string{"action": "sdc_status"}); err != nil {
+		t.Fatalf("failed to send sdc_status: %v", err)
+	}
+	var statusResp map[string]interface{}
+	if err := conn.ReadJSON(&statusResp); err != nil {
+		t.Fatalf("failed to read sdc_status response: %v", err)
+	}
+	if statusResp["status"] != "ok" || statusResp["connected"] != true {
+		t.Fatalf("unexpected sdc_status response: %v", statusResp)
+	}
+
+	// 3. Fiscalize basket transaction over WebSocket
+	fiscalizeCmd := map[string]interface{}{
+		"action": "fiscalize",
+		"data": map[string]string{
+			"invoice_number": "INV-DHA01-T01-000104",
+			"total_payable":  "860.00",
+			"vat_amount":     "30.29",
+			"sd_amount":      "0.00",
+		},
+	}
+	if err := conn.WriteJSON(fiscalizeCmd); err != nil {
+		t.Fatalf("failed to send fiscalize command: %v", err)
+	}
+
+	var fiscResp map[string]interface{}
+	if err := conn.ReadJSON(&fiscResp); err != nil {
+		t.Fatalf("failed to read fiscalize response: %v", err)
+	}
+
+	if fiscResp["status"] != "ok" {
+		t.Fatalf("fiscalization over websocket returned error: %v", fiscResp)
+	}
+	if fiscResp["is_provisional"] != false {
+		t.Errorf("expected is_provisional=false, got %v", fiscResp["is_provisional"])
+	}
+	sdcInvoice, _ := fiscResp["sdc_invoice_number"].(string)
+	if !strings.HasPrefix(sdcInvoice, "SDC-2027-") {
+		t.Errorf("expected SDC invoice prefix SDC-2027-, got %s", sdcInvoice)
+	}
+	sig, _ := fiscResp["fiscal_signature"].(string)
+	if len(sig) < 16 {
+		t.Errorf("expected valid fiscal signature, got %s", sig)
+	}
+}
