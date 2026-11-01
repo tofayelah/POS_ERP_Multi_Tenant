@@ -95,43 +95,104 @@ export function parseRate(rateStr) {
 }
 
 /**
- * Calculate Net Price and VAT Amount from tax-inclusive Gross MRP.
- * Formula from Design §11.4:
- *   Net Price = round(Gross MRP / (1 + V), 2)
- *   VAT Amount = Gross MRP - Net Price
+ * Calculate Net Price, Supplementary Duty, and VAT Amount from tax-inclusive Gross MRP.
+ * Formula from Design §11.4 & Bangladesh VAT Act 2012:
+ *   Value with SD = round(Gross / (1 + VAT_Rate), 2)
+ *   VAT Amount = Gross - Value with SD
+ *   Net Price = round(Value with SD / (1 + SD_Rate), 2)
+ *   SD Amount = Value with SD - Net Price
  *
  * @param {string|number} grossStr
  * @param {string|number} vatRateStr
- * @returns {{ gross: string, net: string, vat: string, grossPaisa: bigint, netPaisa: bigint, vatPaisa: bigint }}
+ * @param {string|number} sdRateStr
+ * @returns {{ gross: string, net: string, sd: string, vat: string, grossPaisa: bigint, netPaisa: bigint, sdPaisa: bigint, vatPaisa: bigint }}
  */
-export function calculateTaxInclusiveLine(grossStr, vatRateStr) {
+export function calculateTaxInclusiveLine(grossStr, vatRateStr, sdRateStr = '0') {
     const grossPaisa = parsePaisa(grossStr);
-    const { rateInt, base100 } = parseRate(vatRateStr);
+    const { rateInt: vatRateInt, base100: vatBase100 } = parseRate(vatRateStr);
+    const { rateInt: sdRateInt, base100: sdBase100 } = parseRate(sdRateStr);
 
-    if (rateInt === 0n || grossPaisa === 0n) {
+    if (grossPaisa === 0n) {
         return {
-            gross: formatPaisa(grossPaisa),
-            net: formatPaisa(grossPaisa),
+            gross: '0.00',
+            net: '0.00',
+            sd: '0.00',
             vat: '0.00',
-            grossPaisa,
-            netPaisa: grossPaisa,
+            grossPaisa: 0n,
+            netPaisa: 0n,
+            sdPaisa: 0n,
             vatPaisa: 0n,
         };
     }
 
-    // Net Paisa = roundHalfUp((GrossPaisa * Base100) / (Base100 + RateInt))
-    const numerator = grossPaisa * base100;
-    const denominator = base100 + rateInt;
-    const netPaisa = divideAndRoundHalfUp(numerator, denominator);
-    const vatPaisa = grossPaisa - netPaisa;
+    // Step 1: Extract VAT from Gross
+    let valueWithSdPaisa = grossPaisa;
+    let vatPaisa = 0n;
+    if (vatRateInt > 0n) {
+        const num = grossPaisa * vatBase100;
+        const den = vatBase100 + vatRateInt;
+        valueWithSdPaisa = divideAndRoundHalfUp(num, den);
+        vatPaisa = grossPaisa - valueWithSdPaisa;
+    }
+
+    // Step 2: Extract Supplementary Duty from Value with SD
+    let netPaisa = valueWithSdPaisa;
+    let sdPaisa = 0n;
+    if (sdRateInt > 0n) {
+        const num = valueWithSdPaisa * sdBase100;
+        const den = sdBase100 + sdRateInt;
+        netPaisa = divideAndRoundHalfUp(num, den);
+        sdPaisa = valueWithSdPaisa - netPaisa;
+    }
 
     return {
         gross: formatPaisa(grossPaisa),
         net: formatPaisa(netPaisa),
+        sd: formatPaisa(sdPaisa),
         vat: formatPaisa(vatPaisa),
         grossPaisa,
         netPaisa,
+        sdPaisa,
         vatPaisa,
+    };
+}
+
+/**
+ * Calculate Supplementary Duty, VAT, and Gross Total for a tax-exclusive line.
+ * Formula from Bangladesh VAT Act 2012:
+ *   SD Amount = round(Net * SD_Rate, 2)
+ *   Value for VAT = Net + SD Amount
+ *   VAT Amount = round(Value for VAT * VAT_Rate, 2)
+ *   Total Payable = Net + SD Amount + VAT Amount
+ *
+ * @param {string|number} netStr
+ * @param {string|number} vatRateStr
+ * @param {string|number} sdRateStr
+ * @returns {{ net: string, sd: string, vat: string, total: string }}
+ */
+export function calculateTaxExclusiveLine(netStr, vatRateStr, sdRateStr = '0') {
+    const netPaisa = parsePaisa(netStr);
+    const { rateInt: vatRateInt, base100: vatBase100 } = parseRate(vatRateStr);
+    const { rateInt: sdRateInt, base100: sdBase100 } = parseRate(sdRateStr);
+
+    let sdPaisa = 0n;
+    if (sdRateInt > 0n) {
+        sdPaisa = divideAndRoundHalfUp(netPaisa * sdRateInt, sdBase100);
+    }
+
+    const valueForVatPaisa = netPaisa + sdPaisa;
+    let vatPaisa = 0n;
+    if (vatRateInt > 0n) {
+        vatPaisa = divideAndRoundHalfUp(valueForVatPaisa * vatRateInt, vatBase100);
+    }
+
+    const totalPaisa = valueForVatPaisa + vatPaisa;
+
+    return {
+        net: formatPaisa(netPaisa),
+        sd: formatPaisa(sdPaisa),
+        vat: formatPaisa(vatPaisa),
+        total: formatPaisa(totalPaisa),
     };
 }
 
@@ -164,12 +225,17 @@ export function calculateBasket(lines) {
  * Round cash drawer tender amount to nearest integer Taka ৳1 (§11.4).
  *
  * @param {string|number} amountStr
- * @returns {string}
+ * @returns {{ rounded_cash: string, adjustment: string }}
  */
 export function roundCashToInteger(amountStr) {
     const paisa = parsePaisa(amountStr);
     const quotient = paisa / 100n;
     const remainder = paisa % 100n;
     const roundedTaka = remainder >= 50n ? quotient + 1n : quotient;
-    return `${roundedTaka}.00`;
+    const roundedPaisa = roundedTaka * 100n;
+    const diffPaisa = roundedPaisa - paisa;
+    return {
+        rounded_cash: `${roundedTaka}.00`,
+        adjustment: formatPaisa(diffPaisa),
+    };
 }
