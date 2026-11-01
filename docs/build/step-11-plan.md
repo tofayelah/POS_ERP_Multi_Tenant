@@ -227,13 +227,13 @@ All tenant tables will be created using `App\Core\Database\TenantMigration` with
 
 ## 5. Implementation Steps & Commit Schedule (Test First)
 
-### Commit 1: Schema Migrations & RLS Policies (Suppliers, Bills, Payments, Open Items, Allocations, VDS, Bank)
-- **Test Written First:** `tests/Database/SubledgerSchemaTenantIsolationTest.php`
+### Commit 1: Schema Migrations & RLS Policies (Suppliers, Bills, Payments, Open Items, Allocations, VDS, Bank) [COMPLETED]
+- **Test Written First:** `tests/Database/SubledgerSchemaTenantIsolationTest.php` (PASS - 2 tests, 17 assertions)
   - Asserts that all 8 subledger tables enforce PostgreSQL Row-Level Security.
   - Verifies cross-tenant data is completely invisible under `app_rw`.
   - Verifies composite foreign keys `(tenant_id, company_id, id)` prevent cross-company references.
 - **Implementation:**
-  - Create migrations in `database/migrations/`:
+  - Created migrations in `database/migrations/`:
     1. `2026_11_11_000001_create_suppliers_table.php`
     2. `2026_11_11_000002_create_supplier_bills_table.php`
     3. `2026_11_11_000003_create_payments_table.php`
@@ -242,7 +242,9 @@ All tenant tables will be created using `App\Core\Database\TenantMigration` with
     6. `2026_11_11_000006_create_vds_certificates_table.php`
     7. `2026_11_11_000007_create_bank_statements_table.php`
     8. `2026_11_11_000008_create_subledger_triggers.php` (for allocation and payment immutability)
-  - Create Eloquent models in `app/Models/`: `Supplier`, `SupplierBill`, `Payment`, `SubledgerOpenItem`, `PaymentAllocation`, `VdsCertificate`, `BankStatement`, `BankStatementLine`.
+  - Created Eloquent models in `app/Models/`: `Supplier`, `SupplierBill`, `Payment`, `SubledgerOpenItem`, `PaymentAllocation`, `VdsCertificate`, `BankStatement`, `BankStatementLine`.
+  - Verified RLS (`php artisan db:check-rls` -> 55/55 tables passed).
+  - Verified Pint (392 files) and PHPStan (0 errors).
 
 ### Commit 2: Customer Credit Limits ("Baki") Validation at Sale & POS
 - **Test Written First:** `tests/Database/CustomerCreditLimitTest.php`
