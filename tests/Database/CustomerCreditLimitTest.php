@@ -163,6 +163,7 @@ class CustomerCreditLimitTest extends TestCase
             'tenant_id' => $this->tenant->id,
             'company_id' => $this->company->id,
             'code' => 'ZERO',
+            'name_en' => 'Zero Rated VAT',
             'description' => 'Zero Rated VAT',
         ]);
 

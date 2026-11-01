@@ -18,6 +18,7 @@ use App\Modules\Accounting\Contracts\AccountingPostingServiceContract;
 use App\Modules\Accounting\Contracts\NumberSeriesContract;
 use App\Modules\Accounting\DTOs\JournalEntryDTO;
 use App\Modules\Accounting\DTOs\JournalLineDTO;
+use App\Modules\Accounting\Subledger\Contracts\CustomerCreditCheckerContract;
 use App\Modules\Tax\DTOs\IssueInvoiceRequest;
 use App\Modules\Tax\DTOs\ReturnInvoiceRequest;
 use App\Modules\Tax\TaxCalculator;
@@ -31,11 +32,16 @@ use InvalidArgumentException;
 
 class InvoiceIssuer
 {
+    protected CustomerCreditCheckerContract $creditChecker;
+
     public function __construct(
         protected TaxCalculator $taxCalculator,
         protected NumberSeriesContract $numberSeries,
         protected AccountingPostingServiceContract $postingService,
-    ) {}
+        ?CustomerCreditCheckerContract $creditChecker = null,
+    ) {
+        $this->creditChecker = $creditChecker ?? app(CustomerCreditCheckerContract::class);
+    }
 
     /**
      * Issue a Sales Invoice: calculate tax, draw gapless number series, insert draft, issue atomically,
@@ -151,6 +157,16 @@ class InvoiceIssuer
                 ->add($totalSd)
                 ->add($totalTax);
 
+            $paymentStatus = $request->paymentStatus ?? 'paid';
+
+            // Credit Limit Check (ACC-06, NEW-16, Design §8.2 #4)
+            if ($paymentStatus === 'credit') {
+                if (! $customerId) {
+                    throw new InvalidArgumentException('Cannot issue credit sale without a registered customer.');
+                }
+                $this->creditChecker->checkCreditLimit((string) $companyId, (string) $customerId, $totalPayable);
+            }
+
             $invoiceId = (string) Str::uuid();
 
             // 4. Insert draft invoice
@@ -171,11 +187,39 @@ class InvoiceIssuer
                 'supplementary_duty_amount' => (string) $totalSd->getBigDecimal(),
                 'tax_amount' => (string) $totalTax->getBigDecimal(),
                 'total_payable' => (string) $totalPayable->getBigDecimal(),
-                'payment_status' => 'paid',
+                'payment_status' => $paymentStatus,
                 'is_synced_from_offline' => $request->isSyncedFromOffline,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
+
+            // Create subledger open item for credit sale (single source of truth for AR)
+            if ($paymentStatus === 'credit') {
+                $dueDate = $request->dueDate
+                    ? ($request->dueDate instanceof CarbonInterface ? $request->dueDate->toDateString() : Carbon::parse($request->dueDate)->toDateString())
+                    : Carbon::parse($invoiceDate)->addDays(30)->toDateString();
+
+                DB::table('subledger_open_items')->insert([
+                    'id' => (string) Str::uuid(),
+                    'tenant_id' => $tenantId,
+                    'company_id' => $companyId,
+                    'party_type' => 'customer',
+                    'party_id' => $customerId,
+                    'source_type' => 'sales_invoice',
+                    'source_id' => $invoiceId,
+                    'document_number' => $invoiceNumber,
+                    'document_date' => $invoiceDate,
+                    'due_date' => $dueDate,
+                    'direction' => 'debit',
+                    'gl_control_account_code' => '1030',
+                    'original_amount' => (string) $totalPayable->getBigDecimal(),
+                    'allocated_amount' => '0.0000',
+                    'remaining_amount' => (string) $totalPayable->getBigDecimal(),
+                    'status' => 'open',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
 
             // 5. Insert invoice lines
             foreach ($lineCalculations as $line) {
@@ -210,7 +254,8 @@ class InvoiceIssuer
 
             // 7. Post synchronous double-entry GL journal via AccountingPostingService
             $accountMap = $request->accountMap;
-            $cashAccountId = $accountMap['cash_or_ar'] ?? $this->getRequiredAccountId($companyId, '1010');
+            $cashOrArDefault = ($paymentStatus === 'credit') ? '1030' : '1010';
+            $cashAccountId = $accountMap['cash_or_ar'] ?? $this->getRequiredAccountId($companyId, $cashOrArDefault);
             $salesAccountId = $accountMap['sales'] ?? $this->getRequiredAccountId($companyId, '4010');
             $vatPayableAccountId = $accountMap['vat_payable'] ?? $this->getRequiredAccountId($companyId, '2020');
             $sdPayableAccountId = $accountMap['sd_payable'] ?? $this->findOptionalAccountId($companyId, '2030');

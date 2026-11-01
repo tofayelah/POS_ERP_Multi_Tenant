@@ -30,5 +30,7 @@ readonly class IssueInvoiceRequest
         public array $accountMap = [],
         public ?string $narration = null,
         public bool $isSyncedFromOffline = false,
+        public ?string $paymentStatus = 'paid',
+        public CarbonInterface|string|null $dueDate = null,
     ) {}
 }
