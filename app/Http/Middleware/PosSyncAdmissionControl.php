@@ -12,7 +12,7 @@ class PosSyncAdmissionControl
 {
     public function handle(Request $request, Closure $next): Response
     {
-        $tenantId = TenantContext::id() ?? (string) $request->user()?->tenant_id;
+        $tenantId = TenantContext::id() ?? (string) $request->header('X-Tenant-ID', '');
         $maxConcurrent = (int) config('pos.max_concurrent_sync_batches', 10);
         $key = null;
 
