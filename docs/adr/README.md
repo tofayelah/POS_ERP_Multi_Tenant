@@ -35,3 +35,4 @@ Each record uses the following standardized structure:
 - [ADR-016: Offline POS Oversell Reconciliation and Supervised Exception Handling](ADR-016-offline-oversell.md)
 - [ADR-017: Statutory Sales Invoice Immutability, Void Flow & Fiscal Enrichment Hardening](ADR-017-invoice-immutability.md)
 - [ADR-018: Bangladesh VAT & Tax Rounding Specification, Cash Tender Adjustment, and Golden Vectors](ADR-018-tax-rounding.md)
+- [ADR-019: AR & AP Subledger Architecture, Module Boundaries & Control Account Reconciliation](ADR-019-subledger-module-boundary.md)
