@@ -704,6 +704,7 @@ class InvoiceIssuerTest extends TestCase
         ));
 
         $html = $this->reportService->renderMushak63($invoice, 'a4', 'en');
+        @file_put_contents(base_path('.scratch/mushak_6_3_basket.html'), $html);
 
         // Assert exact basket figures in statutory Mushak 6.3 output
         $this->assertStringContainsString('829.71', $html, 'Mushak 6.3 must contain Net Subtotal 829.71');
