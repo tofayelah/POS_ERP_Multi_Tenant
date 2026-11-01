@@ -51,7 +51,7 @@ class CustomerCreditChecker implements CustomerCreditCheckerContract
             $netDue = BigDecimal::zero();
         }
 
-        return Money::of($netDue->toScale(2, RoundingMode::HALF_UP)->jsonSerialize(), 'BDT');
+        return Money::of($netDue->toScale(2, RoundingMode::HalfUp)->jsonSerialize(), 'BDT');
     }
 
     /**
