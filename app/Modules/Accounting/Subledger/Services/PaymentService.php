@@ -239,7 +239,7 @@ class PaymentService implements PaymentServiceContract
                 throw new InvalidArgumentException('Cannot allocate payment without active TenantContext.');
             }
 
-            /** @var Payment|null $payment */
+            /** @var Payment $payment */
             $payment = Payment::query()
                 ->where('tenant_id', $tenantId)
                 ->where('id', $paymentId)
@@ -268,7 +268,7 @@ class PaymentService implements PaymentServiceContract
             foreach ($allocations as $item) {
                 $allocAmount = Money::of($item->amount);
 
-                /** @var SubledgerOpenItem|null $openItem */
+                /** @var SubledgerOpenItem $openItem */
                 $openItem = SubledgerOpenItem::query()
                     ->where('tenant_id', $tenantId)
                     ->where('company_id', $payment->company_id)
