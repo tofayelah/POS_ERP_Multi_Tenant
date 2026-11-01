@@ -45,7 +45,7 @@ class CustomerCreditChecker implements CustomerCreditCheckerContract
             ->sum('remaining_amount');
 
         $netDue = BigDecimal::of((string) ($debitDue ?: '0.0000'))
-            ->subtract(BigDecimal::of((string) ($creditDue ?: '0.0000')));
+            ->minus(BigDecimal::of((string) ($creditDue ?: '0.0000')));
 
         if ($netDue->isNegative()) {
             $netDue = BigDecimal::zero();
