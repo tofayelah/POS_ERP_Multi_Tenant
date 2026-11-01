@@ -15,11 +15,11 @@ use App\Models\SalesInvoice;
 use App\Models\SalesInvoiceLine;
 use App\Models\SalesOrder;
 use App\Models\SalesOrderLine;
-use App\Models\SubledgerOpenItem;
 use App\Modules\Accounting\Contracts\AccountingPostingServiceContract;
 use App\Modules\Accounting\Contracts\NumberSeriesContract;
 use App\Modules\Accounting\DTOs\JournalEntryDTO;
 use App\Modules\Accounting\DTOs\JournalLineDTO;
+use App\Modules\Accounting\Subledger\Contracts\SubledgerContract;
 use App\Modules\Inventory\Contracts\StockMovementServiceContract;
 use App\Modules\Inventory\DTOs\StockMovementDTO;
 use App\Modules\Sales\Contracts\SalesDocumentChainContract;
@@ -43,6 +43,7 @@ class SalesDocumentChainService implements SalesDocumentChainContract
         protected NumberSeriesContract $numberSeries,
         protected StockMovementServiceContract $stockService,
         protected AccountingPostingServiceContract $accountingService,
+        protected ?SubledgerContract $subledger = null,
     ) {}
 
     public function createQuotation(CreateQuotationDTO $dto): Quotation
@@ -526,27 +527,20 @@ class SalesDocumentChainService implements SalesDocumentChainContract
                 ]
             ));
 
-            // Record Open Item in AR Subledger
+            // Record Open Item in AR Subledger via SubledgerContract (ACC-06, NEW-16)
             $dueDate = $dto->dueDate ?? Carbon::parse($dto->invoiceDate)->addDays(30)->toDateString();
+            $subledger = $this->subledger ?? app(SubledgerContract::class);
 
-            SubledgerOpenItem::create([
-                'id' => (string) Str::uuid(),
-                'tenant_id' => $tenantId,
-                'company_id' => $dto->companyId,
-                'party_type' => 'customer',
-                'party_id' => $challan->customer_id,
-                'source_type' => 'sales_invoice',
-                'source_id' => $invoice->id,
-                'document_number' => $invoice->invoice_number,
-                'document_date' => $dto->invoiceDate,
-                'due_date' => $dueDate,
-                'direction' => 'debit',
-                'gl_control_account_code' => '1030',
-                'original_amount' => (string) $totalPayable->toScale(4, RoundingMode::HalfUp),
-                'allocated_amount' => '0.0000',
-                'remaining_amount' => (string) $totalPayable->toScale(4, RoundingMode::HalfUp),
-                'status' => 'open',
-            ]);
+            $subledger->createReceivable(
+                tenantId: $tenantId,
+                companyId: $dto->companyId,
+                customerId: $challan->customer_id,
+                invoiceId: $invoice->id,
+                invoiceNumber: $invoice->invoice_number,
+                documentDate: $dto->invoiceDate,
+                dueDate: $dueDate,
+                amount: (string) $totalPayable->toScale(4, RoundingMode::HalfUp),
+            );
 
             return $invoice->load('lines');
         });

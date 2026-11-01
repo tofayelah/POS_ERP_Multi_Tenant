@@ -13,6 +13,7 @@ use App\Modules\Accounting\Subledger\Contracts\BankReconciliationContract;
 use App\Modules\Accounting\Subledger\Contracts\CustomerCreditCheckerContract;
 use App\Modules\Accounting\Subledger\Contracts\PaymentServiceContract;
 use App\Modules\Accounting\Subledger\Contracts\SubledgerAgingContract;
+use App\Modules\Accounting\Subledger\Contracts\SubledgerContract;
 use App\Modules\Accounting\Subledger\Contracts\SubledgerReconciliationContract;
 use App\Modules\Accounting\Subledger\Contracts\SupplierPaymentVoucherContract;
 use App\Modules\Accounting\Subledger\Contracts\VdsCertificateContract;
@@ -21,6 +22,7 @@ use App\Modules\Accounting\Subledger\Services\CustomerCreditChecker;
 use App\Modules\Accounting\Subledger\Services\PaymentService;
 use App\Modules\Accounting\Subledger\Services\SubledgerAgingService;
 use App\Modules\Accounting\Subledger\Services\SubledgerReconciliationService;
+use App\Modules\Accounting\Subledger\Services\SubledgerService;
 use App\Modules\Accounting\Subledger\Services\SupplierPaymentVoucherService;
 use App\Modules\Accounting\Subledger\Services\VdsCertificateService;
 
@@ -39,6 +41,7 @@ class AccountingServiceProvider extends AbstractModuleServiceProvider
         $this->app->singleton(SubledgerReconciliationContract::class, SubledgerReconciliationService::class);
         $this->app->singleton(BankReconciliationContract::class, BankReconciliationService::class);
         $this->app->singleton(SubledgerAgingContract::class, SubledgerAgingService::class);
+        $this->app->singleton(SubledgerContract::class, SubledgerService::class);
         $this->app->singleton(FinancialReportContract::class, FinancialReportService::class);
     }
 

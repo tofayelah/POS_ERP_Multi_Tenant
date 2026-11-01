@@ -10,13 +10,13 @@ use App\Models\GoodsReceipt;
 use App\Models\GoodsReceiptLine;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderLine;
-use App\Models\SubledgerOpenItem;
 use App\Models\SupplierBill;
 use App\Models\SupplierBillLine;
 use App\Modules\Accounting\Contracts\AccountingPostingServiceContract;
 use App\Modules\Accounting\Contracts\NumberSeriesContract;
 use App\Modules\Accounting\DTOs\JournalEntryDTO;
 use App\Modules\Accounting\DTOs\JournalLineDTO;
+use App\Modules\Accounting\Subledger\Contracts\SubledgerContract;
 use App\Modules\Inventory\Contracts\StockMovementServiceContract;
 use App\Modules\Inventory\DTOs\StockMovementDTO;
 use App\Modules\Procurement\Contracts\ProcurementDocumentChainContract;
@@ -39,6 +39,7 @@ class ProcurementDocumentChainService implements ProcurementDocumentChainContrac
         protected NumberSeriesContract $numberSeries,
         protected StockMovementServiceContract $stockService,
         protected AccountingPostingServiceContract $accountingService,
+        protected ?SubledgerContract $subledger = null,
     ) {}
 
     public function createPurchaseOrder(CreatePurchaseOrderDTO $dto): PurchaseOrder
@@ -431,25 +432,18 @@ class ProcurementDocumentChainService implements ProcurementDocumentChainContrac
             $bill->gl_journal_entry_id = $entry->id;
             $bill->save();
 
-            // Record Open Item in AP Subledger
-            SubledgerOpenItem::create([
-                'id' => (string) Str::uuid(),
-                'tenant_id' => $tenantId,
-                'company_id' => $dto->companyId,
-                'party_type' => 'supplier',
-                'party_id' => $grn->supplier_id,
-                'source_type' => 'supplier_bill',
-                'source_id' => $bill->id,
-                'document_number' => $bill->bill_number,
-                'document_date' => $dto->billDate,
-                'due_date' => $dto->dueDate,
-                'direction' => 'credit',
-                'gl_control_account_code' => '2010',
-                'original_amount' => (string) $totalAmount->toScale(4, RoundingMode::HalfUp),
-                'allocated_amount' => '0.0000',
-                'remaining_amount' => (string) $totalAmount->toScale(4, RoundingMode::HalfUp),
-                'status' => 'open',
-            ]);
+            // Record Open Item in AP Subledger via SubledgerContract (ACC-06, NEW-16)
+            $subledger = $this->subledger ?? app(SubledgerContract::class);
+            $subledger->createPayable(
+                tenantId: $tenantId,
+                companyId: $dto->companyId,
+                supplierId: $grn->supplier_id,
+                billId: $bill->id,
+                billNumber: $bill->bill_number,
+                documentDate: $dto->billDate,
+                dueDate: $dto->dueDate,
+                amount: (string) $totalAmount->toScale(4, RoundingMode::HalfUp),
+            );
 
             return $bill->load('lines');
         });
