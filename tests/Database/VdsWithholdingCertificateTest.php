@@ -178,14 +178,13 @@ class VdsWithholdingCertificateTest extends TestCase
             'invoice_number' => 'INV-2026-00860',
             'invoice_date' => Carbon::today()->toDateString(),
             'business_date' => Carbon::today()->toDateString(),
-            'due_date' => Carbon::today()->addDays(30)->toDateString(),
             'subtotal' => '829.7100',
-            'total_vat' => '30.2900',
-            'grand_total' => '860.0000',
-            'tendered_amount' => '0.0000',
-            'change_amount' => '0.0000',
+            'discount_amount' => '0.0000',
+            'supplementary_duty_amount' => '0.0000',
+            'tax_amount' => '30.2900',
+            'total_payable' => '860.0000',
+            'payment_status' => 'unpaid',
             'status' => 'issued',
-            'fiscal_year' => $this->fiscalYear->title,
         ]);
 
         $openItem = SubledgerOpenItem::create([
@@ -439,14 +438,13 @@ class VdsWithholdingCertificateTest extends TestCase
             'invoice_number' => 'INV-2026-OVER',
             'invoice_date' => Carbon::today()->toDateString(),
             'business_date' => Carbon::today()->toDateString(),
-            'due_date' => Carbon::today()->addDays(30)->toDateString(),
             'subtotal' => '1000.0000',
-            'total_vat' => '50.0000',
-            'grand_total' => '1050.0000',
-            'tendered_amount' => '0.0000',
-            'change_amount' => '0.0000',
+            'discount_amount' => '0.0000',
+            'supplementary_duty_amount' => '0.0000',
+            'tax_amount' => '50.0000',
+            'total_payable' => '1050.0000',
+            'payment_status' => 'unpaid',
             'status' => 'issued',
-            'fiscal_year' => $this->fiscalYear->title,
         ]);
 
         SubledgerOpenItem::create([
