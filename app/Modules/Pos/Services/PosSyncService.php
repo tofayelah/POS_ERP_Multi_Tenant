@@ -24,9 +24,11 @@ use InvalidArgumentException;
 
 class PosSyncService implements PosSyncServiceContract
 {
+    protected InvoiceIssuerContract $invoiceIssuer;
+
     public function __construct(
         protected PosSyncPayloadAdapter $adapter,
-        protected ?InvoiceIssuerContract $invoiceIssuer = null,
+        ?InvoiceIssuerContract $invoiceIssuer = null,
         protected ?OfflineOversellServiceContract $oversellService = null,
     ) {
         $this->invoiceIssuer = $invoiceIssuer ?? app(InvoiceIssuerContract::class);
