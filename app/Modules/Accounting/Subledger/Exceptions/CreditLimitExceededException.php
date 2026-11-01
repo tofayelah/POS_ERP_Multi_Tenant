@@ -15,10 +15,10 @@ class CreditLimitExceededException extends Exception
     ) {
         $msg = $message ?: sprintf(
             'Credit limit exceeded: Customer credit limit is %s, current due is %s. Attempted credit sale of %s results in projected due of %s.',
-            $creditLimit->format(),
-            $currentDue->format(),
-            $proposedAmount->format(),
-            $currentDue->add($proposedAmount)->format()
+            $creditLimit->getFormattedAmount(),
+            $currentDue->getFormattedAmount(),
+            $proposedAmount->getFormattedAmount(),
+            $currentDue->add($proposedAmount)->getFormattedAmount()
         );
         parent::__construct($msg);
     }
