@@ -22,6 +22,8 @@ use Illuminate\Support\Carbon;
  * @property string $invoice_date
  * @property string $business_date
  * @property string|null $customer_id
+ * @property string|null $sales_order_id
+ * @property string|null $delivery_challan_id
  * @property string $status
  * @property string $subtotal
  * @property string $discount_amount
@@ -62,6 +64,8 @@ class SalesInvoice extends Model
         'invoice_date',
         'business_date',
         'customer_id',
+        'sales_order_id',
+        'delivery_challan_id',
         'status',
         'subtotal',
         'discount_amount',
@@ -128,6 +132,22 @@ class SalesInvoice extends Model
     public function customer(): BelongsTo
     {
         return $this->belongsTo(Customer::class);
+    }
+
+    /**
+     * @return BelongsTo<SalesOrder, $this>
+     */
+    public function salesOrder(): BelongsTo
+    {
+        return $this->belongsTo(SalesOrder::class, 'sales_order_id');
+    }
+
+    /**
+     * @return BelongsTo<DeliveryChallan, $this>
+     */
+    public function deliveryChallan(): BelongsTo
+    {
+        return $this->belongsTo(DeliveryChallan::class, 'delivery_challan_id');
     }
 
     /**

@@ -12,6 +12,8 @@ use Illuminate\Support\Carbon;
  * @property string $tenant_id
  * @property string $company_id
  * @property string $sales_invoice_id
+ * @property string|null $sales_order_line_id
+ * @property string|null $delivery_challan_line_id
  * @property string $product_variant_id
  * @property string $item_description
  * @property string $uom
@@ -50,6 +52,8 @@ class SalesInvoiceLine extends Model
         'tenant_id',
         'company_id',
         'sales_invoice_id',
+        'sales_order_line_id',
+        'delivery_challan_line_id',
         'product_variant_id',
         'item_description',
         'uom',
@@ -114,6 +118,22 @@ class SalesInvoiceLine extends Model
     public function productVariant(): BelongsTo
     {
         return $this->belongsTo(ProductVariant::class, 'product_variant_id');
+    }
+
+    /**
+     * @return BelongsTo<SalesOrderLine, $this>
+     */
+    public function salesOrderLine(): BelongsTo
+    {
+        return $this->belongsTo(SalesOrderLine::class, 'sales_order_line_id');
+    }
+
+    /**
+     * @return BelongsTo<DeliveryChallanLine, $this>
+     */
+    public function deliveryChallanLine(): BelongsTo
+    {
+        return $this->belongsTo(DeliveryChallanLine::class, 'delivery_challan_line_id');
     }
 
     /**

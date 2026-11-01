@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 
 /**
@@ -13,6 +14,8 @@ use Illuminate\Support\Carbon;
  * @property string $company_id
  * @property string $branch_id
  * @property string $supplier_id
+ * @property string|null $purchase_order_id
+ * @property string|null $goods_receipt_id
  * @property string $bill_number
  * @property Carbon $bill_date
  * @property Carbon $due_date
@@ -49,6 +52,8 @@ class SupplierBill extends Model
         'company_id',
         'branch_id',
         'supplier_id',
+        'purchase_order_id',
+        'goods_receipt_id',
         'bill_number',
         'bill_date',
         'due_date',
@@ -123,5 +128,29 @@ class SupplierBill extends Model
     public function approver(): BelongsTo
     {
         return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    /**
+     * @return BelongsTo<PurchaseOrder, $this>
+     */
+    public function purchaseOrder(): BelongsTo
+    {
+        return $this->belongsTo(PurchaseOrder::class, 'purchase_order_id');
+    }
+
+    /**
+     * @return BelongsTo<GoodsReceipt, $this>
+     */
+    public function goodsReceipt(): BelongsTo
+    {
+        return $this->belongsTo(GoodsReceipt::class, 'goods_receipt_id');
+    }
+
+    /**
+     * @return HasMany<SupplierBillLine, $this>
+     */
+    public function lines(): HasMany
+    {
+        return $this->hasMany(SupplierBillLine::class, 'supplier_bill_id');
     }
 }
