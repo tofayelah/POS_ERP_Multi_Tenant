@@ -42,7 +42,19 @@ class LocationScope implements Scope
 
         $branchCol = method_exists($model, 'getLocationScopeBranchColumn')
             ? $model->getLocationScopeBranchColumn()
-            : 'branch_id';
+            : (in_array($model->getTable(), [
+                'stock_balances',
+                'stock_movements',
+                'cost_layers',
+                'stock_locations',
+                'stock_transfers',
+                'stock_transfer_lines',
+                'stock_reservations',
+                'stock_count_lines',
+                'stock_count_sessions',
+                'landed_costs',
+                'landed_cost_allocations',
+            ], true) ? null : 'branch_id');
 
         $companyCol = method_exists($model, 'getLocationScopeCompanyColumn')
             ? $model->getLocationScopeCompanyColumn()
@@ -53,7 +65,7 @@ class LocationScope implements Scope
                 $query->orWhere(function (Builder $sub) use ($scope, $branchCol, $companyCol) {
                     $sub->where($companyCol, $scope->company_id);
 
-                    if ($scope->branch_id !== null) {
+                    if ($scope->branch_id !== null && $branchCol !== null) {
                         $sub->where($branchCol, $scope->branch_id);
                     }
                 });
