@@ -45,11 +45,15 @@
                 Synced
             </span>
 
-            <!-- SDC Status -->
-            <span class="text-xs px-2 py-1 rounded bg-slate-800 text-emerald-400 flex items-center space-x-1">
-                <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
-                <span>SDC: CONNECTED</span>
-            </span>
+            <!-- SDC Status & Toggle -->
+            <button @click="toggleSDC()" 
+                    id="sdc-toggle-btn"
+                    title="Toggle SDC Connection State for testing"
+                    class="text-xs px-2 py-1 rounded bg-slate-800 flex items-center space-x-1 border"
+                    :class="sdcConnected ? 'text-emerald-400 border-emerald-800' : 'text-amber-400 border-amber-600 animate-pulse'">
+                <span class="w-2 h-2 rounded-full" :class="sdcConnected ? 'bg-emerald-400' : 'bg-amber-400'"></span>
+                <span x-text="sdcConnected ? 'SDC: CONNECTED' : 'SDC: OFFLINE (' + shiftUnfiscalizedCount + ')'"></span>
+            </button>
 
             <!-- Lock / Sign Out -->
             <button @click="lockTerminal()" class="text-xs text-gray-300 hover:text-white bg-slate-800 hover:bg-slate-700 px-2.5 py-1 rounded">
@@ -62,6 +66,12 @@
     <div x-show="!isOnline" class="bg-amber-500 text-slate-950 font-bold px-4 py-1 text-center text-xs shadow flex items-center justify-between">
         <span>⚠ OFFLINE MODE: Network disconnected. Transactions are saving locally to Dexie.js (IndexedDB). Zero data loss guaranteed.</span>
         <span class="bg-slate-900 text-amber-300 px-2 py-0.5 rounded text-[11px]" x-text="syncStatusText"></span>
+    </div>
+
+    <!-- Shift Fiscal Fraud Alert Banner (10 Un-fiscalized Invoices Alert, §12.2, NEW-18) -->
+    <div x-show="showFiscalAlertBanner" class="bg-amber-600 text-white font-bold px-4 py-1.5 text-center text-xs shadow flex items-center justify-between" id="fiscal-alert-banner">
+        <span>⚠ ATTENTION: <span x-text="shiftUnfiscalizedCount"></span> un-fiscalized sales issued during this shift. Ensure SDC device is powered and connected.</span>
+        <button @click="showFiscalAlertBanner = false" class="text-xs bg-slate-900 text-amber-200 px-2.5 py-0.5 rounded font-mono">Dismiss</button>
     </div>
 
     <!-- Main Workspace (1366x768 layout) -->
@@ -578,6 +588,42 @@
         </div>
     </div>
 
+    <!-- 8. Fiscal Lockout Modal (25 Un-fiscalized or 60 min offline, §12.2, NEW-18) -->
+    <div x-show="showFiscalLockModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md flex items-center justify-center z-50" id="fiscal-lockout-modal">
+        <div class="bg-white rounded-xl shadow-2xl p-6 w-[500px] max-w-full border-2 border-red-600">
+            <div class="flex items-center space-x-3 mb-3 text-red-600">
+                <svg class="w-8 h-8 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                <h3 class="text-base font-extrabold text-slate-900">SDC FISCAL LOCKOUT ACTIVE (§12.2)</h3>
+            </div>
+            <p class="text-xs text-gray-700 mb-3">
+                Checkout has been automatically suspended because 
+                <span class="font-bold text-red-600" x-text="shiftUnfiscalizedCount"></span> un-fiscalized sales were issued, 
+                or the terminal has been operating without SDC synchronization for over 60 minutes.
+            </p>
+            <div class="bg-amber-50 border border-amber-200 rounded p-2.5 text-xs text-amber-900 mb-4 font-mono">
+                Statutory Rule: Fraud prevention lock requires Shift Supervisor PIN override.
+            </div>
+
+            <div x-show="fiscalLockError" class="mb-3 p-2 bg-red-100 border border-red-300 rounded text-red-800 text-xs font-bold" id="fiscal-lock-error" x-text="fiscalLockError"></div>
+
+            <div class="mb-4">
+                <label class="block text-xs font-bold text-gray-700 mb-1">Shift Supervisor PIN</label>
+                <input type="password" 
+                       id="fiscal-supervisor-pin" 
+                       x-model="fiscalSupervisorPin" 
+                       @keydown.enter="unlockFiscalLockout()"
+                       placeholder="••••" 
+                       class="w-full px-4 py-2 border-2 border-slate-700 rounded-lg text-center tracking-widest font-mono text-xl focus:outline-none">
+            </div>
+
+            <div class="flex justify-end space-x-2">
+                <button @click="unlockFiscalLockout()" id="btn-unlock-fiscal" class="bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider">
+                    Authorize Override & Resume
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Dexie & Alpine App Logic -->
     <script>
         // 1. Initialize Dexie DB
@@ -588,6 +634,9 @@
             carts: 'id, updated_at',
             pending_sales: 'id, type, invoice_number, shift_id, subtotal, discount, vat, payable, payment_method, created_at, status',
             shifts: 'id, terminal_id, opened_at, closed_at, opening_float, cash_sales, expected_cash, actual_cash, variance, status'
+        });
+        db.version(2).stores({
+            pending_fiscal_queue: 'id, invoice_number, shift_id, total_payable, vat_amount, sd_amount, created_at, status'
         });
 
         // 2. Pre-seed local Dexie catalog
@@ -671,6 +720,18 @@
                 lastSaleTotal: '',
                 lastSaleTendered: '',
                 lastSalePaymentMethod: 'CASH',
+
+                // SDC & Fiscalization (§12.2, NEW-18)
+                sdcConnected: true,
+                shiftUnfiscalizedCount: 0,
+                offlineMinutes: 0,
+                showFiscalAlertBanner: false,
+                showFiscalLockModal: false,
+                fiscalSupervisorPin: '',
+                fiscalLockError: '',
+                lastSaleFiscalSignature: '',
+                lastSaleSDCInvoiceNumber: '',
+                lastSaleIsProvisional: false,
 
                 // Returns & Refunds (§11.2, NEW-32)
                 showReturnModal: false,
@@ -1017,6 +1078,12 @@
                     this.changeDue = (change >= 0 ? change : 0).toFixed(2);
                 },
                 async completeSale() {
+                    // Check Fiscal Lockout Active (§12.2)
+                    if (this.showFiscalLockModal) {
+                        alert('SDC Fiscal Lockout is active. Shift Supervisor override PIN is required before completing further sales.');
+                        return;
+                    }
+
                     // MFS / Card Offline Validation Rule (§11.2, NEW-32)
                     if (this.paymentMethod !== 'CASH') {
                         if (!this.isOnline && !this.mfsReferenceInput.trim()) {
@@ -1027,6 +1094,46 @@
 
                     const invoiceNo = 'INV-DHA01-T01-' + String(Date.now()).slice(-6);
                     const saleTotal = this.totals.payable;
+
+                    // Fiscalization & Statutory EFD/SDC Handling (§12.2, NEW-18)
+                    let isProvisional = false;
+                    let sdcInvoiceNo = '';
+                    let fiscalSig = '';
+
+                    if (!this.sdcConnected) {
+                        isProvisional = true;
+                        this.shiftUnfiscalizedCount++;
+
+                        // Queue into Dexie pending_fiscal_queue
+                        await db.pending_fiscal_queue.add({
+                            id: 'fisc-' + Date.now(),
+                            invoice_number: invoiceNo,
+                            shift_id: this.shiftId,
+                            total_payable: saleTotal,
+                            vat_amount: this.totals.vat,
+                            sd_amount: '0.00',
+                            created_at: new Date().toISOString(),
+                            status: 'pending_fiscal'
+                        });
+
+                        // Cumulative Shift Alert at 10 unfiscalized sales
+                        if (this.shiftUnfiscalizedCount >= 10) {
+                            this.showFiscalAlertBanner = true;
+                        }
+
+                        // Hard lockout at 25 unfiscalized sales or 60 min offline
+                        if (this.shiftUnfiscalizedCount >= 25 || this.offlineMinutes >= 60) {
+                            this.showFiscalLockModal = true;
+                        }
+                    } else {
+                        // SDC is connected: generate official signature
+                        sdcInvoiceNo = 'SDC-2027-' + String(Date.now()).slice(-8);
+                        fiscalSig = 'SIG-' + String(Date.now()).slice(-10);
+                    }
+
+                    this.lastSaleIsProvisional = isProvisional;
+                    this.lastSaleSDCInvoiceNumber = sdcInvoiceNo;
+                    this.lastSaleFiscalSignature = fiscalSig;
 
                     // Save sale in Dexie pending_sales
                     const saleRecord = {
@@ -1039,6 +1146,9 @@
                         payable: saleTotal,
                         payment_method: this.paymentMethod,
                         mfs_reference: this.mfsReferenceInput.trim(),
+                        sdc_invoice_number: sdcInvoiceNo,
+                        fiscal_signature: fiscalSig,
+                        is_provisional: isProvisional,
                         created_at: new Date().toISOString(),
                         status: this.isOnline 
                             ? 'synced' 
@@ -1071,6 +1181,35 @@
                     // If online, sync immediately
                     if (this.isOnline) {
                         await this.syncOfflineSales();
+                    }
+                },
+
+                // --- SDC FISCAL REPLAY & LOCKOUT OVERRIDE (§12.2, NEW-18) ---
+                toggleSDC() {
+                    this.sdcConnected = !this.sdcConnected;
+                    if (this.sdcConnected) {
+                        this.replayPendingFiscalQueue();
+                    }
+                },
+                async replayPendingFiscalQueue() {
+                    const pending = await db.pending_fiscal_queue.where('status').equals('pending_fiscal').toArray();
+                    for (const item of pending) {
+                        await db.pending_fiscal_queue.update(item.id, {
+                            status: 'fiscalized',
+                            fiscalized_at: new Date().toISOString(),
+                            sdc_invoice_number: 'SDC-2027-' + String(Date.now()).slice(-8),
+                            fiscal_signature: 'SIG-REPLAY-' + String(Date.now()).slice(-8)
+                        });
+                    }
+                },
+                unlockFiscalLockout() {
+                    if (this.fiscalSupervisorPin === '9999' || this.fiscalSupervisorPin === '4821') {
+                        this.showFiscalLockModal = false;
+                        this.fiscalSupervisorPin = '';
+                        this.fiscalLockError = '';
+                        alert('Supervisor override accepted: Fiscal lockout cleared.');
+                    } else {
+                        this.fiscalLockError = 'Invalid Supervisor PIN. Override refused.';
                     }
                 },
 
