@@ -18,12 +18,26 @@ class NumberSeriesService implements NumberSeriesContract
      */
     protected array $defaultPrefixes = [
         'journal' => 'JV',
-        'sales_invoice' => 'SINV',
+        'sales_invoice' => 'INV',
+        'invoice' => 'INV',
         'purchase_bill' => 'BILL',
+        'supplier_bill' => 'BILL',
         'payment' => 'PAY',
         'receipt' => 'REC',
         'credit_note' => 'CN',
         'debit_note' => 'DN',
+        'quotation' => 'QT',
+        'sales_order' => 'SO',
+        'delivery_challan' => 'DC',
+        'purchase_order' => 'PO',
+        'goods_receipt' => 'GRN',
+        'QT' => 'QT',
+        'SO' => 'SO',
+        'DC' => 'DC',
+        'INV' => 'INV',
+        'PO' => 'PO',
+        'GRN' => 'GRN',
+        'BILL' => 'BILL',
     ];
 
     public function getNextNumber(string $companyId, ?string $branchId, string $documentType, string $fiscalYear): string
