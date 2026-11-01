@@ -373,7 +373,7 @@ class PosSyncOversellAndClockSkewTest extends TestCase
 
         // 5. Verify General Ledger trial balance for this transaction balances (debit == credit)
         $journalEntry = JournalEntry::where('reference_id', $invoiceId)->firstOrFail();
-        $this->assertSame('posted', $journalEntry->status);
+        $this->assertTrue((bool) $journalEntry->is_posted);
 
         $totals = JournalLine::where('journal_entry_id', $journalEntry->id)
             ->selectRaw('SUM(debit) as total_debits, SUM(credit) as total_credits')
@@ -554,6 +554,6 @@ class PosSyncOversellAndClockSkewTest extends TestCase
 
         DB::table('sales_invoices')
             ->where('id', $invoiceId)
-            ->update(['total_amount' => '999999.0000']);
+            ->update(['total_payable' => '999999.0000']);
     }
 }
