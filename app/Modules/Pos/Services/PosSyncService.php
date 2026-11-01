@@ -177,8 +177,8 @@ class PosSyncService implements PosSyncServiceContract
                 quantity: $item->quantity,
                 unitPrice: $item->unitPrice,
                 taxCode: $taxCode,
+                discount: $item->discountAmount,
                 uom: $variant->base_uom ?? 'Pcs',
-                discountAmount: $item->discountAmount,
                 vatRatePercent: $item->flatTaxRate,
             );
         }
