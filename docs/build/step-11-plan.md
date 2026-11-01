@@ -274,15 +274,19 @@ All tenant tables will be created using `App\Core\Database\TenantMigration` with
   - Registered `PaymentServiceContract` singleton in `AccountingServiceProvider`.
   - Verified Pint (404 files) and PHPStan (0 errors).
 
-### Commit 4: Segregation of Duties (SoD §3.3) for Supplier Payment Vouchers
-- **Test Written First:** `tests/Database/SupplierPaymentSodTest.php`
+### Commit 4: Segregation of Duties (SoD §3.3) for Supplier Payment Vouchers [COMPLETED]
+- **Test Written First:** `tests/Database/SupplierPaymentSodTest.php` (PASS - 3 tests, 21 assertions)
   - User A (Purchasing Clerk) creates a Supplier Payment Voucher.
   - User A attempts to approve or post voucher -> Assert fails with `SegregationOfDutiesException` (Rule SoD-01 / SoD-02: Creator cannot approve their own payment).
   - User B (Tenant Owner / Finance Manager) approves voucher -> Assert succeeds, status becomes `posted`, and double-entry GL journal is posted.
   - User C who created the Supplier record attempts to approve -> Assert fails with `SegregationOfDutiesException`.
 - **Implementation:**
-  - Create `app/Modules/Accounting/Subledger/Services/SupplierPaymentVoucherService.php`.
-  - Enforce SoD validation in `PaymentService::approveSupplierPayment(...)`.
+  - Added `created_by` column and relation to `suppliers` table (migration `2026_11_11_000009_add_created_by_to_suppliers_table.php`).
+  - Created `app/Modules/Accounting/Subledger/Contracts/SupplierPaymentVoucherContract.php`.
+  - Created `app/Modules/Accounting/Subledger/Services/SupplierPaymentVoucherService.php`.
+  - Created `CreateSupplierVoucherDTO`, `AllocationItemDTO`, and `SegregationOfDutiesException`.
+  - Registered `SupplierPaymentVoucherContract` singleton in `AccountingServiceProvider`.
+  - Verified Pint (410 files) and PHPStan (0 errors).
 
 ### Commit 5: Mushak 6.6 VDS Withholding & Statutory Accounting
 - **Test Written First:** `tests/Database/VdsWithholdingCertificateTest.php`

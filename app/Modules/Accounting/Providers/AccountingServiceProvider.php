@@ -10,9 +10,11 @@ use App\Modules\Accounting\Services\NumberSeriesService;
 use App\Modules\Accounting\Subledger\Contracts\CustomerCreditCheckerContract;
 use App\Modules\Accounting\Subledger\Contracts\PaymentServiceContract;
 use App\Modules\Accounting\Subledger\Contracts\SupplierPaymentVoucherContract;
+use App\Modules\Accounting\Subledger\Contracts\VdsCertificateContract;
 use App\Modules\Accounting\Subledger\Services\CustomerCreditChecker;
 use App\Modules\Accounting\Subledger\Services\PaymentService;
 use App\Modules\Accounting\Subledger\Services\SupplierPaymentVoucherService;
+use App\Modules\Accounting\Subledger\Services\VdsCertificateService;
 
 class AccountingServiceProvider extends AbstractModuleServiceProvider
 {
@@ -25,6 +27,7 @@ class AccountingServiceProvider extends AbstractModuleServiceProvider
         $this->app->singleton(CustomerCreditCheckerContract::class, CustomerCreditChecker::class);
         $this->app->singleton(PaymentServiceContract::class, PaymentService::class);
         $this->app->singleton(SupplierPaymentVoucherContract::class, SupplierPaymentVoucherService::class);
+        $this->app->singleton(VdsCertificateContract::class, VdsCertificateService::class);
     }
 
     public function getIdentifier(): string
