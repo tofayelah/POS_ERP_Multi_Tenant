@@ -3,7 +3,6 @@
 namespace Tests\Database;
 
 use App\Core\Tenancy\TenantContext;
-use App\Core\ValueObjects\Money;
 use App\Models\AccountingPeriod;
 use App\Models\Branch;
 use App\Models\ChartOfAccount;
@@ -11,9 +10,7 @@ use App\Models\Company;
 use App\Models\Customer;
 use App\Models\FiscalYear;
 use App\Models\JournalEntry;
-use App\Models\JournalLine;
 use App\Models\Payment;
-use App\Models\PaymentAllocation;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\SubledgerOpenItem;

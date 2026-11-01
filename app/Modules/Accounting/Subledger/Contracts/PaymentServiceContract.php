@@ -3,6 +3,8 @@
 namespace App\Modules\Accounting\Subledger\Contracts;
 
 use App\Models\Payment;
+use App\Models\PaymentAllocation;
+use App\Modules\Accounting\Subledger\DTOs\AllocationItemDTO;
 use App\Modules\Accounting\Subledger\DTOs\RecordPaymentDTO;
 
 interface PaymentServiceContract
@@ -16,8 +18,8 @@ interface PaymentServiceContract
     /**
      * Allocate an existing unallocated payment across open subledger items.
      *
-     * @param  array<int, \App\Modules\Accounting\Subledger\DTOs\AllocationItemDTO>  $allocations
-     * @return array<int, \App\Models\PaymentAllocation>
+     * @param  array<int, AllocationItemDTO>  $allocations
+     * @return array<int, PaymentAllocation>
      */
     public function allocatePayment(string $paymentId, array $allocations): array;
 }
