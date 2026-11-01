@@ -27,9 +27,8 @@
     <div class="header">
         <h1>{{ $isBn ? 'গণপ্রজাতন্ত্রী বাংলাদেশ সরকার' : 'Government of the People\'s Republic of Bangladesh' }}</h1>
         <h2>{{ $isBn ? 'জাতীয় রাজস্ব বোর্ড' : 'National Board of Revenue' }}</h2>
-        <p><strong>{{ $isBn ? 'ক্রেডিট নোট' : 'CREDIT NOTE' }}</strong></p>
+        <p><strong>{{ $isBn ? 'ক্রেডিট নোট (ফরম মূসক-৬.৭)' : 'CREDIT NOTE (MUSHAK-6.7)' }}</strong></p>
         <p>[{{ $isBn ? 'বিধি ৪০ এর উপ-বিধি (১) এর দফা (ঙ) দ্রষ্টব্য' : 'Under Rule 40(1)(e) of VAT & SD Rules, 2016' }}]</p>
-        <p><strong>{{ $isBn ? 'ফরম মূসক-৬.৭' : 'Mushak-6.7' }}</strong></p>
     </div>
 
     <table class="meta-table">
