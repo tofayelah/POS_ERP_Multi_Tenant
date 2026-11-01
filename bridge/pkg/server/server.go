@@ -14,11 +14,24 @@ var ErrServerClosed = http.ErrServerClosed
 
 // Server wraps the local HTTP and WebSocket bridge daemon.
 type Server struct {
-	cfg        *config.Config
-	httpServer *http.Server
-	listener   net.Listener
-	mu         sync.Mutex
-	shiftOpen  bool
+	cfg         *config.Config
+	httpServer  *http.Server
+	listener    net.Listener
+	mu          sync.Mutex
+	shiftOpen   bool
+	diagnostics map[string]interface{}
+}
+
+// Handler returns the underlying http.Handler for testing.
+func (s *Server) Handler() http.Handler {
+	return s.httpServer.Handler
+}
+
+// SetDiagnostics stores hardware diagnostic details.
+func (s *Server) SetDiagnostics(diag map[string]interface{}) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.diagnostics = diag
 }
 
 // NewServer creates a new bridge server instance.
