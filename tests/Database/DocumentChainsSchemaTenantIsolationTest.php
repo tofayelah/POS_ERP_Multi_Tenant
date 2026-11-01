@@ -16,6 +16,7 @@ use App\Models\SalesOrder;
 use App\Models\Supplier;
 use App\Models\SupplierBill;
 use App\Models\SupplierBillLine;
+use App\Models\TaxCode;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Models\Warehouse;
@@ -136,6 +137,15 @@ class DocumentChainsSchemaTenantIsolationTest extends TestCase
             'created_by' => $this->userA->id,
         ]);
 
+        $taxCodeA = TaxCode::create([
+            'id' => (string) Str::uuid(),
+            'tenant_id' => $this->tenantA->id,
+            'company_id' => $this->companyA->id,
+            'code' => 'VAT-15-A',
+            'name_en' => 'Standard VAT 15%',
+            'description' => 'Standard VAT',
+        ]);
+
         $this->productA = Product::create([
             'id' => (string) Str::uuid(),
             'tenant_id' => $this->tenantA->id,
@@ -150,6 +160,7 @@ class DocumentChainsSchemaTenantIsolationTest extends TestCase
             'tenant_id' => $this->tenantA->id,
             'company_id' => $this->companyA->id,
             'product_id' => $this->productA->id,
+            'tax_code_id' => $taxCodeA->id,
             'sku' => 'STL-WIRE-1MM',
             'variant_name' => '1mm Gauge',
         ]);
@@ -211,6 +222,15 @@ class DocumentChainsSchemaTenantIsolationTest extends TestCase
             'created_by' => $this->userB->id,
         ]);
 
+        $taxCodeB = TaxCode::create([
+            'id' => (string) Str::uuid(),
+            'tenant_id' => $this->tenantB->id,
+            'company_id' => $this->companyB->id,
+            'code' => 'VAT-15-B',
+            'name_en' => 'Standard VAT 15%',
+            'description' => 'Standard VAT',
+        ]);
+
         $this->productB = Product::create([
             'id' => (string) Str::uuid(),
             'tenant_id' => $this->tenantB->id,
@@ -225,6 +245,7 @@ class DocumentChainsSchemaTenantIsolationTest extends TestCase
             'tenant_id' => $this->tenantB->id,
             'company_id' => $this->companyB->id,
             'product_id' => $this->productB->id,
+            'tax_code_id' => $taxCodeB->id,
             'sku' => 'CPR-CBL-4MM',
             'variant_name' => '4mm Core',
         ]);
