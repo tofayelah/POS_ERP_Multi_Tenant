@@ -6,7 +6,6 @@ use App\Core\Tenancy\TenantContext;
 use App\Core\ValueObjects\Money;
 use App\Models\AccountingPeriod;
 use App\Models\ChartOfAccount;
-use App\Models\Customer;
 use App\Models\DeliveryChallan;
 use App\Models\DeliveryChallanLine;
 use App\Models\ProductVariant;
@@ -293,7 +292,7 @@ class SalesDocumentChainService implements SalesDocumentChainContract
                     stockLocationId: null,
                     productVariantId: $challanLine->variant_id,
                     movementType: 'DELIVERY_CHALLAN',
-                    quantity: '-' . $challanLine->quantity,
+                    quantity: '-'.$challanLine->quantity,
                     unitCost: (string) $unitCost,
                     referenceType: 'delivery_challans',
                     referenceId: $challan->id,
@@ -371,7 +370,7 @@ class SalesDocumentChainService implements SalesDocumentChainContract
                         $ordered = BigDecimal::of($soLine->ordered_quantity);
 
                         if ($newInvoiced->isGreaterThan($ordered)) {
-                            throw new InvoicedQuantityExceedsChallanException("Invoiced quantity exceeds ordered quantity.");
+                            throw new InvoicedQuantityExceedsChallanException('Invoiced quantity exceeds ordered quantity.');
                         }
 
                         $soLine->invoiced_quantity = (string) $newInvoiced->toScale(4, RoundingMode::HalfUp);
@@ -560,7 +559,7 @@ class SalesDocumentChainService implements SalesDocumentChainContract
 
             foreach ($so->lines as $l) {
                 if (BigDecimal::of($l->delivered_quantity)->isPositive() || BigDecimal::of($l->invoiced_quantity)->isPositive()) {
-                    throw new RuntimeException("Cannot cancel sales order with existing deliveries or invoices. Issue returns or credit notes instead.");
+                    throw new RuntimeException('Cannot cancel sales order with existing deliveries or invoices. Issue returns or credit notes instead.');
                 }
             }
 
