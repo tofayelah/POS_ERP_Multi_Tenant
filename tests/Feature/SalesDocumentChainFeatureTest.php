@@ -214,6 +214,7 @@ class SalesDocumentChainFeatureTest extends TestCase
                 unitCost: '600.0000',
                 referenceType: 'initial_stock',
                 referenceId: (string) Str::uuid(),
+                batchNumber: 'BATCH-2026-01',
                 movementDate: Carbon::today()->toDateString()
             ));
         });
@@ -357,7 +358,8 @@ class SalesDocumentChainFeatureTest extends TestCase
                     salesOrderLineId: $salesOrder->lines->first()->id,
                     productId: $this->product->id,
                     variantId: $this->variant->id,
-                    quantity: '40.0000'
+                    quantity: '40.0000',
+                    batchNumber: 'BATCH-2026-01'
                 ),
             ]
         ));
