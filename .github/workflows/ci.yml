@@ -73,3 +73,15 @@ jobs:
       - run: npm run build
       - run: npx vitest run --passWithNoTests
       - run: npm audit --audit-level=high
+
+  bridge:
+    name: Bridge tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+          cache-dependency-path: bridge/go.sum
+      - run: cd bridge && go vet ./...
+      - run: cd bridge && go test -v ./...

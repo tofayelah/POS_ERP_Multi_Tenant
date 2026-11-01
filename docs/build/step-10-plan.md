@@ -305,13 +305,13 @@ All tests will be written before implementation and verified on the dev server (
 
 ## 9. Step-by-Step Commit Sequence
 
-- [ ] **Commit 1: Setup Go bridge module and dev server toolchain**
+- [x] **Commit 1: Setup Go bridge module and dev server toolchain**
   - Initialize `bridge/go.mod`.
   - Install Go toolchain on dev server CT 104.
   - Setup basic project skeleton with listener on `127.0.0.1:9191`.
   - Run `go vet ./...` and `go test ./...` on CT 104.
 
-- [ ] **Commit 2: Test First: Security, Origin validation, Token pairing & Health leakage (`NEW-18`, `NEW-33`)**
+- [x] **Commit 2: Test First: Security, Origin validation, Token pairing & Health leakage (`NEW-18`, `NEW-33`)**
   - Write failing tests in `bridge/security_test.go`:
     - `TestOrigin_WrongOriginRejected`
     - `TestOrigin_HttpLocalhostRejected`
@@ -319,24 +319,24 @@ All tests will be written before implementation and verified on the dev server (
     - `TestHealth_NoLeakageWithoutToken`
   - Push and run on CT 104; verify failures.
 
-- [ ] **Commit 3: Implement Origin checking, 64-char token handshake, Rate limiter & Restricted /health**
+- [x] **Commit 3: Implement Origin checking, 64-char token handshake, Rate limiter & Restricted /health**
   - Implement `pkg/config`, `pkg/server/websocket.go`, `pkg/server/ratelimit.go`, and `pkg/server/health.go`.
   - Enforce tenant HTTPS whitelist, reject `http://localhost`, require 64-character token, rate-limit bad attempts to 5/min, restrict `/health` and eliminate wildcard CORS.
   - Run `go test ./...` on CT 104; verify tests pass.
 
-- [ ] **Commit 4: Test First: Detached Ed25519 updater & Shift-gated installation (`NEW-33`)**
+- [x] **Commit 4: Test First: Detached Ed25519 updater & Shift-gated installation (`NEW-33`)**
   - Write failing tests in `bridge/updater_test.go`:
     - `TestUpdater_BadSignatureRefused`
     - `TestUpdater_ShiftOpenDefersInstall`
     - `TestUpdater_ShiftClosedInstalls`
   - Push and run on CT 104; verify failures.
 
-- [ ] **Commit 5: Implement Detached Ed25519 updater with compiled public key & Shift gating**
+- [x] **Commit 5: Implement Detached Ed25519 updater with compiled public key & Shift gating**
   - Implement `pkg/updater/verify.go` and `pkg/updater/updater.go`.
   - Embed Ed25519 public key; verify detached `.sig`; gate installation on shift-closed status.
   - Run `go test ./...` on CT 104; verify tests pass.
 
-- [ ] **Commit 6: Test First: ESC/POS generation, GS v 0 Bangla raster & Cash drawer kick**
+- [x] **Commit 6: Test First: ESC/POS generation, GS v 0 Bangla raster & Cash drawer kick**
   - Create golden test files `testdata/receipt_80mm_golden.bin` and `testdata/receipt_58mm_golden.bin`.
   - Write failing tests in `bridge/escpos_test.go`:
     - `TestESCPOS_GoldenReceiptOutput_80mm`
@@ -345,24 +345,24 @@ All tests will be written before implementation and verified on the dev server (
     - `TestESCPOS_RasterBitmap_GSv0`
   - Push and run on CT 104; verify failures.
 
-- [ ] **Commit 7: Implement ESC/POS profiles, GS v 0 raster engine & Cash drawer command**
+- [x] **Commit 7: Implement ESC/POS profiles, GS v 0 raster engine & Cash drawer command**
   - Implement `pkg/escpos/escpos.go`, `pkg/escpos/bitmap.go`, `pkg/escpos/drawer.go`, and `pkg/escpos/profiles.go`.
   - Format 58mm/80mm commands, raster bit image conversion, drawer kick pulse.
   - Run `go test ./...` on CT 104; verify tests pass.
 
-- [ ] **Commit 8: Test First: SDC client interface, 2.0s timeout & Provisional receipt fallback (`TAX-01`, `NEW-18`)**
+- [x] **Commit 8: Test First: SDC client interface, 2.0s timeout & Provisional receipt fallback (`TAX-01`, `NEW-18`)**
   - Write failing tests in `bridge/sdc_test.go`:
     - `TestSDC_SuccessfulFiscalization`
     - `TestSDC_TimeoutYieldsProvisional`
     - `TestSDC_VendorEmulatorRoundTrip`
   - Push and run on CT 104; verify failures.
 
-- [ ] **Commit 9: Implement SDC client, Vendor emulator, Test fake & 2.0s context timeout**
+- [x] **Commit 9: Implement SDC client, Vendor emulator, Test fake & 2.0s context timeout**
   - Implement `pkg/sdc/client.go`, `pkg/sdc/emulator.go`, `pkg/sdc/fake.go`, and `pkg/sdc/serial.go`.
   - Wrap fiscalization with 2.0s context timeout; bridge remains completely stateless.
   - Run `go test ./...` on CT 104; verify tests pass.
 
-- [ ] **Commit 10: POS Shell Integration: Dexie pending_fiscal_queue & Dodging fraud controls (§12.2, `NEW-18`)**
+- [x] **Commit 10: POS Shell Integration: Dexie pending_fiscal_queue & Dodging fraud controls (§12.2, `NEW-18`)**
   - Update `resources/views/pos/shell.blade.php`:
     - Add `pending_fiscal_queue` table in Dexie.
     - Connect to bridge WebSocket at `ws://127.0.0.1:9191` using 64-character token.
@@ -371,7 +371,7 @@ All tests will be written before implementation and verified on the dev server (
     - Replay queue when SDC reconnects.
   - Run POS vitest and Playwright tests on CT 104.
 
-- [ ] **Commit 11: CI & Dependabot Integration**
+- [x] **Commit 11: CI & Dependabot Integration**
   - Add bridge test job (`go vet ./...`, `go test -v ./...`) to `.github/workflows/ci.yml`.
   - Add `gomod` ecosystem entry to `.github/dependabot.yml`.
   - Run full test suite (`php artisan test`, `npm run build`, `cd bridge && go test ./...`).
