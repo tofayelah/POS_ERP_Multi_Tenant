@@ -7,7 +7,6 @@ use App\Core\ValueObjects\Money;
 use App\Models\AccountingPeriod;
 use App\Models\ChartOfAccount;
 use App\Models\Payment;
-use App\Models\PaymentAllocation;
 use App\Models\SubledgerOpenItem;
 use App\Models\Supplier;
 use App\Modules\Accounting\Contracts\AccountingPostingServiceContract;
