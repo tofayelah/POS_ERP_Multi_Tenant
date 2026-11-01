@@ -5,7 +5,6 @@ namespace Tests\Database;
 use App\Core\Tenancy\TenantContext;
 use App\Models\AccountingPeriod;
 use App\Models\BankStatement;
-use App\Models\BankStatementLine;
 use App\Models\Branch;
 use App\Models\ChartOfAccount;
 use App\Models\Company;
