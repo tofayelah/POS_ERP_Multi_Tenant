@@ -199,9 +199,9 @@ sequenceDiagram
   - File: `docs/adr/ADR-018-tax-rounding.md`.
 
 #### Stream E · Prompt 9C (Issue, Post & Mushak Registers)
-- [ ] **Commit 6 (Implementation):** `feat(tax): implement InvoiceIssuer with transactional GL posting and Mushak 6.7 credit notes (NEW-24, TAX-03)`
+- [x] **Commit 6 (Implementation):** `feat(tax): implement InvoiceIssuer with transactional GL posting and Mushak 6.7 credit notes (NEW-24, TAX-03)`
   - Files: `app/Modules/Tax/Services/InvoiceIssuer.php`, tests in `tests/Feature/InvoiceIssuerTest.php`.
-- [ ] **Commit 7 (Reporting & Registers):** `feat(tax): add Mushak 6.3, 6.1, 6.2, 6.6, 6.8 statutory registers and 9.1 return figures (TAX-03)`
+- [x] **Commit 7 (Reporting & Registers):** `feat(tax): add Mushak 6.3, 6.1, 6.2, 6.6, 6.8 statutory registers and 9.1 return figures (TAX-03)`
   - Files: Mushak document generators, Blade views, and register reconciliation tests.
 
 ---
