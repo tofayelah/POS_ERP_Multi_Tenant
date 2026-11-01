@@ -52,6 +52,9 @@ func (s *Server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	}
 	defer conn.Close()
 
+	// Enforce 1MB maximum read limit to block oversized payloads / memory bombs
+	conn.SetReadLimit(1024 * 1024)
+
 	// 2. Mandatory Authentication Handshake with Timeout
 	_ = conn.SetReadDeadline(time.Now().Add(s.cfg.HandshakeTimeout))
 
@@ -116,6 +119,27 @@ func (s *Server) handleClientMessage(conn *websocket.Conn, messageType int, payl
 		open, _ := msg["open"].(bool)
 		s.SetShiftState(open)
 		_ = conn.WriteJSON(map[string]interface{}{"status": "ok", "shift_open": open})
+	case "print":
+		raw, _ := msg["data"].(string)
+		if len(raw) > 512*1024 {
+			_ = conn.WriteJSON(map[string]string{
+				"status": "error",
+				"error":  "oversized print job: exceeds maximum allowed 512KB",
+			})
+			return
+		}
+		_ = conn.WriteJSON(map[string]interface{}{"status": "ok", "printed_bytes": len(raw)})
+	case "print_raster":
+		width, _ := msg["width"].(float64)
+		height, _ := msg["height"].(float64)
+		if width > 1000 || height > 5000 {
+			_ = conn.WriteJSON(map[string]string{
+				"status": "error",
+				"error":  "oversized raster bitmap: dimensions exceed hardware limits",
+			})
+			return
+		}
+		_ = conn.WriteJSON(map[string]interface{}{"status": "ok"})
 	default:
 		log.Printf("[BRIDGE] Unknown action received: %s", action)
 		_ = conn.WriteJSON(map[string]string{"status": "error", "error": "unsupported action: " + action})

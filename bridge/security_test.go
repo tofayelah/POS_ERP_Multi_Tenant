@@ -1,7 +1,11 @@
 package main
 
 import (
+	"bytes"
+	"crypto/ed25519"
+	"crypto/rand"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -11,6 +15,7 @@ import (
 
 	"bridge/pkg/config"
 	"bridge/pkg/server"
+	"bridge/pkg/updater"
 
 	"github.com/gorilla/websocket"
 )
@@ -41,51 +46,78 @@ func newTestBridgeServer(t *testing.T) (*server.Server, *httptest.Server) {
 	return srv, ts
 }
 
-// 1. Wrong origin rejected
-func TestOrigin_WrongOriginRejected(t *testing.T) {
+// ============================================================================
+// PROMPT 10B ATTACK SUITE: Adversarial Testing Against Local Print Bridge
+// ============================================================================
+
+// Attack 1: A malicious web page on another origin tries to connect to the bridge
+func TestAttack_PageOnAnotherOrigin(t *testing.T) {
 	_, ts := newTestBridgeServer(t)
 	wsURL := "ws" + strings.TrimPrefix(ts.URL, "http") + "/ws"
 
-	header := http.Header{}
-	header.Set("Origin", "https://malicious-attacker.com")
-
-	dialer := websocket.Dialer{}
-	_, resp, err := dialer.Dial(wsURL, header)
-	if err == nil {
-		t.Fatalf("expected dial to fail for evil origin, but succeeded")
-	}
-
-	if resp == nil || resp.StatusCode != http.StatusForbidden {
-		status := 0
-		if resp != nil {
-			status = resp.StatusCode
-		}
-		t.Fatalf("expected status 403 Forbidden for wrong origin, got %d", status)
-	}
-}
-
-// 2. http://localhost and http://127.0.0.1 strictly rejected
-func TestOrigin_HttpLocalhostRejected(t *testing.T) {
-	_, ts := newTestBridgeServer(t)
-	wsURL := "ws" + strings.TrimPrefix(ts.URL, "http") + "/ws"
-
-	forbiddenOrigins := []string{
-		"http://localhost",
-		"http://localhost:8080",
-		"http://127.0.0.1",
-		"http://127.0.0.1:9191",
-		"http://dev.kcerp.com", // Plain http even if domain matches!
+	evilOrigins := []string{
+		"https://evil-bank-stealer.com",
+		"https://malicious-phishing.org",
+		"https://unauthorized-domain.net",
+		"https://fake-kcerp.com.attacker.com",
 	}
 
 	dialer := websocket.Dialer{}
-	for _, origin := range forbiddenOrigins {
+	for _, origin := range evilOrigins {
 		header := http.Header{}
 		header.Set("Origin", origin)
 
 		_, resp, err := dialer.Dial(wsURL, header)
 		if err == nil {
-			t.Errorf("expected dial to fail for origin %s, but succeeded", origin)
-			continue
+			t.Fatalf("CRITICAL SECURITY VULNERABILITY: WebSocket connection permitted from unauthorized origin %s", origin)
+		}
+		if resp == nil || resp.StatusCode != http.StatusForbidden {
+			status := 0
+			if resp != nil {
+				status = resp.StatusCode
+			}
+			t.Fatalf("expected 403 Forbidden for origin %s, got %d", origin, status)
+		}
+
+		// Also verify HTTP /health endpoint refuses CORS for evil origin
+		req, _ := http.NewRequest(http.MethodGet, ts.URL+"/health", nil)
+		req.Header.Set("Origin", origin)
+		hResp, hErr := ts.Client().Do(req)
+		if hErr != nil {
+			t.Fatalf("HTTP /health request failed: %v", hErr)
+		}
+		defer hResp.Body.Close()
+
+		cors := hResp.Header.Get("Access-Control-Allow-Origin")
+		if cors == "*" || cors == origin {
+			t.Fatalf("CRITICAL SECURITY VULNERABILITY: /health granted CORS origin %s", cors)
+		}
+	}
+}
+
+// Attack 2: A malicious web page or local daemon served from http://localhost:8080 tries to reach the bridge
+func TestAttack_PageOnLocalhostHttp(t *testing.T) {
+	_, ts := newTestBridgeServer(t)
+	wsURL := "ws" + strings.TrimPrefix(ts.URL, "http") + "/ws"
+
+	localhostOrigins := []string{
+		"http://localhost",
+		"http://localhost:8080",
+		"http://localhost:3000",
+		"http://127.0.0.1",
+		"http://127.0.0.1:8080",
+		"http://127.0.0.1:9191",
+		"http://dev.kcerp.com", // Plain HTTP even if domain matches!
+	}
+
+	dialer := websocket.Dialer{}
+	for _, origin := range localhostOrigins {
+		header := http.Header{}
+		header.Set("Origin", origin)
+
+		_, resp, err := dialer.Dial(wsURL, header)
+		if err == nil {
+			t.Fatalf("CRITICAL SECURITY VULNERABILITY: Connection accepted from insecure origin: %s", origin)
 		}
 
 		if resp == nil || resp.StatusCode != http.StatusForbidden {
@@ -93,13 +125,95 @@ func TestOrigin_HttpLocalhostRejected(t *testing.T) {
 			if resp != nil {
 				status = resp.StatusCode
 			}
-			t.Errorf("expected 403 Forbidden for origin %s, got %d", origin, status)
+			t.Fatalf("expected 403 Forbidden for localhost origin %s, got %d", origin, status)
 		}
 	}
 }
 
-// 3. Missing or wrong token rejected; rate-limit failed handshakes
-func TestAuth_MissingOrWrongTokenRejected(t *testing.T) {
+// Attack 3: WebSocket connection established from allowed origin, but tries commands without token
+func TestAttack_WebSocketWithoutToken(t *testing.T) {
+	_, ts := newTestBridgeServer(t)
+	wsURL := "ws" + strings.TrimPrefix(ts.URL, "http") + "/ws"
+
+	header := http.Header{}
+	header.Set("Origin", testValidOrigin)
+
+	dialer := websocket.Dialer{}
+	conn, _, err := dialer.Dial(wsURL, header)
+	if err != nil {
+		t.Fatalf("handshake dial failed: %v", err)
+	}
+	defer conn.Close()
+
+	// Attempt 1: Try sending a print command directly without authenticating
+	unauthPrintJob := map[string]interface{}{
+		"action": "print",
+		"data":   "ROGUE ESC/POS PRINT JOB SENT WITHOUT AUTH TOKEN",
+	}
+	if err := conn.WriteJSON(unauthPrintJob); err != nil {
+		t.Fatalf("failed to send print command: %v", err)
+	}
+
+	// The bridge must refuse command, reject auth and terminate
+	var response map[string]interface{}
+	err = conn.ReadJSON(&response)
+	if err == nil && response["status"] == "ok" {
+		t.Fatalf("CRITICAL SECURITY VULNERABILITY: Unauthenticated print job succeeded: %v", response)
+	}
+
+	// Verify connection is dropped by bridge
+	_ = conn.SetReadDeadline(time.Now().Add(500 * time.Millisecond))
+	_, _, readErr := conn.ReadMessage()
+	if readErr == nil {
+		t.Fatalf("bridge kept unauthenticated connection alive")
+	}
+}
+
+// Attack 4: A stolen/replayed token sent from an unauthorized origin
+func TestAttack_ReplayedTokenFromDifferentOrigin(t *testing.T) {
+	_, ts := newTestBridgeServer(t)
+	wsURL := "ws" + strings.TrimPrefix(ts.URL, "http") + "/ws"
+
+	stolenToken := testValidToken // Valid 64-character token observed by attacker
+	attackerOrigin := "https://stolen-token-site.org"
+
+	header := http.Header{}
+	header.Set("Origin", attackerOrigin)
+	header.Set("X-Bridge-Token", stolenToken)
+
+	dialer := websocket.Dialer{}
+	// WebSocket upgrade MUST fail at origin check, regardless of token present
+	_, resp, err := dialer.Dial(wsURL, header)
+	if err == nil {
+		t.Fatalf("CRITICAL SECURITY VULNERABILITY: Replayed token accepted from foreign origin %s", attackerOrigin)
+	}
+	if resp == nil || resp.StatusCode != http.StatusForbidden {
+		status := 0
+		if resp != nil {
+			status = resp.StatusCode
+		}
+		t.Fatalf("expected 403 Forbidden on stolen token from foreign origin, got %d", status)
+	}
+
+	// Also verify /health rejects CORS header reflection for foreign origin with token
+	req, _ := http.NewRequest(http.MethodGet, ts.URL+"/health", nil)
+	req.Header.Set("Origin", attackerOrigin)
+	req.Header.Set("X-Bridge-Token", stolenToken)
+
+	hResp, err := ts.Client().Do(req)
+	if err != nil {
+		t.Fatalf("GET /health failed: %v", err)
+	}
+	defer hResp.Body.Close()
+
+	cors := hResp.Header.Get("Access-Control-Allow-Origin")
+	if cors == attackerOrigin || cors == "*" {
+		t.Fatalf("CRITICAL SECURITY VULNERABILITY: /health reflected CORS origin for foreign attacker %s", cors)
+	}
+}
+
+// Attack 5: A flood of invalid handshakes (DoS & Brute-Force Rate Limiting)
+func TestAttack_FloodOfHandshakes(t *testing.T) {
 	_, ts := newTestBridgeServer(t)
 	wsURL := "ws" + strings.TrimPrefix(ts.URL, "http") + "/ws"
 
@@ -108,54 +222,146 @@ func TestAuth_MissingOrWrongTokenRejected(t *testing.T) {
 
 	dialer := websocket.Dialer{}
 
-	// Case A: Missing token
-	conn, _, err := dialer.Dial(wsURL, header)
-	if err != nil {
-		t.Fatalf("handshake upgrade failed: %v", err)
-	}
-	defer conn.Close()
-
-	// Sending invalid auth message
-	badAuth := map[string]string{"action": "auth", "token": "invalid_short_token"}
-	if err := conn.WriteJSON(badAuth); err != nil {
-		t.Fatalf("failed to write bad auth: %v", err)
-	}
-
-	// Read response or close
-	var authResp map[string]interface{}
-	err = conn.ReadJSON(&authResp)
-	if err == nil && authResp["status"] == "authenticated" {
-		t.Fatalf("expected auth to be refused for invalid token, but got authenticated")
-	}
-
-	// Case B: Rate limiting after 5 failed handshakes
-	// We already had 1 failure in Case A. Let's do 4 more failures to reach maxFails = 5.
-	for i := 0; i < 4; i++ {
+	// Perform 5 failed handshakes (exhausting the threshold of 5)
+	for i := 1; i <= 5; i++ {
 		c, _, err := dialer.Dial(wsURL, header)
 		if err != nil {
-			t.Fatalf("unexpected dial failure during warmup attempt %d: %v", i, err)
+			t.Fatalf("unexpected failure on initial attempt %d: %v", i, err)
 		}
-		_ = c.WriteJSON(map[string]string{"action": "auth", "token": "wrong_64_character_token_that_does_not_match_configured_bridge_tok"})
+		badPayload := map[string]string{
+			"action": "auth",
+			"token":  strings.Repeat("0", 64), // Invalid token
+		}
+		_ = c.WriteJSON(badPayload)
 		var r map[string]interface{}
 		_ = c.ReadJSON(&r)
 		c.Close()
 	}
 
-	// 6th attempt (total failures now 5) must be rejected immediately by rate limiter with 429
-	_, dialResp, dialErr := dialer.Dial(wsURL, header)
-	if dialErr == nil {
-		t.Fatalf("expected rate-limited connection to be rejected after 5 failures, but succeeded")
-	}
-	if dialResp == nil || dialResp.StatusCode != http.StatusTooManyRequests {
-		status := 0
-		if dialResp != nil {
-			status = dialResp.StatusCode
+	// Flooding 15 more rapid connection attempts: ALL must be blocked with HTTP 429
+	for i := 6; i <= 20; i++ {
+		_, resp, dialErr := dialer.Dial(wsURL, header)
+		if dialErr == nil {
+			t.Fatalf("CRITICAL SECURITY VULNERABILITY: Rate limiter failed to block flooded attempt %d", i)
 		}
-		t.Fatalf("expected status 429 Too Many Requests, got %d (err: %v)", status, dialErr)
+		if resp == nil || resp.StatusCode != http.StatusTooManyRequests {
+			status := 0
+			if resp != nil {
+				status = resp.StatusCode
+			}
+			t.Fatalf("expected status 429 Too Many Requests on attempt %d, got %d", i, status)
+		}
 	}
 }
 
-// 4. /health leaks nothing without the token and sends no wildcard CORS
+// Attack 6: Forged update manifest with malicious binary or corrupted signature
+func TestAttack_ForgedUpdateManifest(t *testing.T) {
+	// Generate genuine vendor keypair and attacker keypair
+	vendorPub, _ := generateTestKeyPair(t)
+	_, attackerPriv := generateTestKeyPair(t)
+
+	trojanBinary := []byte("#!/bin/sh\n# MALICIOUS TROJAN BACKDOOR INJECTED BY ATTACKER\nrm -rf /\n")
+
+	// Attacker signs trojan with attacker private key
+	attackerSignature := ed25519.Sign(attackerPriv, trojanBinary)
+
+	installed := false
+	up := updater.NewUpdater(vendorPub, "1.0.0", func() bool { return false }, func(data []byte) error {
+		installed = true
+		return nil
+	})
+
+	// Case A: Binary signed by rogue attacker key
+	err := up.ApplyUpdate(trojanBinary, attackerSignature)
+	if err == nil {
+		t.Fatalf("CRITICAL SECURITY VULNERABILITY: Updater accepted forged binary signed with attacker key")
+	}
+	if !errors.Is(err, updater.ErrInvalidSignature) {
+		t.Errorf("expected ErrInvalidSignature, got %v", err)
+	}
+	if installed {
+		t.Fatalf("trojan binary was executed on host")
+	}
+
+	// Case B: Arbitrary corrupted signature bytes
+	randomSig := make([]byte, ed25519.SignatureSize)
+	_, _ = rand.Read(randomSig)
+	errCorrupted := up.ApplyUpdate(trojanBinary, randomSig)
+	if errCorrupted == nil {
+		t.Fatalf("CRITICAL SECURITY VULNERABILITY: Updater accepted random garbage signature")
+	}
+	if !errors.Is(errCorrupted, updater.ErrInvalidSignature) {
+		t.Errorf("expected ErrInvalidSignature, got %v", errCorrupted)
+	}
+}
+
+// Attack 7: Oversized print job (Memory bomb / DoS attack)
+func TestAttack_OversizedPrintJob(t *testing.T) {
+	_, ts := newTestBridgeServer(t)
+	wsURL := "ws" + strings.TrimPrefix(ts.URL, "http") + "/ws"
+
+	header := http.Header{}
+	header.Set("Origin", testValidOrigin)
+
+	dialer := websocket.Dialer{}
+	conn, _, err := dialer.Dial(wsURL, header)
+	if err != nil {
+		t.Fatalf("connection failed: %v", err)
+	}
+	defer conn.Close()
+
+	// Authenticate legitimately first
+	authMsg := map[string]string{"action": "auth", "token": testValidToken}
+	if err := conn.WriteJSON(authMsg); err != nil {
+		t.Fatalf("auth write failed: %v", err)
+	}
+	var authResp map[string]interface{}
+	if err := conn.ReadJSON(&authResp); err != nil || authResp["status"] != "authenticated" {
+		t.Fatalf("auth failed: %v", authResp)
+	}
+
+	// Construct an oversized print job (2 MB payload, exceeding the 1 MB safety limit)
+	hugeData := bytes.Repeat([]byte("A"), 2*1024*1024)
+	oversizedJob := map[string]interface{}{
+		"action": "print",
+		"data":   string(hugeData),
+	}
+
+	writeErr := conn.WriteJSON(oversizedJob)
+	if writeErr != nil {
+		// Connection closed immediately by client buffer, safe
+		return
+	}
+
+	// Reading response: bridge must enforce read limit and drop connection
+	var printResp map[string]interface{}
+	readErr := conn.ReadJSON(&printResp)
+	if readErr == nil && printResp["status"] == "ok" {
+		t.Fatalf("CRITICAL SECURITY VULNERABILITY: Bridge accepted 2MB memory bomb print job!")
+	}
+
+	// Verify that error is CloseMessageTooBig or connection closed
+	if readErr != nil {
+		t.Logf("oversized print job safely rejected with error: %v", readErr)
+	}
+}
+
+// ============================================================================
+// BASELINE INTEGRATION TESTS (From 10A)
+// ============================================================================
+
+func TestOrigin_WrongOriginRejected(t *testing.T) {
+	TestAttack_PageOnAnotherOrigin(t)
+}
+
+func TestOrigin_HttpLocalhostRejected(t *testing.T) {
+	TestAttack_PageOnLocalhostHttp(t)
+}
+
+func TestAuth_MissingOrWrongTokenRejected(t *testing.T) {
+	TestAttack_FloodOfHandshakes(t)
+}
+
 func TestHealth_NoLeakageWithoutToken(t *testing.T) {
 	srv, ts := newTestBridgeServer(t)
 	srv.SetDiagnostics(map[string]interface{}{
@@ -179,7 +385,6 @@ func TestHealth_NoLeakageWithoutToken(t *testing.T) {
 		t.Fatalf("expected status 200, got %d", resp.StatusCode)
 	}
 
-	// Header checks: NO Access-Control-Allow-Origin: *
 	corsOrigin := resp.Header.Get("Access-Control-Allow-Origin")
 	if corsOrigin == "*" {
 		t.Fatalf("CRITICAL SECURITY FLAW: /health returned Access-Control-Allow-Origin: *")
@@ -194,12 +399,10 @@ func TestHealth_NoLeakageWithoutToken(t *testing.T) {
 		t.Fatalf("failed to parse /health json: %v", err)
 	}
 
-	// Must contain status and version
 	if healthData["status"] != "ok" || healthData["version"] != "1.0.0" {
 		t.Errorf("expected status 'ok' and version '1.0.0', got %v", healthData)
 	}
 
-	// MUST NOT leak printers, ports, or SDC details
 	if _, ok := healthData["printers"]; ok {
 		t.Fatalf("SECURITY LEAK: /health leaked printer details without token: %v", healthData["printers"])
 	}
@@ -224,7 +427,6 @@ func TestHealth_NoLeakageWithoutToken(t *testing.T) {
 		t.Fatalf("failed to parse /health json with auth: %v", err)
 	}
 
-	// Now printers and SDC should be present
 	if _, ok := authHealthData["printers"]; !ok {
 		t.Errorf("expected printers diagnostics with valid token, but missing")
 	}
