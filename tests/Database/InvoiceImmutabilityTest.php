@@ -217,7 +217,161 @@ class InvoiceImmutabilityTest extends TestCase
         $this->createLine($mismatchedInvoiceId, 100.0, 15.0, 115.0);
 
         $this->expectException(QueryException::class);
+        $this->expectExceptionMessageMatches('/Header-Line Imbalance Violation/i');
         DB::table('sales_invoices')->where('id', $mismatchedInvoiceId)->update(['status' => 'issued']);
+    }
+
+    public function test_t2_issuing_invoice_with_mismatched_tax_amount_is_rejected(): void
+    {
+        $invoiceId = (string) Str::uuid();
+        DB::table('sales_invoices')->insert([
+            'id' => $invoiceId,
+            'tenant_id' => $this->tenant->id,
+            'company_id' => $this->company->id,
+            'branch_id' => $this->branch->id,
+            'invoice_number' => 'INV-T2-TAX-'.Str::random(6),
+            'invoice_date' => Carbon::today()->toDateString(),
+            'business_date' => Carbon::today()->toDateString(),
+            'status' => 'draft',
+            'subtotal' => 100.0000,
+            'discount_amount' => 0.0000,
+            'supplementary_duty_amount' => 0.0000,
+            'tax_amount' => 99.0000, // Header claims 99 tax, line has 15
+            'total_payable' => 199.0000,
+            'payment_status' => 'paid',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->createLine($invoiceId, 100.0, 15.0, 115.0);
+
+        $this->expectException(QueryException::class);
+        $this->expectExceptionMessageMatches('/Tax Amount Imbalance Violation/i');
+        DB::table('sales_invoices')->where('id', $invoiceId)->update(['status' => 'issued']);
+    }
+
+    public function test_t2_issuing_invoice_with_mismatched_duty_amount_is_rejected(): void
+    {
+        $invoiceId = (string) Str::uuid();
+        DB::table('sales_invoices')->insert([
+            'id' => $invoiceId,
+            'tenant_id' => $this->tenant->id,
+            'company_id' => $this->company->id,
+            'branch_id' => $this->branch->id,
+            'invoice_number' => 'INV-T2-SD-'.Str::random(6),
+            'invoice_date' => Carbon::today()->toDateString(),
+            'business_date' => Carbon::today()->toDateString(),
+            'status' => 'draft',
+            'subtotal' => 100.0000,
+            'discount_amount' => 0.0000,
+            'supplementary_duty_amount' => 25.0000, // Header claims 25 SD, line has 0
+            'tax_amount' => 15.0000,
+            'total_payable' => 140.0000,
+            'payment_status' => 'paid',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->createLine($invoiceId, 100.0, 15.0, 115.0);
+
+        $this->expectException(QueryException::class);
+        $this->expectExceptionMessageMatches('/Supplementary Duty Imbalance Violation/i');
+        DB::table('sales_invoices')->where('id', $invoiceId)->update(['status' => 'issued']);
+    }
+
+    public function test_t2_issuing_invoice_with_mismatched_total_payable_is_rejected(): void
+    {
+        $invoiceId = (string) Str::uuid();
+        DB::table('sales_invoices')->insert([
+            'id' => $invoiceId,
+            'tenant_id' => $this->tenant->id,
+            'company_id' => $this->company->id,
+            'branch_id' => $this->branch->id,
+            'invoice_number' => 'INV-T2-TOT-'.Str::random(6),
+            'invoice_date' => Carbon::today()->toDateString(),
+            'business_date' => Carbon::today()->toDateString(),
+            'status' => 'draft',
+            'subtotal' => 100.0000,
+            'discount_amount' => 0.0000,
+            'supplementary_duty_amount' => 0.0000,
+            'tax_amount' => 15.0000,
+            'total_payable' => 500.0000, // Total payable mathematically wrong (should be 115)
+            'payment_status' => 'paid',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->createLine($invoiceId, 100.0, 15.0, 115.0);
+
+        $this->expectException(QueryException::class);
+        $this->expectExceptionMessageMatches('/Total Payable Imbalance Violation/i');
+        DB::table('sales_invoices')->where('id', $invoiceId)->update(['status' => 'issued']);
+    }
+
+    public function test_t2_issuing_invoice_with_matching_lines_and_totals_is_allowed(): void
+    {
+        $invoiceId = (string) Str::uuid();
+        DB::table('sales_invoices')->insert([
+            'id' => $invoiceId,
+            'tenant_id' => $this->tenant->id,
+            'company_id' => $this->company->id,
+            'branch_id' => $this->branch->id,
+            'invoice_number' => 'INV-T2-OK-'.Str::random(6),
+            'invoice_date' => Carbon::today()->toDateString(),
+            'business_date' => Carbon::today()->toDateString(),
+            'status' => 'draft',
+            'subtotal' => 100.0000,
+            'discount_amount' => 0.0000,
+            'supplementary_duty_amount' => 0.0000,
+            'tax_amount' => 15.0000,
+            'total_payable' => 115.0000,
+            'payment_status' => 'paid',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->createLine($invoiceId, 100.0, 15.0, 115.0);
+
+        DB::table('sales_invoices')->where('id', $invoiceId)->update(['status' => 'issued']);
+
+        $invoice = SalesInvoice::findOrFail($invoiceId);
+        $this->assertSame('issued', $invoice->status);
+    }
+
+    public function test_t3_draft_invoice_can_be_updated_while_remaining_draft(): void
+    {
+        $invoiceId = (string) Str::uuid();
+        DB::table('sales_invoices')->insert([
+            'id' => $invoiceId,
+            'tenant_id' => $this->tenant->id,
+            'company_id' => $this->company->id,
+            'branch_id' => $this->branch->id,
+            'invoice_number' => 'INV-T3-'.Str::random(6),
+            'invoice_date' => Carbon::today()->toDateString(),
+            'business_date' => Carbon::today()->toDateString(),
+            'status' => 'draft',
+            'subtotal' => 100.0000,
+            'discount_amount' => 0.0000,
+            'supplementary_duty_amount' => 0.0000,
+            'tax_amount' => 15.0000,
+            'total_payable' => 115.0000,
+            'payment_status' => 'pending',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        // Edits while remaining draft are permitted
+        DB::table('sales_invoices')->where('id', $invoiceId)->update([
+            'payment_status' => 'paid',
+            'subtotal' => 200.0000,
+            'total_payable' => 230.0000,
+            'tax_amount' => 30.0000,
+        ]);
+
+        $invoice = SalesInvoice::findOrFail($invoiceId);
+        $this->assertSame('draft', $invoice->status);
+        $this->assertSame('paid', $invoice->payment_status);
+        $this->assertSame('200.0000', (string) $invoice->subtotal);
     }
 
     /**
@@ -324,6 +478,152 @@ class InvoiceImmutabilityTest extends TestCase
         $this->assertEquals('SDC-2026-0001', $invoice->sdc_invoice_number);
     }
 
+    public function test_t4_direct_update_of_issued_invoice_without_fiscal_enrichment_is_rejected(): void
+    {
+        $invoiceId = (string) Str::uuid();
+        DB::table('sales_invoices')->insert([
+            'id' => $invoiceId,
+            'tenant_id' => $this->tenant->id,
+            'company_id' => $this->company->id,
+            'branch_id' => $this->branch->id,
+            'invoice_number' => 'INV-T4-NO-FISCAL-'.Str::random(6),
+            'invoice_date' => Carbon::today()->toDateString(),
+            'business_date' => Carbon::today()->toDateString(),
+            'status' => 'issued',
+            'subtotal' => 100.0000,
+            'discount_amount' => 0.0000,
+            'supplementary_duty_amount' => 0.0000,
+            'tax_amount' => 15.0000,
+            'total_payable' => 115.0000,
+            'payment_status' => 'paid',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->expectException(QueryException::class);
+        $this->expectExceptionMessageMatches('/Issued Sales Invoice .* is immutable and cannot be modified/i');
+        DB::table('sales_invoices')->where('id', $invoiceId)->update([
+            'total_payable' => 200.0000,
+        ]);
+    }
+
+    public function test_t4_fiscal_enrichment_cannot_modify_customer_or_financial_totals(): void
+    {
+        $invoiceId = (string) Str::uuid();
+        DB::table('sales_invoices')->insert([
+            'id' => $invoiceId,
+            'tenant_id' => $this->tenant->id,
+            'company_id' => $this->company->id,
+            'branch_id' => $this->branch->id,
+            'invoice_number' => 'INV-T4-FIN-'.Str::random(6),
+            'invoice_date' => Carbon::today()->toDateString(),
+            'business_date' => Carbon::today()->toDateString(),
+            'status' => 'issued',
+            'subtotal' => 100.0000,
+            'discount_amount' => 0.0000,
+            'supplementary_duty_amount' => 0.0000,
+            'tax_amount' => 15.0000,
+            'total_payable' => 115.0000,
+            'payment_status' => 'paid',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->expectException(QueryException::class);
+        $this->expectExceptionMessageMatches('/Fiscal enrichment on Sales Invoice .* may only fill fiscal_signature or sdc_invoice_number from NULL/i');
+        DB::table('sales_invoices')->where('id', $invoiceId)->update([
+            'fiscal_signature' => 'VALID_SIG_HASH_003',
+            'discount_amount' => 10.0000,
+        ]);
+    }
+
+    public function test_t4_overwriting_already_set_fiscal_signature_is_rejected(): void
+    {
+        $invoiceId = (string) Str::uuid();
+        DB::table('sales_invoices')->insert([
+            'id' => $invoiceId,
+            'tenant_id' => $this->tenant->id,
+            'company_id' => $this->company->id,
+            'branch_id' => $this->branch->id,
+            'invoice_number' => 'INV-T4-OVERWRITE-SIG-'.Str::random(6),
+            'invoice_date' => Carbon::today()->toDateString(),
+            'business_date' => Carbon::today()->toDateString(),
+            'status' => 'issued',
+            'subtotal' => 100.0000,
+            'discount_amount' => 0.0000,
+            'supplementary_duty_amount' => 0.0000,
+            'tax_amount' => 15.0000,
+            'total_payable' => 115.0000,
+            'payment_status' => 'paid',
+            'fiscal_signature' => 'INITIAL_SIGNATURE_HASH',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->expectException(QueryException::class);
+        $this->expectExceptionMessageMatches('/fiscal_signature on Sales Invoice .* cannot be overwritten once set/i');
+        DB::table('sales_invoices')->where('id', $invoiceId)->update([
+            'fiscal_signature' => 'NEW_OVERWRITE_SIGNATURE',
+        ]);
+    }
+
+    public function test_t4_overwriting_already_set_sdc_invoice_number_is_rejected(): void
+    {
+        $invoiceId = (string) Str::uuid();
+        DB::table('sales_invoices')->insert([
+            'id' => $invoiceId,
+            'tenant_id' => $this->tenant->id,
+            'company_id' => $this->company->id,
+            'branch_id' => $this->branch->id,
+            'invoice_number' => 'INV-T4-OVERWRITE-SDC-'.Str::random(6),
+            'invoice_date' => Carbon::today()->toDateString(),
+            'business_date' => Carbon::today()->toDateString(),
+            'status' => 'issued',
+            'subtotal' => 100.0000,
+            'discount_amount' => 0.0000,
+            'supplementary_duty_amount' => 0.0000,
+            'tax_amount' => 15.0000,
+            'total_payable' => 115.0000,
+            'payment_status' => 'paid',
+            'sdc_invoice_number' => 'SDC-2026-ORIGINAL',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->expectException(QueryException::class);
+        $this->expectExceptionMessageMatches('/sdc_invoice_number on Sales Invoice .* cannot be overwritten once set/i');
+        DB::table('sales_invoices')->where('id', $invoiceId)->update([
+            'sdc_invoice_number' => 'SDC-2026-FORGED',
+        ]);
+    }
+
+    public function test_t4_deleting_issued_invoice_is_rejected(): void
+    {
+        $invoiceId = (string) Str::uuid();
+        DB::table('sales_invoices')->insert([
+            'id' => $invoiceId,
+            'tenant_id' => $this->tenant->id,
+            'company_id' => $this->company->id,
+            'branch_id' => $this->branch->id,
+            'invoice_number' => 'INV-T4-DEL-'.Str::random(6),
+            'invoice_date' => Carbon::today()->toDateString(),
+            'business_date' => Carbon::today()->toDateString(),
+            'status' => 'issued',
+            'subtotal' => 100.0000,
+            'discount_amount' => 0.0000,
+            'supplementary_duty_amount' => 0.0000,
+            'tax_amount' => 15.0000,
+            'total_payable' => 115.0000,
+            'payment_status' => 'paid',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->expectException(QueryException::class);
+        $this->expectExceptionMessageMatches('/Issued Sales Invoice .* cannot be deleted. Issue a Mushak 6.7 Credit Note/i');
+        DB::table('sales_invoices')->where('id', $invoiceId)->delete();
+    }
+
     /**
      * T5: changing sales_invoice_id on a line is rejected (NEW-27).
      */
@@ -378,9 +678,252 @@ class InvoiceImmutabilityTest extends TestCase
 
         // Attempting to move line from issued Invoice 1 to draft Invoice 2
         $this->expectException(QueryException::class);
+        $this->expectExceptionMessageMatches('/Cannot reassign sales_invoice_id on invoice line/i');
         DB::table('sales_invoice_lines')->where('id', $line->id)->update([
             'sales_invoice_id' => $invoice2Id,
         ]);
+    }
+
+    public function test_t5_inserting_line_into_issued_invoice_is_rejected(): void
+    {
+        $invoiceId = (string) Str::uuid();
+        DB::table('sales_invoices')->insert([
+            'id' => $invoiceId,
+            'tenant_id' => $this->tenant->id,
+            'company_id' => $this->company->id,
+            'branch_id' => $this->branch->id,
+            'invoice_number' => 'INV-T5-INS-ISS-'.Str::random(6),
+            'invoice_date' => Carbon::today()->toDateString(),
+            'business_date' => Carbon::today()->toDateString(),
+            'status' => 'issued',
+            'subtotal' => 100.0000,
+            'discount_amount' => 0.0000,
+            'supplementary_duty_amount' => 0.0000,
+            'tax_amount' => 15.0000,
+            'total_payable' => 115.0000,
+            'payment_status' => 'paid',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->expectException(QueryException::class);
+        $this->expectExceptionMessageMatches('/Cannot INSERT line items on a Sales Invoice with status issued/i');
+        $this->createLine($invoiceId, 100.0, 15.0, 115.0);
+    }
+
+    public function test_t5_updating_line_on_issued_invoice_is_rejected(): void
+    {
+        $invoiceId = (string) Str::uuid();
+        DB::table('sales_invoices')->insert([
+            'id' => $invoiceId,
+            'tenant_id' => $this->tenant->id,
+            'company_id' => $this->company->id,
+            'branch_id' => $this->branch->id,
+            'invoice_number' => 'INV-T5-UPD-ISS-'.Str::random(6),
+            'invoice_date' => Carbon::today()->toDateString(),
+            'business_date' => Carbon::today()->toDateString(),
+            'status' => 'draft',
+            'subtotal' => 100.0000,
+            'discount_amount' => 0.0000,
+            'supplementary_duty_amount' => 0.0000,
+            'tax_amount' => 15.0000,
+            'total_payable' => 115.0000,
+            'payment_status' => 'paid',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $line = $this->createLine($invoiceId, 100.0, 15.0, 115.0);
+        DB::table('sales_invoices')->where('id', $invoiceId)->update(['status' => 'issued']);
+
+        $this->expectException(QueryException::class);
+        $this->expectExceptionMessageMatches('/Cannot UPDATE line items on a Sales Invoice with status issued/i');
+        DB::table('sales_invoice_lines')->where('id', $line->id)->update([
+            'quantity' => 5.0000,
+        ]);
+    }
+
+    public function test_t5_deleting_line_from_issued_invoice_is_rejected(): void
+    {
+        $invoiceId = (string) Str::uuid();
+        DB::table('sales_invoices')->insert([
+            'id' => $invoiceId,
+            'tenant_id' => $this->tenant->id,
+            'company_id' => $this->company->id,
+            'branch_id' => $this->branch->id,
+            'invoice_number' => 'INV-T5-DEL-ISS-'.Str::random(6),
+            'invoice_date' => Carbon::today()->toDateString(),
+            'business_date' => Carbon::today()->toDateString(),
+            'status' => 'draft',
+            'subtotal' => 100.0000,
+            'discount_amount' => 0.0000,
+            'supplementary_duty_amount' => 0.0000,
+            'tax_amount' => 15.0000,
+            'total_payable' => 115.0000,
+            'payment_status' => 'paid',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $line = $this->createLine($invoiceId, 100.0, 15.0, 115.0);
+        DB::table('sales_invoices')->where('id', $invoiceId)->update(['status' => 'issued']);
+
+        $this->expectException(QueryException::class);
+        $this->expectExceptionMessageMatches('/Cannot DELETE line items on a Sales Invoice with status issued/i');
+        DB::table('sales_invoice_lines')->where('id', $line->id)->delete();
+    }
+
+    public function test_t5_inserting_line_into_cancelled_invoice_is_rejected(): void
+    {
+        $invoiceId = (string) Str::uuid();
+        DB::table('sales_invoices')->insert([
+            'id' => $invoiceId,
+            'tenant_id' => $this->tenant->id,
+            'company_id' => $this->company->id,
+            'branch_id' => $this->branch->id,
+            'invoice_number' => 'INV-T5-INS-CANC-'.Str::random(6),
+            'invoice_date' => Carbon::today()->toDateString(),
+            'business_date' => Carbon::today()->toDateString(),
+            'status' => 'cancelled',
+            'subtotal' => 0.0000,
+            'discount_amount' => 0.0000,
+            'supplementary_duty_amount' => 0.0000,
+            'tax_amount' => 0.0000,
+            'total_payable' => 0.0000,
+            'payment_status' => 'paid',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->expectException(QueryException::class);
+        $this->expectExceptionMessageMatches('/Cannot INSERT line items on a Sales Invoice with status cancelled/i');
+        $this->createLine($invoiceId, 100.0, 15.0, 115.0);
+    }
+
+    public function test_t5_updating_line_on_cancelled_invoice_is_rejected(): void
+    {
+        $invoiceId = (string) Str::uuid();
+        DB::table('sales_invoices')->insert([
+            'id' => $invoiceId,
+            'tenant_id' => $this->tenant->id,
+            'company_id' => $this->company->id,
+            'branch_id' => $this->branch->id,
+            'invoice_number' => 'INV-T5-UPD-CANC-'.Str::random(6),
+            'invoice_date' => Carbon::today()->toDateString(),
+            'business_date' => Carbon::today()->toDateString(),
+            'status' => 'draft',
+            'subtotal' => 100.0000,
+            'discount_amount' => 0.0000,
+            'supplementary_duty_amount' => 0.0000,
+            'tax_amount' => 15.0000,
+            'total_payable' => 115.0000,
+            'payment_status' => 'paid',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $line = $this->createLine($invoiceId, 100.0, 15.0, 115.0);
+        DB::table('sales_invoices')->where('id', $invoiceId)->update(['status' => 'cancelled']);
+
+        $this->expectException(QueryException::class);
+        $this->expectExceptionMessageMatches('/Cannot UPDATE line items on a Sales Invoice with status cancelled/i');
+        DB::table('sales_invoice_lines')->where('id', $line->id)->update([
+            'quantity' => 10.0000,
+        ]);
+    }
+
+    public function test_t5_deleting_line_from_cancelled_invoice_is_rejected(): void
+    {
+        $invoiceId = (string) Str::uuid();
+        DB::table('sales_invoices')->insert([
+            'id' => $invoiceId,
+            'tenant_id' => $this->tenant->id,
+            'company_id' => $this->company->id,
+            'branch_id' => $this->branch->id,
+            'invoice_number' => 'INV-T5-DEL-CANC-'.Str::random(6),
+            'invoice_date' => Carbon::today()->toDateString(),
+            'business_date' => Carbon::today()->toDateString(),
+            'status' => 'draft',
+            'subtotal' => 100.0000,
+            'discount_amount' => 0.0000,
+            'supplementary_duty_amount' => 0.0000,
+            'tax_amount' => 15.0000,
+            'total_payable' => 115.0000,
+            'payment_status' => 'paid',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $line = $this->createLine($invoiceId, 100.0, 15.0, 115.0);
+        DB::table('sales_invoices')->where('id', $invoiceId)->update(['status' => 'cancelled']);
+
+        $this->expectException(QueryException::class);
+        $this->expectExceptionMessageMatches('/Cannot DELETE line items on a Sales Invoice with status cancelled/i');
+        DB::table('sales_invoice_lines')->where('id', $line->id)->delete();
+    }
+
+    public function test_t5_updating_line_on_draft_invoice_is_allowed(): void
+    {
+        $invoiceId = (string) Str::uuid();
+        DB::table('sales_invoices')->insert([
+            'id' => $invoiceId,
+            'tenant_id' => $this->tenant->id,
+            'company_id' => $this->company->id,
+            'branch_id' => $this->branch->id,
+            'invoice_number' => 'INV-T5-UPD-DFT-'.Str::random(6),
+            'invoice_date' => Carbon::today()->toDateString(),
+            'business_date' => Carbon::today()->toDateString(),
+            'status' => 'draft',
+            'subtotal' => 100.0000,
+            'discount_amount' => 0.0000,
+            'supplementary_duty_amount' => 0.0000,
+            'tax_amount' => 15.0000,
+            'total_payable' => 115.0000,
+            'payment_status' => 'paid',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $line = $this->createLine($invoiceId, 100.0, 15.0, 115.0);
+
+        DB::table('sales_invoice_lines')->where('id', $line->id)->update([
+            'quantity' => 3.0000,
+            'line_total' => 300.0000,
+            'tax_amount' => 45.0000,
+        ]);
+
+        $freshLine = SalesInvoiceLine::findOrFail($line->id);
+        $this->assertSame('3.0000', (string) $freshLine->quantity);
+        $this->assertSame('300.0000', (string) $freshLine->line_total);
+    }
+
+    public function test_t5_deleting_line_from_draft_invoice_is_allowed(): void
+    {
+        $invoiceId = (string) Str::uuid();
+        DB::table('sales_invoices')->insert([
+            'id' => $invoiceId,
+            'tenant_id' => $this->tenant->id,
+            'company_id' => $this->company->id,
+            'branch_id' => $this->branch->id,
+            'invoice_number' => 'INV-T5-DEL-DFT-'.Str::random(6),
+            'invoice_date' => Carbon::today()->toDateString(),
+            'business_date' => Carbon::today()->toDateString(),
+            'status' => 'draft',
+            'subtotal' => 100.0000,
+            'discount_amount' => 0.0000,
+            'supplementary_duty_amount' => 0.0000,
+            'tax_amount' => 15.0000,
+            'total_payable' => 115.0000,
+            'payment_status' => 'paid',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $line = $this->createLine($invoiceId, 100.0, 15.0, 115.0);
+        $this->assertDatabaseHas('sales_invoice_lines', ['id' => $line->id]);
+
+        DB::table('sales_invoice_lines')->where('id', $line->id)->delete();
+        $this->assertDatabaseMissing('sales_invoice_lines', ['id' => $line->id]);
     }
 
     /**
@@ -483,5 +1026,177 @@ class InvoiceImmutabilityTest extends TestCase
         $invoice = SalesInvoice::findOrFail($invoiceId);
         $this->assertEquals('cancelled', $invoice->status);
         $this->assertEquals($invoiceNumber, $invoice->invoice_number);
+    }
+
+    /**
+     * Composite Foreign Key Protections (NEW-27, AGENTS.md Rule 2).
+     */
+    public function test_composite_fk_rejects_cross_company_branch_reference(): void
+    {
+        $otherCompany = Company::create([
+            'id' => (string) Str::uuid(),
+            'tenant_id' => $this->tenant->id,
+            'legal_name' => 'Foreign Company Ltd',
+            'base_currency' => 'BDT',
+            'fiscal_year_start_month' => 7,
+            'tax_regime' => 'standard_vat',
+        ]);
+
+        $foreignBranch = Branch::create([
+            'tenant_id' => $this->tenant->id,
+            'company_id' => $otherCompany->id,
+            'code' => 'BR-FOREIGN',
+            'name' => 'Foreign Branch',
+            'is_active' => true,
+        ]);
+
+        $this->expectException(QueryException::class);
+        $this->expectExceptionMessageMatches('/(fk_sales_invoices_branch|foreign key constraint)/i');
+
+        // Invoice under $this->company attempting to reference $foreignBranch under $otherCompany
+        DB::table('sales_invoices')->insert([
+            'id' => (string) Str::uuid(),
+            'tenant_id' => $this->tenant->id,
+            'company_id' => $this->company->id,
+            'branch_id' => $foreignBranch->id,
+            'invoice_number' => 'INV-X-BR-'.Str::random(6),
+            'invoice_date' => Carbon::today()->toDateString(),
+            'business_date' => Carbon::today()->toDateString(),
+            'status' => 'draft',
+            'subtotal' => 100.0000,
+            'discount_amount' => 0.0000,
+            'supplementary_duty_amount' => 0.0000,
+            'tax_amount' => 15.0000,
+            'total_payable' => 115.0000,
+            'payment_status' => 'paid',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    public function test_composite_fk_rejects_cross_company_customer_reference(): void
+    {
+        $otherCompany = Company::create([
+            'id' => (string) Str::uuid(),
+            'tenant_id' => $this->tenant->id,
+            'legal_name' => 'Other Customer Co Ltd',
+            'base_currency' => 'BDT',
+            'fiscal_year_start_month' => 7,
+            'tax_regime' => 'standard_vat',
+        ]);
+
+        $foreignCustomer = Customer::create([
+            'tenant_id' => $this->tenant->id,
+            'company_id' => $otherCompany->id,
+            'name' => 'Foreign Customer',
+            'is_active' => true,
+        ]);
+
+        $this->expectException(QueryException::class);
+        $this->expectExceptionMessageMatches('/(fk_sales_invoices_customer|foreign key constraint)/i');
+
+        // Invoice under $this->company referencing $foreignCustomer under $otherCompany
+        DB::table('sales_invoices')->insert([
+            'id' => (string) Str::uuid(),
+            'tenant_id' => $this->tenant->id,
+            'company_id' => $this->company->id,
+            'branch_id' => $this->branch->id,
+            'customer_id' => $foreignCustomer->id,
+            'invoice_number' => 'INV-X-CUST-'.Str::random(6),
+            'invoice_date' => Carbon::today()->toDateString(),
+            'business_date' => Carbon::today()->toDateString(),
+            'status' => 'draft',
+            'subtotal' => 100.0000,
+            'discount_amount' => 0.0000,
+            'supplementary_duty_amount' => 0.0000,
+            'tax_amount' => 15.0000,
+            'total_payable' => 115.0000,
+            'payment_status' => 'paid',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    public function test_composite_fk_rejects_cross_company_product_variant_on_line(): void
+    {
+        $invoiceId = (string) Str::uuid();
+        DB::table('sales_invoices')->insert([
+            'id' => $invoiceId,
+            'tenant_id' => $this->tenant->id,
+            'company_id' => $this->company->id,
+            'branch_id' => $this->branch->id,
+            'invoice_number' => 'INV-X-LINE-'.Str::random(6),
+            'invoice_date' => Carbon::today()->toDateString(),
+            'business_date' => Carbon::today()->toDateString(),
+            'status' => 'draft',
+            'subtotal' => 100.0000,
+            'discount_amount' => 0.0000,
+            'supplementary_duty_amount' => 0.0000,
+            'tax_amount' => 15.0000,
+            'total_payable' => 115.0000,
+            'payment_status' => 'paid',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $otherCompany = Company::create([
+            'id' => (string) Str::uuid(),
+            'tenant_id' => $this->tenant->id,
+            'legal_name' => 'Foreign Inventory Ltd',
+            'base_currency' => 'BDT',
+            'fiscal_year_start_month' => 7,
+            'tax_regime' => 'standard_vat',
+        ]);
+
+        $foreignProduct = Product::create([
+            'tenant_id' => $this->tenant->id,
+            'company_id' => $otherCompany->id,
+            'code' => 'PROD-FOR-01',
+            'name_en' => 'Foreign Product',
+            'base_uom' => 'Pcs',
+            'is_active' => true,
+        ]);
+
+        $foreignTaxCode = TaxCode::create([
+            'tenant_id' => $this->tenant->id,
+            'company_id' => $otherCompany->id,
+            'code' => 'VAT-FOR-15',
+            'name_en' => 'Foreign VAT 15%',
+            'is_active' => true,
+        ]);
+
+        $foreignVariant = ProductVariant::create([
+            'tenant_id' => $this->tenant->id,
+            'company_id' => $otherCompany->id,
+            'product_id' => $foreignProduct->id,
+            'tax_code_id' => $foreignTaxCode->id,
+            'sku' => 'SKU-FOR-01',
+            'name_en' => 'Foreign Variant',
+            'base_uom' => 'Pcs',
+            'mrp' => 115.0000,
+            'cost_price' => 80.0000,
+            'is_active' => true,
+        ]);
+
+        $this->expectException(QueryException::class);
+        $this->expectExceptionMessageMatches('/(fk_invoice_lines_variant|foreign key constraint)/i');
+
+        // Line under $this->company attempting to use variant under $otherCompany
+        SalesInvoiceLine::create([
+            'id' => (string) Str::uuid(),
+            'tenant_id' => $this->tenant->id,
+            'company_id' => $this->company->id,
+            'sales_invoice_id' => $invoiceId,
+            'product_variant_id' => $foreignVariant->id,
+            'item_description' => 'Foreign Item Line',
+            'uom' => 'Pcs',
+            'quantity' => 1.0000,
+            'unit_price' => 115.0000,
+            'pricing_basis' => 'tax_inclusive',
+            'tax_code_id' => $this->taxCode->id,
+            'vat_rate' => 15.00,
+            'tax_amount' => 15.0000,
+            'line_total' => 100.0000,
+        ]);
     }
 }
