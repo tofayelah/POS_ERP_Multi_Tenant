@@ -128,15 +128,12 @@ func TestAuth_MissingOrWrongTokenRejected(t *testing.T) {
 		t.Fatalf("expected auth to be refused for invalid token, but got authenticated")
 	}
 
-	// Case B: Rate limiting 5 consecutive failed handshakes
-	for i := 0; i < 6; i++ {
+	// Case B: Rate limiting after 5 failed handshakes
+	// We already had 1 failure in Case A. Let's do 4 more failures to reach maxFails = 5.
+	for i := 0; i < 4; i++ {
 		c, _, err := dialer.Dial(wsURL, header)
 		if err != nil {
-			// Rate limited at HTTP layer
-			if i >= 5 {
-				return // Expected rate limit triggered!
-			}
-			t.Fatalf("unexpected dial failure on attempt %d: %v", i, err)
+			t.Fatalf("unexpected dial failure during warmup attempt %d: %v", i, err)
 		}
 		_ = c.WriteJSON(map[string]string{"action": "auth", "token": "wrong_64_character_token_that_does_not_match_configured_bridge_tok"})
 		var r map[string]interface{}
@@ -144,13 +141,17 @@ func TestAuth_MissingOrWrongTokenRejected(t *testing.T) {
 		c.Close()
 	}
 
-	// 7th attempt must be rejected immediately by rate limiter
+	// 6th attempt (total failures now 5) must be rejected immediately by rate limiter with 429
 	_, dialResp, dialErr := dialer.Dial(wsURL, header)
 	if dialErr == nil {
-		t.Fatalf("expected rate-limited connection to be rejected, but succeeded")
+		t.Fatalf("expected rate-limited connection to be rejected after 5 failures, but succeeded")
 	}
-	if dialResp != nil && dialResp.StatusCode != http.StatusTooManyRequests && dialResp.StatusCode != http.StatusForbidden {
-		t.Logf("connection refused after rate limit: %v (status %d)", dialErr, dialResp.StatusCode)
+	if dialResp == nil || dialResp.StatusCode != http.StatusTooManyRequests {
+		status := 0
+		if dialResp != nil {
+			status = dialResp.StatusCode
+		}
+		t.Fatalf("expected status 429 Too Many Requests, got %d (err: %v)", status, dialErr)
 	}
 }
 
