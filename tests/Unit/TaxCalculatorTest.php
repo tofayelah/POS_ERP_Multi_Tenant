@@ -12,7 +12,7 @@ use App\Modules\Tax\TaxCalculator;
 use Carbon\Carbon;
 use Illuminate\Support\Str;
 
-$vectorsPath = base_path('tests/golden/vat-vectors.json');
+$vectorsPath = __DIR__.'/../golden/vat-vectors.json';
 $vectors = json_decode((string) file_get_contents($vectorsPath), true);
 
 $lineVectorsById = [];
