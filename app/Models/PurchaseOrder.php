@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -29,9 +30,9 @@ use Illuminate\Support\Carbon;
  * @property-read Branch $branch
  * @property-read Supplier $supplier
  * @property-read User $creator
- * @property-read \Illuminate\Database\Eloquent\Collection<int, PurchaseOrderLine> $lines
- * @property-read \Illuminate\Database\Eloquent\Collection<int, GoodsReceipt> $goodsReceipts
- * @property-read \Illuminate\Database\Eloquent\Collection<int, SupplierBill> $bills
+ * @property-read Collection<int, PurchaseOrderLine> $lines
+ * @property-read Collection<int, GoodsReceipt> $goodsReceipts
+ * @property-read Collection<int, SupplierBill> $bills
  */
 class PurchaseOrder extends Model
 {

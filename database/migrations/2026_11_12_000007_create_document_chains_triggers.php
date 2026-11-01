@@ -155,7 +155,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        DB::connection('pgsql_owner')->unprepared("
+        DB::connection('pgsql_owner')->unprepared('
             DROP TRIGGER IF EXISTS trg_delivery_challan_immutability ON delivery_challans;
             DROP FUNCTION IF EXISTS trg_fn_enforce_delivery_challan_immutability();
 
@@ -167,6 +167,6 @@ return new class extends Migration
 
             DROP TRIGGER IF EXISTS trg_purchase_order_immutability ON purchase_orders;
             DROP FUNCTION IF EXISTS trg_fn_enforce_purchase_order_immutability();
-        ");
+        ');
     }
 };

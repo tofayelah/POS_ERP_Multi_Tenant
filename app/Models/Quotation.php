@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -29,7 +30,7 @@ use Illuminate\Support\Carbon;
  * @property-read Branch $branch
  * @property-read Customer $customer
  * @property-read User $creator
- * @property-read \Illuminate\Database\Eloquent\Collection<int, QuotationLine> $lines
+ * @property-read Collection<int, QuotationLine> $lines
  */
 class Quotation extends Model
 {
