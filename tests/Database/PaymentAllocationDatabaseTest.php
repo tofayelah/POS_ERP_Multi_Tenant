@@ -237,7 +237,7 @@ class PaymentAllocationDatabaseTest extends TestCase
             company: $this->company,
             branch: $this->branch,
             postedBy: $this->user->id,
-            lines: [new InvoiceLineItemDTO($this->variant, 10, '1000.00', 'Wholesale Carton')],
+            lines: [new InvoiceLineItemDTO(variant: $this->variant, itemDescription: 'Wholesale Carton', quantity: '10', unitPrice: '1000.00')],
             customer: $this->customer,
             paymentStatus: 'credit'
         ));
@@ -247,7 +247,7 @@ class PaymentAllocationDatabaseTest extends TestCase
             company: $this->company,
             branch: $this->branch,
             postedBy: $this->user->id,
-            lines: [new InvoiceLineItemDTO($this->variant, 15, '1000.00', 'Wholesale Carton')],
+            lines: [new InvoiceLineItemDTO(variant: $this->variant, itemDescription: 'Wholesale Carton', quantity: '15', unitPrice: '1000.00')],
             customer: $this->customer,
             paymentStatus: 'credit'
         ));
@@ -257,7 +257,7 @@ class PaymentAllocationDatabaseTest extends TestCase
             company: $this->company,
             branch: $this->branch,
             postedBy: $this->user->id,
-            lines: [new InvoiceLineItemDTO($this->variant, 25, '1000.00', 'Wholesale Carton')],
+            lines: [new InvoiceLineItemDTO(variant: $this->variant, itemDescription: 'Wholesale Carton', quantity: '25', unitPrice: '1000.00')],
             customer: $this->customer,
             paymentStatus: 'credit'
         ));
@@ -338,7 +338,7 @@ class PaymentAllocationDatabaseTest extends TestCase
             company: $this->company,
             branch: $this->branch,
             postedBy: $this->user->id,
-            lines: [new InvoiceLineItemDTO($this->variant, 10, '1000.00', 'Wholesale Carton')],
+            lines: [new InvoiceLineItemDTO(variant: $this->variant, itemDescription: 'Wholesale Carton', quantity: '10', unitPrice: '1000.00')],
             customer: $this->customer,
             paymentStatus: 'credit'
         ));
@@ -373,7 +373,7 @@ class PaymentAllocationDatabaseTest extends TestCase
             company: $this->company,
             branch: $this->branch,
             postedBy: $this->user->id,
-            lines: [new InvoiceLineItemDTO($this->variant, 20, '1000.00', 'Wholesale Carton')],
+            lines: [new InvoiceLineItemDTO(variant: $this->variant, itemDescription: 'Wholesale Carton', quantity: '20', unitPrice: '1000.00')],
             customer: $this->customer,
             paymentStatus: 'credit'
         ));
