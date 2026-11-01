@@ -31,7 +31,7 @@ use App\Modules\Sales\Exceptions\DeliveredQuantityExceedsOrderException;
 use App\Modules\Sales\Exceptions\InvoicedQuantityExceedsChallanException;
 use Brick\Math\BigDecimal;
 use Brick\Math\RoundingMode;
-use Carbon\Carbon;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
