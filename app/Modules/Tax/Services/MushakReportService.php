@@ -9,7 +9,6 @@ use App\Models\SalesInvoice;
 use Carbon\Carbon;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\View;
-use InvalidArgumentException;
 
 class MushakReportService
 {
@@ -181,10 +180,10 @@ class MushakReportService
             ->get();
 
         foreach ($creditNotes as $cn) {
-            $sub = - (float) $cn->subtotal;
-            $sd = - (float) $cn->supplementary_duty_amount;
-            $vat = - (float) $cn->tax_amount;
-            $grand = - (float) $cn->total_amount;
+            $sub = -(float) $cn->subtotal;
+            $sd = -(float) $cn->supplementary_duty_amount;
+            $vat = -(float) $cn->tax_amount;
+            $grand = -(float) $cn->total_amount;
 
             $totalSubtotal += $sub;
             $totalSd += $sd;

@@ -9,12 +9,11 @@ use App\Models\Branch;
 use App\Models\ChartOfAccount;
 use App\Models\Company;
 use App\Models\CreditNote;
-use App\Models\CreditNoteLine;
 use App\Models\Customer;
 use App\Models\PosTerminal;
 use App\Models\ProductVariant;
 use App\Models\SalesInvoice;
-use App\Models\SalesInvoiceLine;
+use App\Models\TaxCode;
 use App\Modules\Accounting\Contracts\AccountingPostingServiceContract;
 use App\Modules\Accounting\Contracts\NumberSeriesContract;
 use App\Modules\Accounting\DTOs\JournalEntryDTO;
@@ -23,6 +22,7 @@ use App\Modules\Tax\DTOs\IssueInvoiceRequest;
 use App\Modules\Tax\DTOs\ReturnInvoiceRequest;
 use App\Modules\Tax\TaxCalculator;
 use Brick\Math\BigDecimal;
+use Brick\Math\RoundingMode;
 use Carbon\Carbon;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\DB;
@@ -101,7 +101,7 @@ class InvoiceIssuer
 
             foreach ($request->lines as $lineDto) {
                 $variantId = $lineDto->variant instanceof ProductVariant ? $lineDto->variant->id : $lineDto->variant;
-                $taxCodeId = $lineDto->taxCode instanceof \App\Models\TaxCode ? $lineDto->taxCode->id : $lineDto->taxCode;
+                $taxCodeId = $lineDto->taxCode instanceof TaxCode ? $lineDto->taxCode->id : $lineDto->taxCode;
 
                 $taxRes = $this->taxCalculator->calculateLine(
                     price: $lineDto->unitPrice,
@@ -368,7 +368,7 @@ class InvoiceIssuer
                 }
 
                 // Compute proportional return amounts
-                $ratio = $retQtyBd->dividedBy($origQtyBd, 8, \Brick\Math\RoundingMode::HalfUp);
+                $ratio = $retQtyBd->dividedBy($origQtyBd, 8, RoundingMode::HalfUp);
 
                 $origLineTotal = Money::of((string) $origLine->line_total);
                 $origTax = Money::of((string) $origLine->tax_amount);
@@ -538,8 +538,8 @@ class InvoiceIssuer
 
     protected function resolveFallbackTaxCodeId(string $companyId): string
     {
-        /** @var \App\Models\TaxCode|null $taxCode */
-        $taxCode = \App\Models\TaxCode::query()
+        /** @var TaxCode|null $taxCode */
+        $taxCode = TaxCode::query()
             ->where('company_id', $companyId)
             ->first();
 
