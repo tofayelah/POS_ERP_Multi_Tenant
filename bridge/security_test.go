@@ -109,7 +109,7 @@ func TestAuth_MissingOrWrongTokenRejected(t *testing.T) {
 	dialer := websocket.Dialer{}
 
 	// Case A: Missing token
-	conn, resp, err := dialer.Dial(wsURL, header)
+	conn, _, err := dialer.Dial(wsURL, header)
 	if err != nil {
 		t.Fatalf("handshake upgrade failed: %v", err)
 	}
