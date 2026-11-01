@@ -3,7 +3,6 @@
 namespace Tests\Database;
 
 use App\Core\Tenancy\TenantContext;
-use App\Core\ValueObjects\Money;
 use App\Models\AccountingPeriod;
 use App\Models\Branch;
 use App\Models\ChartOfAccount;
@@ -12,13 +11,13 @@ use App\Models\Customer;
 use App\Models\FiscalYear;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Models\SubledgerOpenItem;
 use App\Models\TaxCode;
 use App\Models\TaxCodeRate;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Modules\Accounting\Subledger\Contracts\CustomerCreditCheckerContract;
 use App\Modules\Accounting\Subledger\Exceptions\CreditLimitExceededException;
-use App\Modules\Accounting\Subledger\Services\CustomerCreditChecker;
 use App\Modules\Tax\DTOs\InvoiceLineItemDTO;
 use App\Modules\Tax\DTOs\IssueInvoiceRequest;
 use App\Modules\Tax\Services\InvoiceIssuer;
@@ -246,7 +245,7 @@ class CustomerCreditLimitTest extends TestCase
         $this->assertEquals('8000.0000', (string) $invoice->total_payable);
 
         // Check that subledger open item was created
-        $openItem = \App\Models\SubledgerOpenItem::where('source_id', $invoice->id)->first();
+        $openItem = SubledgerOpenItem::where('source_id', $invoice->id)->first();
         $this->assertNotNull($openItem);
         $this->assertEquals('8000.0000', (string) $openItem->original_amount);
         $this->assertEquals('8000.0000', (string) $openItem->remaining_amount);
