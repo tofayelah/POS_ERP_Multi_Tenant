@@ -288,8 +288,8 @@ All tenant tables will be created using `App\Core\Database\TenantMigration` with
   - Registered `SupplierPaymentVoucherContract` singleton in `AccountingServiceProvider`.
   - Verified Pint (410 files) and PHPStan (0 errors).
 
-### Commit 5: Mushak 6.6 VDS Withholding & Statutory Accounting
-- **Test Written First:** `tests/Database/VdsWithholdingCertificateTest.php`
+### Commit 5: Mushak 6.6 VDS Withholding & Statutory Accounting [COMPLETED]
+- **Test Written First:** `tests/Database/VdsWithholdingCertificateTest.php` (PASS - 3 tests, 52 assertions)
   - Issues invoice of ৳860 (Net ৳829.71, VAT ৳30.29).
   - Corporate buyer pays ৳829.71 in bank, withholding ৳30.29 as VDS with Mushak 6.6 certificate # `VDS-2026-0042`.
   - Records receipt with VDS deduction.
@@ -298,12 +298,21 @@ All tenant tables will be created using `App\Core\Database\TenantMigration` with
     - Debit: VDS Receivable (1060) ৳30.29
     - Credit: Accounts Receivable (1030) ৳860.00
   - Asserts invoice open item is fully cleared (`remaining_amount = 0.0000`).
+  - Asserts supplier payment with VDS withholding:
+    - Bill of ৳100,000 (Subtotal ৳85,000, VAT ৳15,000).
+    - Pays ৳85,000 via bank, withholds ৳15,000 VDS, issues Mushak 6.6 # `VDS-OUT-2026-0001`.
+    - GL: Debit AP (2010) ৳100,000, Credit Bank (1020) ৳85,000, Credit VDS Payable (2040) ৳15,000.
+    - Supplier bill open item is fully cleared.
+  - Asserts settlement exceeding remaining balance is refused.
 - **Implementation:**
-  - Create `app/Modules/Accounting/Subledger/Services/VdsCertificateService.php`.
-  - Support VDS certificate issuance for supplier withholdings (Credit VDS Payable 2040).
+  - Created `app/Modules/Accounting/Subledger/Contracts/VdsCertificateContract.php`.
+  - Created `app/Modules/Accounting/Subledger/Services/VdsCertificateService.php`.
+  - Created `CustomerVdsDeductionDTO` and `SupplierVdsWithholdingDTO`.
+  - Registered `VdsCertificateContract` singleton in `AccountingServiceProvider`.
+  - Verified Pint (415 files) and PHPStan (0 errors).
 
-### Commit 6: 500-Transaction Randomized Subledger GL Reconciliation Property Test
-- **Test Written First:** `tests/Database/SubledgerGlReconciliationTest.php`
+### Commit 6: 500-Transaction Randomized Subledger GL Reconciliation Property Test [COMPLETED]
+- **Test Written First:** `tests/Database/SubledgerGlReconciliationTest.php` (PASS - 1 test, 12 assertions, 7.0s duration)
   - Seeds 10 customers and 10 suppliers.
   - Uses fixed pseudorandom seed (`mt_srand(424242)`).
   - Executes 500 randomized lifecycle events:
@@ -312,31 +321,46 @@ All tenant tables will be created using `App\Core\Database\TenantMigration` with
     - Mushak 6.7 credit notes (reducing AR)
     - Supplier bills (adding AP credit open items, GL 2010)
     - Supplier payment vouchers with SoD approval
-    - VDS withholdings
   - Strictly asserts at the end:
     $$\sum \text{AR Open Items remaining\_amount} \equiv \text{GL Control Account 1030 Balance}$$
     $$\sum \text{AP Open Items remaining\_amount} \equiv \text{GL Control Account 2010 Balance}$$
+  - Asserts all open items have mathematically consistent allocation statuses (`open`, `partially_allocated`, `fully_allocated`).
+  - Asserts all double-entry GL journal entries balance.
 - **Implementation:**
-  - Refine `SubledgerService` transaction boundary to ensure every open item mutation atomically updates GL via `AccountingPostingServiceContract`.
+  - Created `app/Modules/Accounting/Subledger/Contracts/SubledgerReconciliationContract.php`.
+  - Created `app/Modules/Accounting/Subledger/Services/SubledgerReconciliationService.php`.
+  - Created `SubledgerReconciliationResult` DTO.
+  - Registered `SubledgerReconciliationContract` singleton in `AccountingServiceProvider`.
+  - Verified Pint (419 files) and PHPStan Level 8 (0 errors).
 
-### Commit 7: Bank & Cash Statement Reconciliation Engine
-- **Test Written First:** `tests/Database/BankReconciliationTest.php`
+### Commit 7: Bank & Cash Statement Reconciliation Engine [COMPLETED]
+- **Test Written First:** `tests/Database/BankReconciliationTest.php` (PASS - 2 tests, 26 assertions)
   - Imports sample bank statement lines.
   - Matches 5 statement lines against posted payments (by date, reference, and exact amount).
   - Leaves 1 unmatched line (unrecorded bank charge).
   - Asserts reconciliation summary generates accurate cleared balance and outstanding variance.
+  - Tests manual matching and unmatching workflows with automatic payment status synchronization (`posted` <-> `reconciled`).
 - **Implementation:**
-  - Create `app/Modules/Accounting/Subledger/Services/BankReconciliationService.php`.
+  - Created `app/Modules/Accounting/Subledger/Contracts/BankReconciliationContract.php`.
+  - Created `app/Modules/Accounting/Subledger/Services/BankReconciliationService.php`.
+  - Created `ImportBankStatementDTO`, `ImportStatementLineDTO`, `BankReconciliationSummaryDTO`.
+  - Registered `BankReconciliationContract` singleton in `AccountingServiceProvider`.
+  - Verified Pint (425 files) and PHPStan Level 8 (0 errors).
 
-### Commit 8: Aging Registers & Financial Statements (Trial Balance, P&L, Balance Sheet)
-- **Test Written First:** `tests/Database/FinancialStatementsTest.php`
+### Commit 8: Aging Registers & Financial Statements (Trial Balance, P&L, Balance Sheet) [COMPLETED]
+- **Test Written First:** `tests/Database/FinancialStatementsTest.php` (PASS - 3 tests, 24 assertions)
   - Tests AR & AP Aging buckets (`0-30`, `31-60`, `61-90`, `91-120`, `120+` days) and asserts total aging equals GL accounts 1030 and 2010.
   - Tests Trial Balance: verifies $\sum \text{Debits} == \sum \text{Credits}$ across all active COA accounts.
   - Tests Profit & Loss: Net Revenue (4000s) - COGS (5000s) - Expenses (6000s) == Net Operating Income.
   - Tests Balance Sheet: Total Assets (1000s) == Total Liabilities (2000s) + Total Equity (3000s) + Net Income.
 - **Implementation:**
-  - Create `app/Modules/Accounting/Subledger/Services/SubledgerAgingService.php`.
-  - Create `app/Modules/Accounting/Services/FinancialReportService.php`.
+  - Created `app/Modules/Accounting/Subledger/Contracts/SubledgerAgingContract.php`.
+  - Created `app/Modules/Accounting/Subledger/Services/SubledgerAgingService.php`.
+  - Created `app/Modules/Accounting/Contracts/FinancialReportContract.php`.
+  - Created `app/Modules/Accounting/Services/FinancialReportService.php`.
+  - Created `AgingBucketDTO`, `PartyAgingItemDTO`, `AgingReportDTO`, `TrialBalanceAccountDTO`, `TrialBalanceReportDTO`, `ProfitAndLossReportDTO`, `BalanceSheetReportDTO`.
+  - Registered `SubledgerAgingContract` and `FinancialReportContract` in `AccountingServiceProvider`.
+  - Verified Pint (437 files) and PHPStan Level 8 (0 errors).
 
 ---
 
