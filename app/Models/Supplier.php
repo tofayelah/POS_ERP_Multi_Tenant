@@ -18,10 +18,12 @@ use Illuminate\Support\Carbon;
  * @property string|null $supplier_bin
  * @property int $credit_period_days
  * @property bool $is_active
+ * @property string|null $created_by
  * @property Carbon $created_at
  * @property Carbon $updated_at
  * @property-read Tenant $tenant
  * @property-read Company $company
+ * @property-read User|null $creator
  */
 class Supplier extends Model
 {
@@ -44,6 +46,7 @@ class Supplier extends Model
         'supplier_bin',
         'credit_period_days',
         'is_active',
+        'created_by',
     ];
 
     /**
@@ -71,5 +74,13 @@ class Supplier extends Model
     public function company(): BelongsTo
     {
         return $this->belongsTo(Company::class);
+    }
+
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
     }
 }
