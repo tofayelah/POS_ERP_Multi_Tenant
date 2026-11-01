@@ -210,13 +210,13 @@ class InvoiceIssuer
 
             // 7. Post synchronous double-entry GL journal via AccountingPostingService
             $accountMap = $request->accountMap;
-            $cashAccountId = $accountMap['cash_or_ar'] ?? $this->resolveAccountId($companyId, '1010');
-            $salesAccountId = $accountMap['sales'] ?? $this->resolveAccountId($companyId, '4010');
-            $vatPayableAccountId = $accountMap['vat_payable'] ?? $this->resolveAccountId($companyId, '2020');
-            $sdPayableAccountId = $accountMap['sd_payable'] ?? $this->resolveAccountId($companyId, '2030', required: false);
+            $cashAccountId = $accountMap['cash_or_ar'] ?? $this->getRequiredAccountId($companyId, '1010');
+            $salesAccountId = $accountMap['sales'] ?? $this->getRequiredAccountId($companyId, '4010');
+            $vatPayableAccountId = $accountMap['vat_payable'] ?? $this->getRequiredAccountId($companyId, '2020');
+            $sdPayableAccountId = $accountMap['sd_payable'] ?? $this->findOptionalAccountId($companyId, '2030');
 
-            $cogsAccountId = $accountMap['cogs'] ?? $this->resolveAccountId($companyId, '5010', required: false);
-            $inventoryAccountId = $accountMap['inventory'] ?? $this->resolveAccountId($companyId, '1040', required: false);
+            $cogsAccountId = $accountMap['cogs'] ?? $this->findOptionalAccountId($companyId, '5010');
+            $inventoryAccountId = $accountMap['inventory'] ?? $this->findOptionalAccountId($companyId, '1040');
 
             $journalLines = [];
 
@@ -449,10 +449,10 @@ class InvoiceIssuer
 
             // Post Reversing Journal Entry in the same transaction
             $accountMap = $request->accountMap;
-            $cashAccountId = $accountMap['cash_or_ar'] ?? $this->resolveAccountId($invoice->company_id, '1010');
-            $salesAccountId = $accountMap['sales'] ?? $this->resolveAccountId($invoice->company_id, '4010');
-            $vatPayableAccountId = $accountMap['vat_payable'] ?? $this->resolveAccountId($invoice->company_id, '2020');
-            $sdPayableAccountId = $accountMap['sd_payable'] ?? $this->resolveAccountId($invoice->company_id, '2030', required: false);
+            $cashAccountId = $accountMap['cash_or_ar'] ?? $this->getRequiredAccountId($invoice->company_id, '1010');
+            $salesAccountId = $accountMap['sales'] ?? $this->getRequiredAccountId($invoice->company_id, '4010');
+            $vatPayableAccountId = $accountMap['vat_payable'] ?? $this->getRequiredAccountId($invoice->company_id, '2020');
+            $sdPayableAccountId = $accountMap['sd_payable'] ?? $this->findOptionalAccountId($invoice->company_id, '2030');
 
             $journalLines = [];
 
@@ -517,7 +517,7 @@ class InvoiceIssuer
         });
     }
 
-    protected function resolveAccountId(string $companyId, string $accountCode, bool $required = true): ?string
+    protected function getRequiredAccountId(string $companyId, string $accountCode): string
     {
         /** @var ChartOfAccount|null $account */
         $account = ChartOfAccount::query()
@@ -526,14 +526,21 @@ class InvoiceIssuer
             ->first();
 
         if (! $account) {
-            if ($required) {
-                throw new InvalidArgumentException("Required Chart of Account code [{$accountCode}] not found for company [{$companyId}].");
-            }
-
-            return null;
+            throw new InvalidArgumentException("Required Chart of Account code [{$accountCode}] not found for company [{$companyId}].");
         }
 
         return $account->id;
+    }
+
+    protected function findOptionalAccountId(string $companyId, string $accountCode): ?string
+    {
+        /** @var ChartOfAccount|null $account */
+        $account = ChartOfAccount::query()
+            ->where('company_id', $companyId)
+            ->where('account_code', $accountCode)
+            ->first();
+
+        return $account?->id;
     }
 
     protected function resolveFallbackTaxCodeId(string $companyId): string
