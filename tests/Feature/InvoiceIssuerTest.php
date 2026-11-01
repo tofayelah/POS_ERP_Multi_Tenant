@@ -406,8 +406,8 @@ class InvoiceIssuerTest extends TestCase
             ->first();
 
         $this->assertNotNull($journal);
-        $this->assertSame('posted', $journal->status);
-        $this->assertSame('sales_invoice', $journal->document_type);
+        $this->assertTrue($journal->is_posted);
+        $this->assertSame('sales_invoice', $journal->reference_type);
 
         // Assert Double-entry Balance
         $totalDebit = $journal->lines->sum('debit_amount');
@@ -498,8 +498,8 @@ class InvoiceIssuerTest extends TestCase
             ->first();
 
         $this->assertNotNull($returnJournal);
-        $this->assertSame('posted', $returnJournal->status);
-        $this->assertTrue($returnJournal->is_reversal);
+        $this->assertTrue($returnJournal->is_posted);
+        $this->assertSame('credit_note', $returnJournal->reference_type);
 
         // Reversal debits Sales & VAT, credits Cash
         $retSalesLine = $returnJournal->lines->firstWhere('account_id', $this->salesAccount->id);

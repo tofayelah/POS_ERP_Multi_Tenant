@@ -507,7 +507,7 @@ class InvoiceIssuer
                 postedBy: $request->postedBy,
                 branchId: $invoice->branch_id,
                 narration: "Mushak 6.7 Credit Note {$creditNoteNumber} Reversing Invoice {$invoice->invoice_number}",
-                isReversal: true,
+                isReversal: false,
                 lines: $journalLines,
             );
 

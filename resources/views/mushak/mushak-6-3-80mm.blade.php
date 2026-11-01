@@ -5,7 +5,8 @@
 <html lang="{{ $lang }}">
 <head>
     <meta charset="utf-8">
-    <title>{{ $invoice->invoice_number }}</title>
+    <title>{{ $invoice->invoice_number }} (80mm)</title>
+    <!-- Format: Mushak 6.3 80mm POS Thermal Receipt -->
     <style>
         body { width: 72mm; margin: 0 auto; padding: 4mm; font-family: 'Courier New', monospace; font-size: 11px; line-height: 1.25; }
         .center { text-align: center; }
