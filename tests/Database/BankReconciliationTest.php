@@ -3,7 +3,6 @@
 namespace Tests\Database;
 
 use App\Core\Tenancy\TenantContext;
-use App\Core\ValueObjects\Money;
 use App\Models\AccountingPeriod;
 use App\Models\BankStatement;
 use App\Models\BankStatementLine;
