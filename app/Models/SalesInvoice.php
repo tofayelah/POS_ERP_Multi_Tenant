@@ -33,6 +33,10 @@ use Illuminate\Support\Carbon;
  * @property string $payment_status
  * @property string|null $fiscal_signature
  * @property bool $is_synced_from_offline
+ * @property Carbon|null $device_time
+ * @property Carbon|null $server_received_time
+ * @property int|null $clock_skew_seconds
+ * @property bool $is_clock_skew_flagged
  * @property Carbon $created_at
  * @property Carbon $updated_at
  * @property-read Tenant $tenant
@@ -75,6 +79,10 @@ class SalesInvoice extends Model
         'payment_status',
         'fiscal_signature',
         'is_synced_from_offline',
+        'device_time',
+        'server_received_time',
+        'clock_skew_seconds',
+        'is_clock_skew_flagged',
     ];
 
     /**
@@ -91,6 +99,10 @@ class SalesInvoice extends Model
             'tax_amount' => 'decimal:4',
             'total_payable' => 'decimal:4',
             'is_synced_from_offline' => 'boolean',
+            'device_time' => 'datetime',
+            'server_received_time' => 'datetime',
+            'clock_skew_seconds' => 'integer',
+            'is_clock_skew_flagged' => 'boolean',
         ];
     }
 
