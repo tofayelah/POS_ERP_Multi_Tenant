@@ -260,17 +260,19 @@ All tenant tables will be created using `App\Core\Database\TenantMigration` with
   - Integrated dynamic credit limit check and subledger open item creation into `InvoiceIssuer`.
   - Verified Pint (397 files) and PHPStan (0 errors).
 
-### Commit 3: Payments Recording & Multi-Invoice Allocation Engine
-- **Test Written First:** `tests/Database/PaymentAllocationDatabaseTest.php`
+### Commit 3: Payments Recording & Multi-Invoice Allocation Engine [COMPLETED]
+- **Test Written First:** `tests/Database/PaymentAllocationDatabaseTest.php` (PASS - 3 tests, 21 assertions)
   - Creates 3 open sales invoices (৳10,000, ৳15,000, ৳25,000).
   - Records single payment of ৳30,000 via bKash.
   - Allocates ৳10,000 to Inv 1 (fully paid), ৳15,000 to Inv 2 (fully paid), ৳5,000 to Inv 3 (partially paid, ৳20,000 remaining).
   - Asserts attempting to allocate ৳25,000 to Inv 3 (exceeding open amount) throws `AllocationExceedsOpenItemException`.
   - Asserts allocating more than payment total throws `AllocationExceedsPaymentException`.
 - **Implementation:**
-  - Create `app/Modules/Accounting/Subledger/Contracts/PaymentServiceContract.php`.
-  - Create `app/Modules/Accounting/Subledger/Services/PaymentService.php` and `AllocationService.php`.
-  - Add DB triggers enforcing integrity constraints on `payment_allocations`.
+  - Created `app/Modules/Accounting/Subledger/Contracts/PaymentServiceContract.php`.
+  - Created `app/Modules/Accounting/Subledger/Services/PaymentService.php`.
+  - Created `RecordPaymentDTO`, `AllocationItemDTO`, `AllocationExceedsOpenItemException`, `AllocationExceedsPaymentException`.
+  - Registered `PaymentServiceContract` singleton in `AccountingServiceProvider`.
+  - Verified Pint (404 files) and PHPStan (0 errors).
 
 ### Commit 4: Segregation of Duties (SoD §3.3) for Supplier Payment Vouchers
 - **Test Written First:** `tests/Database/SupplierPaymentSodTest.php`
