@@ -118,6 +118,8 @@ test('resolves rates via TaxRateResolver when TaxCode is supplied', function () 
         'status' => 'active',
     ]);
 
+    \App\Core\Tenancy\TenantContext::set($tenant);
+
     $company = Company::create([
         'id' => (string) Str::uuid(),
         'tenant_id' => $tenant->id,
