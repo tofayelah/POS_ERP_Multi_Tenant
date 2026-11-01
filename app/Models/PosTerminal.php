@@ -7,6 +7,19 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * @property string $id
+ * @property string $tenant_id
+ * @property string $company_id
+ * @property string $branch_id
+ * @property string $terminal_code
+ * @property string $name
+ * @property string|null $device_token_hash
+ * @property bool $is_active
+ * @property-read Tenant $tenant
+ * @property-read Company $company
+ * @property-read Branch $branch
+ */
 class PosTerminal extends Model
 {
     use HasUuids;

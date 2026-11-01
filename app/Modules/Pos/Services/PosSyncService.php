@@ -138,7 +138,7 @@ class PosSyncService implements PosSyncServiceContract
 
         // 2. Dual timestamps and clock skew detection
         $deviceTime = $sale->deviceTime;
-        $skewSeconds = abs($serverReceivedTime->diffInSeconds($deviceTime));
+        $skewSeconds = (int) abs($serverReceivedTime->diffInSeconds($deviceTime));
         $isClockSkewFlagged = $skewSeconds > $clockSkewThreshold;
 
         // 3. Resolve line items & variants
