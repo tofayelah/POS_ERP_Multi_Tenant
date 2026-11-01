@@ -116,7 +116,8 @@ describe('POS Tax Calculation Engine - Golden Vectors (§11.4)', () => {
                     vector.sd_rate || '0'
                 );
 
-                expect(result.gross).toBe(vector.expect.gross);
+                const expectedGross = vector.expect.gross !== undefined ? vector.expect.gross : vector.gross;
+                expect(result.gross).toBe(expectedGross);
                 expect(result.net).toBe(vector.expect.net);
                 if (vector.expect.sd !== undefined) {
                     expect(result.sd).toBe(vector.expect.sd);
