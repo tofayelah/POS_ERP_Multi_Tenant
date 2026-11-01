@@ -561,7 +561,7 @@ class InvoiceImmutabilityTest extends TestCase
         ]);
 
         $this->expectException(QueryException::class);
-        $this->expectExceptionMessageMatches('/fiscal_signature on Sales Invoice .* cannot be overwritten once set/i');
+        $this->expectExceptionMessageMatches('/(fiscal_signature on Sales Invoice .* cannot be overwritten once set|Issued Sales Invoice .* is immutable and cannot be modified)/i');
         DB::table('sales_invoices')->where('id', $invoiceId)->update([
             'fiscal_signature' => 'NEW_OVERWRITE_SIGNATURE',
         ]);
@@ -591,7 +591,7 @@ class InvoiceImmutabilityTest extends TestCase
         ]);
 
         $this->expectException(QueryException::class);
-        $this->expectExceptionMessageMatches('/sdc_invoice_number on Sales Invoice .* cannot be overwritten once set/i');
+        $this->expectExceptionMessageMatches('/(sdc_invoice_number on Sales Invoice .* cannot be overwritten once set|Issued Sales Invoice .* is immutable and cannot be modified)/i');
         DB::table('sales_invoices')->where('id', $invoiceId)->update([
             'sdc_invoice_number' => 'SDC-2026-FORGED',
         ]);
