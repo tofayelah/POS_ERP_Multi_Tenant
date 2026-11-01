@@ -60,6 +60,13 @@ class PosBatchSyncTest extends TestCase
         ]);
 
         TenantContext::set($this->tenant);
+        setPermissionsTeamId($this->tenant->id);
+
+        \Spatie\Permission\Models\Role::firstOrCreate([
+            'name' => 'Tenant Admin',
+            'guard_name' => 'web',
+            'tenant_id' => $this->tenant->id,
+        ]);
 
         $this->company = Company::create([
             'id' => (string) Str::uuid(),
@@ -103,7 +110,6 @@ class PosBatchSyncTest extends TestCase
             'email' => 'cashier-'.Str::random(6).'@example.com',
             'password' => 'secret123',
         ]);
-        \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'Tenant Admin', 'guard_name' => 'web']);
         $this->cashier->assignRole('Tenant Admin');
 
         \App\Models\TenantMembership::create([
