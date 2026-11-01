@@ -20,6 +20,7 @@ type Server struct {
 	mu          sync.Mutex
 	shiftOpen   bool
 	diagnostics map[string]interface{}
+	rateLimiter *RateLimiter
 }
 
 // Handler returns the underlying http.Handler for testing.
@@ -41,12 +42,14 @@ func NewServer(cfg *config.Config) *Server {
 	}
 
 	s := &Server{
-		cfg:       cfg,
-		shiftOpen: false,
+		cfg:         cfg,
+		shiftOpen:   false,
+		rateLimiter: NewRateLimiter(cfg.RateLimitMaxFails, cfg.RateLimitWindow),
 	}
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/health", s.handleHealth)
+	mux.HandleFunc("/ws", s.handleWebSocket)
 
 	s.httpServer = &http.Server{
 		Handler: mux,
@@ -85,10 +88,4 @@ func (s *Server) IsShiftOpen() bool {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	return s.shiftOpen
-}
-
-func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(`{"status":"ok","version":"1.0.0"}`))
 }
