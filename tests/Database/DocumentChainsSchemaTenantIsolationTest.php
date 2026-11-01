@@ -140,8 +140,8 @@ class DocumentChainsSchemaTenantIsolationTest extends TestCase
             'id' => (string) Str::uuid(),
             'tenant_id' => $this->tenantA->id,
             'company_id' => $this->companyA->id,
-            'name' => 'Steel Wire A',
-            'type' => 'goods',
+            'code' => 'PROD-A-01',
+            'name_en' => 'Steel Wire A',
             'base_uom' => 'KG',
         ]);
 
@@ -215,8 +215,8 @@ class DocumentChainsSchemaTenantIsolationTest extends TestCase
             'id' => (string) Str::uuid(),
             'tenant_id' => $this->tenantB->id,
             'company_id' => $this->companyB->id,
-            'name' => 'Copper Cable B',
-            'type' => 'goods',
+            'code' => 'PROD-B-01',
+            'name_en' => 'Copper Cable B',
             'base_uom' => 'MTR',
         ]);
 
