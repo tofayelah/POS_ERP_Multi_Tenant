@@ -1,5 +1,16 @@
 <?php
 
+use App\Models\Customer;
+use App\Models\DeliveryChallan;
+use App\Models\GoodsReceipt;
+use App\Models\PurchaseOrder;
+use App\Models\Quotation;
+use App\Models\SalesInvoice;
+use App\Models\SalesOrder;
+use App\Models\Supplier;
+use App\Models\SupplierBill;
+use Illuminate\Support\Facades\DB;
+
 test('no debugging statements are left in application')
     ->expect(['dd', 'dump', 'ray'])
     ->not->toBeUsed();
@@ -98,7 +109,7 @@ test('no module or table outside subledger stores a party balance (ACC-06, NEW-1
         'supplier_bills',
     ];
 
-    $balanceColumns = Illuminate\Support\Facades\DB::table('information_schema.columns')
+    $balanceColumns = DB::table('information_schema.columns')
         ->where('table_schema', 'public')
         ->whereIn('table_name', $restrictedTables)
         ->where('column_name', 'like', '%balance%')
@@ -107,19 +118,19 @@ test('no module or table outside subledger stores a party balance (ACC-06, NEW-1
     expect($balanceColumns->toArray())->toBeEmpty();
 
     $models = [
-        App\Models\Customer::class,
-        App\Models\Supplier::class,
-        App\Models\Quotation::class,
-        App\Models\SalesOrder::class,
-        App\Models\DeliveryChallan::class,
-        App\Models\PurchaseOrder::class,
-        App\Models\GoodsReceipt::class,
-        App\Models\SalesInvoice::class,
-        App\Models\SupplierBill::class,
+        Customer::class,
+        Supplier::class,
+        Quotation::class,
+        SalesOrder::class,
+        DeliveryChallan::class,
+        PurchaseOrder::class,
+        GoodsReceipt::class,
+        SalesInvoice::class,
+        SupplierBill::class,
     ];
 
     foreach ($models as $modelClass) {
-        $instance = new $modelClass();
+        $instance = new $modelClass;
         foreach ($instance->getFillable() as $column) {
             expect(strtolower($column))->not->toContain('balance');
         }
@@ -127,7 +138,7 @@ test('no module or table outside subledger stores a party balance (ACC-06, NEW-1
 });
 
 test('subledger open items table is the sole source of open party balances (ACC-06)', function () {
-    $subledgerTables = Illuminate\Support\Facades\DB::table('information_schema.tables')
+    $subledgerTables = DB::table('information_schema.tables')
         ->where('table_schema', 'public')
         ->where('table_name', 'like', 'subledger_%')
         ->pluck('table_name')
@@ -143,4 +154,3 @@ test('sales and procurement modules do not access subledger model directly (ACC-
     expect('App\Modules\Procurement')
         ->not->toUse('App\Models\SubledgerOpenItem');
 });
-
