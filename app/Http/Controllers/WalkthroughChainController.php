@@ -7,6 +7,7 @@ use App\Models\AccountingPeriod;
 use App\Models\Branch;
 use App\Models\Company;
 use App\Models\Customer;
+use App\Models\DeliveryChallan;
 use App\Models\GoodsReceipt;
 use App\Models\Product;
 use App\Models\ProductVariant;
@@ -341,8 +342,8 @@ class WalkthroughChainController extends Controller
             return response()->json(['error' => 'Forbidden: Only Accountant can issue Sales Invoices.'], Response::HTTP_FORBIDDEN);
         }
 
-        /** @var \App\Models\DeliveryChallan $challan */
-        $challan = \App\Models\DeliveryChallan::where('tenant_id', $tenant->id)
+        /** @var DeliveryChallan $challan */
+        $challan = DeliveryChallan::where('tenant_id', $tenant->id)
             ->where('company_id', $company->id)
             ->where('status', 'confirmed')
             ->latest()
