@@ -29,7 +29,7 @@ class SubledgerReconciliationService implements SubledgerReconciliationContract
             ->where('party_type', 'customer')
             ->where('direction', 'debit')
             ->whereIn('status', ['open', 'partially_allocated'])
-            ->sum('remaining_amount') ?? '0';
+            ->sum('remaining_amount');
 
         $creditSum = DB::table('subledger_open_items')
             ->where('tenant_id', $tenantId)
@@ -37,7 +37,7 @@ class SubledgerReconciliationService implements SubledgerReconciliationContract
             ->where('party_type', 'customer')
             ->where('direction', 'credit')
             ->whereIn('status', ['open', 'partially_allocated'])
-            ->sum('remaining_amount') ?? '0';
+            ->sum('remaining_amount');
 
         $subledgerTotal = Money::of((string) $debitSum)->subtract(Money::of((string) $creditSum));
 
@@ -59,7 +59,7 @@ class SubledgerReconciliationService implements SubledgerReconciliationContract
             ->where('journal_entries.company_id', $companyId)
             ->where('journal_entries.is_posted', true)
             ->where('journal_lines.account_id', $arAccount->id)
-            ->sum('journal_lines.debit_amount') ?? '0';
+            ->sum('journal_lines.debit_amount');
 
         $glCredit = DB::table('journal_lines')
             ->join('journal_entries', 'journal_lines.journal_entry_id', '=', 'journal_entries.id')
@@ -67,7 +67,7 @@ class SubledgerReconciliationService implements SubledgerReconciliationContract
             ->where('journal_entries.company_id', $companyId)
             ->where('journal_entries.is_posted', true)
             ->where('journal_lines.account_id', $arAccount->id)
-            ->sum('journal_lines.credit_amount') ?? '0';
+            ->sum('journal_lines.credit_amount');
 
         $glTotal = Money::of((string) $glDebit)->subtract(Money::of((string) $glCredit));
 
@@ -102,7 +102,7 @@ class SubledgerReconciliationService implements SubledgerReconciliationContract
             ->where('party_type', 'supplier')
             ->where('direction', 'credit')
             ->whereIn('status', ['open', 'partially_allocated'])
-            ->sum('remaining_amount') ?? '0';
+            ->sum('remaining_amount');
 
         $debitSum = DB::table('subledger_open_items')
             ->where('tenant_id', $tenantId)
@@ -110,7 +110,7 @@ class SubledgerReconciliationService implements SubledgerReconciliationContract
             ->where('party_type', 'supplier')
             ->where('direction', 'debit')
             ->whereIn('status', ['open', 'partially_allocated'])
-            ->sum('remaining_amount') ?? '0';
+            ->sum('remaining_amount');
 
         $subledgerTotal = Money::of((string) $creditSum)->subtract(Money::of((string) $debitSum));
 
@@ -132,7 +132,7 @@ class SubledgerReconciliationService implements SubledgerReconciliationContract
             ->where('journal_entries.company_id', $companyId)
             ->where('journal_entries.is_posted', true)
             ->where('journal_lines.account_id', $apAccount->id)
-            ->sum('journal_lines.credit_amount') ?? '0';
+            ->sum('journal_lines.credit_amount');
 
         $glDebit = DB::table('journal_lines')
             ->join('journal_entries', 'journal_lines.journal_entry_id', '=', 'journal_entries.id')
@@ -140,7 +140,7 @@ class SubledgerReconciliationService implements SubledgerReconciliationContract
             ->where('journal_entries.company_id', $companyId)
             ->where('journal_entries.is_posted', true)
             ->where('journal_lines.account_id', $apAccount->id)
-            ->sum('journal_lines.debit_amount') ?? '0';
+            ->sum('journal_lines.debit_amount');
 
         $glTotal = Money::of((string) $glCredit)->subtract(Money::of((string) $glDebit));
 
