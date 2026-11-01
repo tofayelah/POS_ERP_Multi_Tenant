@@ -2,6 +2,7 @@
 
 namespace App\Modules\Tax\Services;
 
+use App\Core\Scoping\LocationScope;
 use App\Core\Tenancy\TenantContext;
 use App\Core\ValueObjects\Money;
 use App\Models\AccountingPeriod;
@@ -345,7 +346,7 @@ class InvoiceIssuer
 
             $this->postingService->post($journalEntryDTO);
 
-            return SalesInvoice::with('lines')->findOrFail($invoiceId);
+            return SalesInvoice::with('lines')->withoutGlobalScope(LocationScope::class)->findOrFail($invoiceId);
         });
     }
 

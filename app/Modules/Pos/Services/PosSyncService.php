@@ -78,7 +78,7 @@ class PosSyncService implements PosSyncServiceContract
                 $results[] = [
                     'client_txn_id' => $sale->clientTxnId,
                     'status' => 'failed',
-                    'reason' => $e->getMessage().' in '.$e->getFile().':'.$e->getLine(),
+                    'reason' => $e->getMessage(),
                 ];
             }
         }

@@ -103,6 +103,15 @@ class PosBatchSyncTest extends TestCase
             'email' => 'cashier-'.Str::random(6).'@example.com',
             'password' => 'secret123',
         ]);
+        \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'Tenant Admin', 'guard_name' => 'web']);
+        $this->cashier->assignRole('Tenant Admin');
+
+        \App\Models\TenantMembership::create([
+            'id' => (string) Str::uuid(),
+            'tenant_id' => $this->tenant->id,
+            'user_id' => $this->cashier->id,
+            'is_active' => true,
+        ]);
 
         $currentYear = Carbon::now()->year;
         $this->fiscalYear = FiscalYear::create([
