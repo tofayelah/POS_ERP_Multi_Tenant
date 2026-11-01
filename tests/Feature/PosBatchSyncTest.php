@@ -358,7 +358,7 @@ class PosBatchSyncTest extends TestCase
         $data1 = $response1->json();
         $this->assertSame('success', $data1['status']);
         $this->assertCount(2, $data1['results']);
-        $this->assertSame('committed', $data1['results'][0]['status']);
+        $this->assertSame('committed', $data1['results'][0]['status'], $data1['results'][0]['reason'] ?? 'no reason');
         $this->assertSame('committed', $data1['results'][1]['status']);
         $invNum1 = $data1['results'][0]['invoice_number'];
         $invNum2 = $data1['results'][1]['invoice_number'];
