@@ -1,75 +1,77 @@
 <x-filament-panels::page>
-    <div class="space-y-6">
+    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
         @if($report)
-            <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                <div class="rounded-xl bg-white p-6 shadow-sm border border-gray-100 dark:bg-gray-800 dark:border-gray-700">
-                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Debit Amount</p>
-                    <p class="mt-2 text-2xl font-bold text-gray-900 dark:text-white">৳ {{ $report->totalDebit->getAmount() }}</p>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem;">
+                <div style="background: white; border-radius: 0.75rem; border: 1px solid #e2e8f0; padding: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                    <p style="font-size: 0.875rem; font-weight: 500; color: #64748b; margin: 0;">Total Debit Amount</p>
+                    <p style="font-size: 1.5rem; font-weight: 700; color: #0f172a; margin: 0.5rem 0 0 0; font-family: monospace;">৳ {{ $report->totalDebit->getAmount() }}</p>
                 </div>
-                <div class="rounded-xl bg-white p-6 shadow-sm border border-gray-100 dark:bg-gray-800 dark:border-gray-700">
-                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Credit Amount</p>
-                    <p class="mt-2 text-2xl font-bold text-gray-900 dark:text-white">৳ {{ $report->totalCredit->getAmount() }}</p>
+                <div style="background: white; border-radius: 0.75rem; border: 1px solid #e2e8f0; padding: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                    <p style="font-size: 0.875rem; font-weight: 500; color: #64748b; margin: 0;">Total Credit Amount</p>
+                    <p style="font-size: 1.5rem; font-weight: 700; color: #0f172a; margin: 0.5rem 0 0 0; font-family: monospace;">৳ {{ $report->totalCredit->getAmount() }}</p>
                 </div>
-                <div class="rounded-xl bg-white p-6 shadow-sm border border-gray-100 dark:bg-gray-800 dark:border-gray-700">
-                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Ledger Balance Status</p>
-                    <div class="mt-2 flex items-center gap-2">
+                <div style="background: white; border-radius: 0.75rem; border: 1px solid #e2e8f0; padding: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                    <p style="font-size: 0.875rem; font-weight: 500; color: #64748b; margin: 0;">Ledger Balance Status</p>
+                    <div style="margin-top: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
                         @if($report->isBalanced)
-                            <span class="inline-flex items-center rounded-full bg-green-50 px-2.5 py-1 text-xs font-semibold text-green-700 ring-1 ring-inset ring-green-600/20 dark:bg-green-900/30 dark:text-green-400">
-                                Strictly Balanced (Debits = Credits)
+                            <span style="display: inline-flex; align-items: center; border-radius: 9999px; background: #ecfdf5; border: 1px solid #a7f3d0; padding: 0.35rem 0.75rem; font-size: 0.75rem; font-weight: 700; color: #047857;">
+                                ✓ Strictly Balanced (Debits = Credits)
                             </span>
                         @else
-                            <span class="inline-flex items-center rounded-full bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-700 ring-1 ring-inset ring-red-600/20 dark:bg-red-900/30 dark:text-red-400">
-                                Unbalanced Ledger
+                            <span style="display: inline-flex; align-items: center; border-radius: 9999px; background: #fef2f2; border: 1px solid #fecaca; padding: 0.35rem 0.75rem; font-size: 0.75rem; font-weight: 700; color: #b91c1c;">
+                                ⚠ Unbalanced Ledger
                             </span>
                         @endif
                     </div>
                 </div>
             </div>
 
-            <div class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
-                <div class="border-b border-gray-200 px-6 py-4 dark:border-gray-700">
-                    <h3 class="text-base font-semibold text-gray-900 dark:text-white">General Ledger Accounts</h3>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">Statutory trial balance as of {{ now()->toFormattedDateString() }}</p>
+            <div style="background: white; border-radius: 0.75rem; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); overflow: hidden;">
+                <div style="border-bottom: 1px solid #e2e8f0; padding: 1rem 1.5rem;">
+                    <h3 style="font-size: 1rem; font-weight: 700; color: #0f172a; margin: 0;">General Ledger Accounts</h3>
+                    <p style="font-size: 0.875rem; color: #64748b; margin: 0.25rem 0 0 0;">Statutory trial balance as of {{ now()->toFormattedDateString() }}</p>
                 </div>
-                <table class="min-w-full divide-y divide-gray-200 text-left text-sm dark:divide-gray-700">
-                    <thead class="bg-gray-50 dark:bg-gray-900/50">
-                        <tr>
-                            <th scope="col" class="px-6 py-3 font-semibold text-gray-700 dark:text-gray-300">Account Code</th>
-                            <th scope="col" class="px-6 py-3 font-semibold text-gray-700 dark:text-gray-300">Account Name</th>
-                            <th scope="col" class="px-6 py-3 font-semibold text-gray-700 dark:text-gray-300">Type</th>
-                            <th scope="col" class="px-6 py-3 text-right font-semibold text-gray-700 dark:text-gray-300">Net Debit (BDT)</th>
-                            <th scope="col" class="px-6 py-3 text-right font-semibold text-gray-700 dark:text-gray-300">Net Credit (BDT)</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-                        @forelse($report->accounts as $row)
-                            <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-700/50">
-                                <td class="whitespace-nowrap px-6 py-4 font-mono font-medium text-gray-900 dark:text-white">{{ $row->accountCode }}</td>
-                                <td class="whitespace-nowrap px-6 py-4 text-gray-700 dark:text-gray-300">{{ $row->accountName }}</td>
-                                <td class="whitespace-nowrap px-6 py-4 capitalize text-gray-500 dark:text-gray-400">{{ $row->accountType }}</td>
-                                <td class="whitespace-nowrap px-6 py-4 text-right font-mono text-gray-900 dark:text-white">৳ {{ $row->netDebit->getAmount() }}</td>
-                                <td class="whitespace-nowrap px-6 py-4 text-right font-mono text-gray-900 dark:text-white">৳ {{ $row->netCredit->getAmount() }}</td>
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.875rem;">
+                        <thead>
+                            <tr style="background: #f8fafc; border-bottom: 2px solid #e2e8f0;">
+                                <th style="padding: 0.75rem 1.5rem; font-weight: 600; color: #475569;">Account Code</th>
+                                <th style="padding: 0.75rem 1.5rem; font-weight: 600; color: #475569;">Account Name</th>
+                                <th style="padding: 0.75rem 1.5rem; font-weight: 600; color: #475569;">Type</th>
+                                <th style="padding: 0.75rem 1.5rem; font-weight: 600; color: #475569; text-align: right;">Net Debit (BDT)</th>
+                                <th style="padding: 0.75rem 1.5rem; font-weight: 600; color: #475569; text-align: right;">Net Credit (BDT)</th>
                             </tr>
-                        @empty
-                            <tr>
-                                <td colspan="5" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
-                                    No ledger activity posted in this period.
-                                </td>
+                        </thead>
+                        <tbody>
+                            @forelse($report->accounts as $row)
+                                <tr style="border-bottom: 1px solid #f1f5f9;">
+                                    <td style="padding: 0.75rem 1.5rem; font-family: monospace; font-weight: 600; color: #0f172a;">{{ $row->accountCode }}</td>
+                                    <td style="padding: 0.75rem 1.5rem; color: #334155;">{{ $row->accountName }}</td>
+                                    <td style="padding: 0.75rem 1.5rem; text-transform: capitalize; color: #64748b;">{{ $row->accountType }}</td>
+                                    <td style="padding: 0.75rem 1.5rem; text-align: right; font-family: monospace; color: #0f172a;">৳ {{ $row->netDebit->getAmount() }}</td>
+                                    <td style="padding: 0.75rem 1.5rem; text-align: right; font-family: monospace; color: #0f172a;">৳ {{ $row->netCredit->getAmount() }}</td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="5" style="padding: 2rem 1.5rem; text-align: center; color: #94a3b8;">
+                                        No ledger activity posted in this period.
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                        <tfoot>
+                            <tr style="border-top: 2px solid #cbd5e1; background: #f8fafc; font-weight: 700;">
+                                <td colspan="3" style="padding: 1rem 1.5rem; color: #0f172a;">Total</td>
+                                <td style="padding: 1rem 1.5rem; text-align: right; font-family: monospace; color: #0f172a;">৳ {{ $report->totalDebit->getAmount() }}</td>
+                                <td style="padding: 1rem 1.5rem; text-align: right; font-family: monospace; color: #0f172a;">৳ {{ $report->totalCredit->getAmount() }}</td>
                             </tr>
-                        @endforelse
-                    </tbody>
-                    <tfoot class="border-t-2 border-gray-300 bg-gray-50 font-bold dark:border-gray-600 dark:bg-gray-900/50">
-                        <tr>
-                            <td colspan="3" class="px-6 py-4 text-gray-900 dark:text-white">Total</td>
-                            <td class="whitespace-nowrap px-6 py-4 text-right font-mono text-gray-900 dark:text-white">৳ {{ $report->totalDebit->getAmount() }}</td>
-                            <td class="whitespace-nowrap px-6 py-4 text-right font-mono text-gray-900 dark:text-white">৳ {{ $report->totalCredit->getAmount() }}</td>
-                        </tr>
-                    </tfoot>
-                </table>
+                        </tfoot>
+                    </table>
+                </div>
             </div>
         @else
-            <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-                <p class="text-sm text-gray-500">No active company profile found for the current tenant.</p>
+            <div style="background: white; border-radius: 0.75rem; border: 1px solid #e2e8f0; padding: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                <p style="font-size: 0.875rem; color: #64748b;">No active company profile found for the current tenant.</p>
             </div>
         @endif
     </div>
