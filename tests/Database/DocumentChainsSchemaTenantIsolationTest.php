@@ -162,7 +162,7 @@ class DocumentChainsSchemaTenantIsolationTest extends TestCase
             'product_id' => $this->productA->id,
             'tax_code_id' => $taxCodeA->id,
             'sku' => 'STL-WIRE-1MM',
-            'variant_name' => '1mm Gauge',
+            'name_en' => '1mm Gauge',
         ]);
 
         // Tenant B setup
@@ -247,7 +247,7 @@ class DocumentChainsSchemaTenantIsolationTest extends TestCase
             'product_id' => $this->productB->id,
             'tax_code_id' => $taxCodeB->id,
             'sku' => 'CPR-CBL-4MM',
-            'variant_name' => '4mm Core',
+            'name_en' => '4mm Core',
         ]);
 
         // Default back to Tenant A
