@@ -377,7 +377,7 @@ class InvoiceIssuerTest extends TestCase
         // 1. Verify Sales Invoice Header
         $this->assertInstanceOf(SalesInvoice::class, $invoice);
         $this->assertSame('issued', $invoice->status);
-        $this->assertStringStartsWith('SINV-', $invoice->invoice_number);
+        $this->assertStringStartsWith('INV-', $invoice->invoice_number);
         $this->assertSame('829.7100', (string) $invoice->subtotal);
         $this->assertSame('30.2900', (string) $invoice->tax_amount);
         $this->assertSame('860.0000', (string) $invoice->total_payable);
