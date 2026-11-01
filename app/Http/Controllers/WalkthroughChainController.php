@@ -365,8 +365,7 @@ class WalkthroughChainController extends Controller
             'invoice_id' => $invoice->id,
             'invoice_number' => $invoice->invoice_number,
             'status' => $invoice->status,
-            'total_amount' => $invoice->grand_total,
-            'gl_journal_id' => $invoice->gl_journal_entry_id,
+            'total_amount' => $invoice->total_payable,
             'user' => $user->email,
             'role' => 'Accountant',
         ]);
