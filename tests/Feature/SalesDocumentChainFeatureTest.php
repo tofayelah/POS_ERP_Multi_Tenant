@@ -132,10 +132,10 @@ class SalesDocumentChainFeatureTest extends TestCase
             'id' => (string) Str::uuid(),
             'tenant_id' => $this->tenant->id,
             'company_id' => $this->company->id,
-            'name' => 'FY 2026-2027',
+            'title' => 'FY 2026-2027',
             'start_date' => '2026-07-01',
             'end_date' => '2027-06-30',
-            'status' => 'active',
+            'is_closed' => false,
         ]);
 
         $this->period = AccountingPeriod::create([
