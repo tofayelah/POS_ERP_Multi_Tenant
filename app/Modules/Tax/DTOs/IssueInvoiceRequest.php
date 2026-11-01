@@ -32,5 +32,9 @@ readonly class IssueInvoiceRequest
         public bool $isSyncedFromOffline = false,
         public ?string $paymentStatus = 'paid',
         public CarbonInterface|string|null $dueDate = null,
+        public ?CarbonInterface $deviceTime = null,
+        public ?CarbonInterface $serverReceivedTime = null,
+        public ?int $clockSkewSeconds = null,
+        public bool $isClockSkewFlagged = false,
     ) {}
 }

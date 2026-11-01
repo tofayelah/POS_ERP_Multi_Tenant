@@ -189,6 +189,10 @@ class InvoiceIssuer
                 'total_payable' => (string) $totalPayable->getBigDecimal(),
                 'payment_status' => $paymentStatus,
                 'is_synced_from_offline' => $request->isSyncedFromOffline,
+                'device_time' => $request->deviceTime,
+                'server_received_time' => $request->serverReceivedTime,
+                'clock_skew_seconds' => $request->clockSkewSeconds,
+                'is_clock_skew_flagged' => $request->isClockSkewFlagged,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
