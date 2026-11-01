@@ -2,7 +2,7 @@
 
 namespace Tests\Unit;
 
-use App\Core\ValueObjects\Money;
+use App\Core\Tenancy\TenantContext;
 use App\Models\Company;
 use App\Models\TaxCode;
 use App\Models\TaxCodeRate;
@@ -118,7 +118,7 @@ test('resolves rates via TaxRateResolver when TaxCode is supplied', function () 
         'status' => 'active',
     ]);
 
-    \App\Core\Tenancy\TenantContext::set($tenant);
+    TenantContext::set($tenant);
 
     $company = Company::create([
         'id' => (string) Str::uuid(),
