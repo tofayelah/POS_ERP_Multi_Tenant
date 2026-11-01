@@ -7,11 +7,13 @@ use App\Modules\Accounting\Contracts\AccountingPostingServiceContract;
 use App\Modules\Accounting\Contracts\NumberSeriesContract;
 use App\Modules\Accounting\Services\AccountingPostingService;
 use App\Modules\Accounting\Services\NumberSeriesService;
+use App\Modules\Accounting\Subledger\Contracts\BankReconciliationContract;
 use App\Modules\Accounting\Subledger\Contracts\CustomerCreditCheckerContract;
 use App\Modules\Accounting\Subledger\Contracts\PaymentServiceContract;
 use App\Modules\Accounting\Subledger\Contracts\SubledgerReconciliationContract;
 use App\Modules\Accounting\Subledger\Contracts\SupplierPaymentVoucherContract;
 use App\Modules\Accounting\Subledger\Contracts\VdsCertificateContract;
+use App\Modules\Accounting\Subledger\Services\BankReconciliationService;
 use App\Modules\Accounting\Subledger\Services\CustomerCreditChecker;
 use App\Modules\Accounting\Subledger\Services\PaymentService;
 use App\Modules\Accounting\Subledger\Services\SubledgerReconciliationService;
@@ -31,6 +33,7 @@ class AccountingServiceProvider extends AbstractModuleServiceProvider
         $this->app->singleton(SupplierPaymentVoucherContract::class, SupplierPaymentVoucherService::class);
         $this->app->singleton(VdsCertificateContract::class, VdsCertificateService::class);
         $this->app->singleton(SubledgerReconciliationContract::class, SubledgerReconciliationService::class);
+        $this->app->singleton(BankReconciliationContract::class, BankReconciliationService::class);
     }
 
     public function getIdentifier(): string
