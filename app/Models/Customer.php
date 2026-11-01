@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Core\Tenancy\HasTenant;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -26,7 +25,7 @@ use Illuminate\Support\Carbon;
  */
 class Customer extends Model
 {
-    use HasFactory, HasTenant, HasUuids;
+    use HasFactory, HasUuids;
 
     protected $table = 'customers';
 

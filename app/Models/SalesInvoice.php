@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use App\Core\Scoping\HasLocationScope;
-use App\Core\Tenancy\HasTenant;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -44,7 +43,7 @@ use Illuminate\Support\Carbon;
  */
 class SalesInvoice extends Model
 {
-    use HasFactory, HasLocationScope, HasTenant, HasUuids;
+    use HasFactory, HasLocationScope, HasUuids;
 
     protected $table = 'sales_invoices';
 
