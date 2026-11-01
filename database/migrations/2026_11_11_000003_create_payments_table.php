@@ -43,8 +43,8 @@ return new class extends TenantMigration
                 ->on('branches')
                 ->onDelete('restrict');
 
-            $table->foreign(['tenant_id', 'created_by'], 'fk_payments_creator')
-                ->references(['tenant_id', 'id'])
+            $table->foreign('created_by', 'fk_payments_creator')
+                ->references('id')
                 ->on('users')
                 ->onDelete('restrict');
         });

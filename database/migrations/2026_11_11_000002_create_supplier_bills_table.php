@@ -46,8 +46,8 @@ return new class extends TenantMigration
                 ->on('suppliers')
                 ->onDelete('restrict');
 
-            $table->foreign(['tenant_id', 'created_by'], 'fk_supplier_bills_creator')
-                ->references(['tenant_id', 'id'])
+            $table->foreign('created_by', 'fk_supplier_bills_creator')
+                ->references('id')
                 ->on('users')
                 ->onDelete('restrict');
         });
