@@ -664,6 +664,11 @@
                 isOnline: navigator.onLine,
                 pendingSalesCount: 0,
                 syncStatusText: 'Synced',
+                clientVersion: '1.2.0',
+                upgradeRequired: false,
+                pendingUpdate: false,
+                syncRetryAfterUntil: 0,
+                consecutiveSyncFailures: 0,
 
                 // Security & Lockout
                 showPinModal: false,
@@ -889,6 +894,11 @@
 
                     this.shiftOpen = false;
                     this.showShiftCloseModal = false;
+                    if (this.pendingUpdate || this.upgradeRequired) {
+                        alert('Register Shift #42 successfully reconciled and closed! Applying required application update now.');
+                        window.location.reload();
+                        return;
+                    }
                     alert('Register Shift #42 successfully reconciled and closed!');
                 },
 
@@ -1289,25 +1299,83 @@
                         this.syncStatusText = 'Synced';
                         return;
                     }
+
+                    if (this.upgradeRequired) {
+                        this.syncStatusText = 'Update required at shift close';
+                        return;
+                    }
+
+                    const now = Date.now();
+                    if (now < this.syncRetryAfterUntil) {
+                        const waitSec = Math.ceil((this.syncRetryAfterUntil - now) / 1000);
+                        this.syncStatusText = `Throttled: Retry in ${waitSec}s`;
+                        return;
+                    }
+
                     try {
-                        const res = await fetch('/api/v1/pos/sync', {
+                        const payload = {
+                            batch_id: 'batch-' + Date.now(),
+                            terminal_id: this.terminalCode || 'T-01',
+                            sales: pending.map(s => ({
+                                client_txn_id: s.id,
+                                device_time: s.timestamp || new Date().toISOString(),
+                                pricing_basis: 'tax_inclusive',
+                                payment_status: s.status === 'pending_sync' ? 'paid' : 'pending',
+                                fiscal_signature: s.fiscal_signature || null,
+                                sdc_invoice_number: s.sdc_invoice_number || null,
+                                items: s.items || []
+                            }))
+                        };
+
+                        const res = await fetch('/api/v1/pos/sync-batch', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
-                                'Accept': 'application/json'
+                                'Accept': 'application/json',
+                                'X-POS-Client-Version': this.clientVersion
                             },
-                            body: JSON.stringify({ sales: pending })
+                            body: JSON.stringify(payload)
                         });
+
+                        if (res.status === 426) {
+                            this.upgradeRequired = true;
+                            this.pendingUpdate = true;
+                            this.syncStatusText = 'Update required at shift close';
+                            return;
+                        }
+
+                        if (res.status === 429) {
+                            this.consecutiveSyncFailures++;
+                            const retryAfter = res.headers.get('Retry-After');
+                            const waitSeconds = retryAfter ? parseInt(retryAfter, 10) : Math.min(30, Math.pow(2, this.consecutiveSyncFailures));
+                            this.syncRetryAfterUntil = Date.now() + (waitSeconds * 1000);
+                            this.syncStatusText = `Throttled: Retry in ${waitSeconds}s`;
+                            return;
+                        }
+
                         if (res.ok) {
+                            const data = await res.json();
+                            const results = data.results || [];
+                            const committedIds = new Set(
+                                results.filter(r => r.status === 'committed' || r.status === 'already_synced')
+                                       .map(r => r.client_txn_id)
+                            );
+
                             for (const s of pending) {
-                                await db.pending_sales.update(s.id, { status: 'synced' });
+                                if (committedIds.has(s.id)) {
+                                    await db.pending_sales.update(s.id, { status: 'synced' });
+                                }
                             }
+
+                            this.consecutiveSyncFailures = 0;
                             await this.updatePendingSalesCount();
-                            this.syncStatusText = 'Synced';
                         }
                     } catch (e) {
-                        // Offline or network error
-                        console.warn('Sync attempt failed, will retry when network restores:', e);
+                        this.consecutiveSyncFailures++;
+                        const backoffSec = Math.min(30, Math.pow(2, this.consecutiveSyncFailures));
+                        const jitter = (Math.random() * 0.4 - 0.2); // +/- 20%
+                        this.syncRetryAfterUntil = Date.now() + Math.round(backoffSec * (1 + jitter) * 1000);
+                        console.warn('Sync attempt failed, will retry with backoff:', e);
                     }
                 }
             };
