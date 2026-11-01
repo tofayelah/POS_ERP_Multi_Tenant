@@ -376,7 +376,7 @@ class PosSyncOversellAndClockSkewTest extends TestCase
         $this->assertTrue((bool) $journalEntry->is_posted);
 
         $totals = JournalLine::where('journal_entry_id', $journalEntry->id)
-            ->selectRaw('SUM(debit) as total_debits, SUM(credit) as total_credits')
+            ->selectRaw('SUM(debit_amount) as total_debits, SUM(credit_amount) as total_credits')
             ->first();
 
         $this->assertNotNull($totals);
