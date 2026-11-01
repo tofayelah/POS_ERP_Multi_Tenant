@@ -246,16 +246,19 @@ All tenant tables will be created using `App\Core\Database\TenantMigration` with
   - Verified RLS (`php artisan db:check-rls` -> 55/55 tables passed).
   - Verified Pint (392 files) and PHPStan (0 errors).
 
-### Commit 2: Customer Credit Limits ("Baki") Validation at Sale & POS
-- **Test Written First:** `tests/Database/CustomerCreditLimitTest.php`
+### Commit 2: Customer Credit Limits ("Baki") Validation at Sale & POS [COMPLETED]
+- **Test Written First:** `tests/Database/CustomerCreditLimitTest.php` (PASS - 4 tests, 13 assertions)
   - Sets customer credit limit to ৳10,000.
   - Posts open invoice of ৳8,000. Asserts dynamically calculated `current_due` is ৳8,000.
   - Attempts sale of ৳2,500 on credit -> Assert refused with `CreditLimitExceededException` (৳8,000 + ৳2,500 > ৳10,000).
   - Asserts sale is allowed if tender is Cash/bKash (credit limit only applies to un-tendered or credit portion).
 - **Implementation:**
-  - Create `app/Modules/Accounting/Subledger/Contracts/CustomerCreditCheckerContract.php`.
-  - Create `app/Modules/Accounting/Subledger/Services/CustomerCreditChecker.php`.
-  - Integrate credit check into `app/Modules/Tax/Services/InvoiceIssuer.php` and POS checkout contract.
+  - Created `app/Modules/Accounting/Subledger/Contracts/CustomerCreditCheckerContract.php`.
+  - Created `app/Modules/Accounting/Subledger/Services/CustomerCreditChecker.php`.
+  - Created `CustomerCreditCheckResult` DTO and `CreditLimitExceededException`.
+  - Registered singleton in `AccountingServiceProvider`.
+  - Integrated dynamic credit limit check and subledger open item creation into `InvoiceIssuer`.
+  - Verified Pint (397 files) and PHPStan (0 errors).
 
 ### Commit 3: Payments Recording & Multi-Invoice Allocation Engine
 - **Test Written First:** `tests/Database/PaymentAllocationDatabaseTest.php`
