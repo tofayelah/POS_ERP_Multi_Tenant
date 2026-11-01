@@ -6,7 +6,6 @@ use App\Core\Tenancy\TenantContext;
 use App\Models\Company;
 use App\Models\User;
 use App\Modules\Accounting\Contracts\FinancialReportContract;
-use App\Modules\Accounting\DTOs\TrialBalanceReportDTO;
 use Filament\Pages\Page;
 use Illuminate\Support\Facades\Auth;
 
