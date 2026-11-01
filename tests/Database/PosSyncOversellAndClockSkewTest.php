@@ -248,8 +248,10 @@ class PosSyncOversellAndClockSkewTest extends TestCase
         TaxCodeRate::create([
             'id' => (string) Str::uuid(),
             'tenant_id' => $this->tenant->id,
+            'company_id' => $this->company->id,
             'tax_code_id' => $this->taxCodeFifteen->id,
-            'rate' => '15.0000',
+            'rate_percent' => '15.00',
+            'supplementary_duty_percent' => '0.00',
             'effective_from' => '2020-01-01',
             'effective_to' => null,
         ]);
