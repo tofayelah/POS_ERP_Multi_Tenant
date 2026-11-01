@@ -31,15 +31,18 @@ class TaxCalculator
         ?string $vatRatePercent = null,
         ?string $supplementaryDutyPercent = null,
     ): TaxLineResult {
-        $vatRate = $vatRatePercent ?? '0';
-        $sdRate = $supplementaryDutyPercent ?? '0';
+        $vatRate = $vatRatePercent;
+        $sdRate = $supplementaryDutyPercent;
 
-        if ($taxCode !== null && $this->rateResolver !== null) {
+        if (($vatRate === null || $sdRate === null) && $taxCode !== null && $this->rateResolver !== null) {
             $effectiveDate = $date ?? now()->toDateString();
             $resolvedRate = $this->rateResolver->resolve($taxCode, $effectiveDate);
-            $vatRate = $resolvedRate->vatRatePercent;
-            $sdRate = $resolvedRate->supplementaryDutyPercent;
+            $vatRate ??= $resolvedRate->vatRatePercent;
+            $sdRate ??= $resolvedRate->supplementaryDutyPercent;
         }
+
+        $vatRate ??= '0';
+        $sdRate ??= '0';
 
         $unitPriceMoney = Money::of($price);
         $totalPriceMoney = $unitPriceMoney->multiply($quantity);

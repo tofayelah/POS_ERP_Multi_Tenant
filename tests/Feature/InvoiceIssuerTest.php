@@ -15,6 +15,7 @@ use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\SalesInvoice;
 use App\Models\TaxCode;
+use App\Models\TaxCodeRate;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Modules\Tax\DTOs\InvoiceLineItemDTO;
@@ -213,6 +214,14 @@ class InvoiceIssuerTest extends TestCase
             'name_en' => 'VAT Exempt (0%)',
             'is_active' => true,
         ]);
+        TaxCodeRate::create([
+            'tenant_id' => $this->tenant->id,
+            'company_id' => $this->company->id,
+            'tax_code_id' => $this->taxCodeZero->id,
+            'rate_percent' => '0.00',
+            'supplementary_duty_percent' => '0.00',
+            'effective_from' => '2020-01-01',
+        ]);
 
         $this->taxCodeFive = TaxCode::create([
             'tenant_id' => $this->tenant->id,
@@ -221,6 +230,14 @@ class InvoiceIssuerTest extends TestCase
             'name_en' => 'Truncated VAT 5%',
             'is_active' => true,
         ]);
+        TaxCodeRate::create([
+            'tenant_id' => $this->tenant->id,
+            'company_id' => $this->company->id,
+            'tax_code_id' => $this->taxCodeFive->id,
+            'rate_percent' => '5.00',
+            'supplementary_duty_percent' => '0.00',
+            'effective_from' => '2020-01-01',
+        ]);
 
         $this->taxCodeFifteen = TaxCode::create([
             'tenant_id' => $this->tenant->id,
@@ -228,6 +245,14 @@ class InvoiceIssuerTest extends TestCase
             'code' => 'VAT-15',
             'name_en' => 'Standard VAT 15%',
             'is_active' => true,
+        ]);
+        TaxCodeRate::create([
+            'tenant_id' => $this->tenant->id,
+            'company_id' => $this->company->id,
+            'tax_code_id' => $this->taxCodeFifteen->id,
+            'rate_percent' => '15.00',
+            'supplementary_duty_percent' => '0.00',
+            'effective_from' => '2020-01-01',
         ]);
 
         // Products and Variants for the Basket Vector (Rice, Oil, Soap)
