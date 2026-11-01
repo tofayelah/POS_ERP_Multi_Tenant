@@ -14,6 +14,7 @@ class PosServiceProvider extends AbstractModuleServiceProvider
 
         $this->app->singleton(PosSyncServiceContract::class, PosSyncService::class);
     }
+
     public function getIdentifier(): string
     {
         return 'pos';
