@@ -67,7 +67,7 @@ class SubledgerAgingService implements SubledgerAgingContract
                 ->toArray();
         }
 
-        /** @var array<string, array{0_30: Money, 31_60: Money, 61_90: Money, 91_120: Money, over_120: Money, total: Money}> $partyBuckets */
+        /** @var array<string, array{b0To30: Money, b31To60: Money, b61To90: Money, b91To120: Money, bOver120: Money, total: Money}> $partyBuckets */
         $partyBuckets = [];
 
         $summary0To30 = Money::zero('BDT');
@@ -96,29 +96,29 @@ class SubledgerAgingService implements SubledgerAgingContract
             $partyId = $item->party_id;
             if (! isset($partyBuckets[$partyId])) {
                 $partyBuckets[$partyId] = [
-                    '0_30' => Money::zero('BDT'),
-                    '31_60' => Money::zero('BDT'),
-                    '61_90' => Money::zero('BDT'),
-                    '91_120' => Money::zero('BDT'),
-                    'over_120' => Money::zero('BDT'),
+                    'b0To30' => Money::zero('BDT'),
+                    'b31To60' => Money::zero('BDT'),
+                    'b61To90' => Money::zero('BDT'),
+                    'b91To120' => Money::zero('BDT'),
+                    'bOver120' => Money::zero('BDT'),
                     'total' => Money::zero('BDT'),
                 ];
             }
 
             if ($daysOverdue <= 30) {
-                $partyBuckets[$partyId]['0_30'] = $partyBuckets[$partyId]['0_30']->add($amount);
+                $partyBuckets[$partyId]['b0To30'] = $partyBuckets[$partyId]['b0To30']->add($amount);
                 $summary0To30 = $summary0To30->add($amount);
             } elseif ($daysOverdue <= 60) {
-                $partyBuckets[$partyId]['31_60'] = $partyBuckets[$partyId]['31_60']->add($amount);
+                $partyBuckets[$partyId]['b31To60'] = $partyBuckets[$partyId]['b31To60']->add($amount);
                 $summary31To60 = $summary31To60->add($amount);
             } elseif ($daysOverdue <= 90) {
-                $partyBuckets[$partyId]['61_90'] = $partyBuckets[$partyId]['61_90']->add($amount);
+                $partyBuckets[$partyId]['b61To90'] = $partyBuckets[$partyId]['b61To90']->add($amount);
                 $summary61To90 = $summary61To90->add($amount);
             } elseif ($daysOverdue <= 120) {
-                $partyBuckets[$partyId]['91_120'] = $partyBuckets[$partyId]['91_120']->add($amount);
+                $partyBuckets[$partyId]['b91To120'] = $partyBuckets[$partyId]['b91To120']->add($amount);
                 $summary91To120 = $summary91To120->add($amount);
             } else {
-                $partyBuckets[$partyId]['over_120'] = $partyBuckets[$partyId]['over_120']->add($amount);
+                $partyBuckets[$partyId]['bOver120'] = $partyBuckets[$partyId]['bOver120']->add($amount);
                 $summaryOver120 = $summaryOver120->add($amount);
             }
 
@@ -132,11 +132,11 @@ class SubledgerAgingService implements SubledgerAgingContract
                 partyId: $partyId,
                 partyName: $partyNames[$partyId] ?? "Unknown Party {$partyId}",
                 buckets: new AgingBucketDTO(
-                    days0To30: $b['0_30'],
-                    days31To60: $b['31_60'],
-                    days61To90: $b['61_90'],
-                    days91To120: $b['91_120'],
-                    daysOver120: $b['over_120'],
+                    days0To30: $b['b0To30'],
+                    days31To60: $b['b31To60'],
+                    days61To90: $b['b61To90'],
+                    days91To120: $b['b91To120'],
+                    daysOver120: $b['bOver120'],
                     total: $b['total']
                 )
             );
