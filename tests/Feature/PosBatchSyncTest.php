@@ -16,10 +16,12 @@ use App\Models\SalesInvoice;
 use App\Models\TaxCode;
 use App\Models\TaxCodeRate;
 use App\Models\Tenant;
+use App\Models\TenantMembership;
 use App\Models\User;
 use App\Models\Warehouse;
 use Carbon\Carbon;
 use Illuminate\Support\Str;
+use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class PosBatchSyncTest extends TestCase
@@ -62,7 +64,7 @@ class PosBatchSyncTest extends TestCase
         TenantContext::set($this->tenant);
         setPermissionsTeamId($this->tenant->id);
 
-        \Spatie\Permission\Models\Role::firstOrCreate([
+        Role::firstOrCreate([
             'name' => 'Tenant Admin',
             'guard_name' => 'web',
             'tenant_id' => $this->tenant->id,
@@ -112,7 +114,7 @@ class PosBatchSyncTest extends TestCase
         ]);
         $this->cashier->assignRole('Tenant Admin');
 
-        \App\Models\TenantMembership::create([
+        TenantMembership::create([
             'id' => (string) Str::uuid(),
             'tenant_id' => $this->tenant->id,
             'user_id' => $this->cashier->id,
