@@ -442,6 +442,9 @@ class PosBatchSyncTest extends TestCase
             ->postJson('/api/v1/pos/sync-batch', $payload);
 
         $response->assertOk();
+        if ($response->json()['results'][0]['status'] === 'failed') {
+            dump($response->json()['results'][0]['reason']);
+        }
         $data = $response->json();
 
         $this->assertCount(3, $data['results']);
@@ -487,6 +490,9 @@ class PosBatchSyncTest extends TestCase
             ->postJson('/api/v1/pos/sync-batch', $payload);
 
         $response->assertOk();
+        if ($response->json()['results'][0]['status'] === 'failed') {
+            dump($response->json()['results'][0]['reason']);
+        }
 
         $invoice = SalesInvoice::where('client_txn_id', 'TXN-NEW27-001')->firstOrFail();
         $this->assertSame('issued', $invoice->status);
