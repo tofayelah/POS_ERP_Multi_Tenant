@@ -60,7 +60,7 @@ class OfflineOversellService implements OfflineOversellServiceContract
 
             // If sale creates a deficit, record supervisor exception
             if ($newOnHand->isNegative()) {
-                $oversoldQty = $newOnHand->abs();
+                $oversoldQty = $onHand->isPositive() ? $saleQty->minus($onHand) : $saleQty;
 
                 StockOversellException::create([
                     'tenant_id' => $tenantId,

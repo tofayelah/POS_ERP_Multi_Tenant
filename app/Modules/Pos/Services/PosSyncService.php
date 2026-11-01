@@ -231,6 +231,7 @@ class PosSyncService implements PosSyncServiceContract
                     quantity: $item->quantity,
                     unitCost: $unitCost,
                     salesInvoiceId: $invoice->id,
+                    branchId: $terminal->branch_id,
                 );
             }
         }
