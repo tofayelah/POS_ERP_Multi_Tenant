@@ -58,13 +58,13 @@ return new class extends TenantMigration
                 ->onDelete('restrict');
         });
 
-        DB::connection('pgsql_owner')->statement("
+        DB::connection('pgsql_owner')->statement('
             ALTER TABLE sales_invoices
             ADD CONSTRAINT chk_terminal_and_client_txn CHECK (
                 (terminal_id IS NULL AND client_txn_id IS NULL) OR
                 (terminal_id IS NOT NULL AND client_txn_id IS NOT NULL)
             );
-        ");
+        ');
     }
 
     /**
