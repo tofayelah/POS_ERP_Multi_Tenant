@@ -6,7 +6,11 @@ use App\Core\Tenancy\TenantContext;
 use App\Models\Branch;
 use App\Models\Company;
 use App\Models\PosTerminal;
+use App\Models\Product;
+use App\Models\ProductVariant;
 use App\Models\SalesInvoice;
+use App\Models\TaxCode;
+use App\Models\TaxCodeRate;
 use App\Models\Tenant;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
@@ -23,6 +27,10 @@ class PosSyncSchemaTest extends TestCase
     protected Branch $branch;
 
     protected PosTerminal $terminal;
+
+    protected ProductVariant $variant;
+
+    protected TaxCode $taxCode;
 
     protected function setUp(): void
     {
@@ -61,6 +69,51 @@ class PosSyncSchemaTest extends TestCase
             'branch_id' => $this->branch->id,
             'terminal_code' => 'TERM-01',
             'name' => 'Checkout Counter 1',
+            'is_active' => true,
+        ]);
+
+        $this->taxCode = TaxCode::create([
+            'id' => (string) Str::uuid(),
+            'tenant_id' => $this->tenant->id,
+            'company_id' => $this->company->id,
+            'code' => 'ZERO',
+            'name_en' => 'Zero Rated VAT',
+            'description' => 'Zero Rated VAT',
+        ]);
+
+        TaxCodeRate::create([
+            'id' => (string) Str::uuid(),
+            'tenant_id' => $this->tenant->id,
+            'company_id' => $this->company->id,
+            'tax_code_id' => $this->taxCode->id,
+            'rate_percent' => '0.00',
+            'supplementary_duty_percent' => '0.00',
+            'effective_from' => '2020-01-01',
+            'effective_to' => null,
+            'is_active' => true,
+        ]);
+
+        $product = Product::create([
+            'id' => (string) Str::uuid(),
+            'tenant_id' => $this->tenant->id,
+            'company_id' => $this->company->id,
+            'code' => 'PROD-01',
+            'name_en' => 'Standard Item',
+            'base_uom' => 'Pcs',
+            'is_active' => true,
+        ]);
+
+        $this->variant = ProductVariant::create([
+            'id' => (string) Str::uuid(),
+            'tenant_id' => $this->tenant->id,
+            'company_id' => $this->company->id,
+            'product_id' => $product->id,
+            'tax_code_id' => $this->taxCode->id,
+            'sku' => 'SKU-01',
+            'name_en' => 'Standard Item Pcs',
+            'base_uom' => 'Pcs',
+            'mrp' => '100.0000',
+            'cost_price' => '80.0000',
             'is_active' => true,
         ]);
     }
@@ -203,14 +256,16 @@ class PosSyncSchemaTest extends TestCase
             'tenant_id' => $this->tenant->id,
             'company_id' => $this->company->id,
             'sales_invoice_id' => $invoiceId,
+            'product_variant_id' => $this->variant->id,
+            'tax_code_id' => $this->taxCode->id,
+            'vat_rate' => '0.00',
             'item_description' => 'Test Item',
+            'uom' => 'Pcs',
             'quantity' => '1.0000',
             'unit_price' => '100.0000',
-            'subtotal' => '100.0000',
             'tax_amount' => '0.0000',
             'line_total' => '100.0000',
             'created_at' => now(),
-            'updated_at' => now(),
         ]);
 
         // Transition to issued
