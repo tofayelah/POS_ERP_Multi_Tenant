@@ -10,8 +10,6 @@ use App\Models\ChartOfAccount;
 use App\Models\Company;
 use App\Models\Customer;
 use App\Models\FiscalYear;
-use App\Models\JournalEntry;
-use App\Models\Payment;
 use App\Models\SalesInvoice;
 use App\Models\SubledgerOpenItem;
 use App\Models\Supplier;
