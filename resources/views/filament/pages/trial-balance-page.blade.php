@@ -4,11 +4,11 @@
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <div class="rounded-xl bg-white p-6 shadow-sm border border-gray-100 dark:bg-gray-800 dark:border-gray-700">
                     <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Debit Amount</p>
-                    <p class="mt-2 text-2xl font-bold text-gray-900 dark:text-white">৳ {{ $report->totalDebit }}</p>
+                    <p class="mt-2 text-2xl font-bold text-gray-900 dark:text-white">৳ {{ $report->totalDebit->getAmount() }}</p>
                 </div>
                 <div class="rounded-xl bg-white p-6 shadow-sm border border-gray-100 dark:bg-gray-800 dark:border-gray-700">
                     <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Credit Amount</p>
-                    <p class="mt-2 text-2xl font-bold text-gray-900 dark:text-white">৳ {{ $report->totalCredit }}</p>
+                    <p class="mt-2 text-2xl font-bold text-gray-900 dark:text-white">৳ {{ $report->totalCredit->getAmount() }}</p>
                 </div>
                 <div class="rounded-xl bg-white p-6 shadow-sm border border-gray-100 dark:bg-gray-800 dark:border-gray-700">
                     <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Ledger Balance Status</p>
@@ -19,7 +19,7 @@
                             </span>
                         @else
                             <span class="inline-flex items-center rounded-full bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-700 ring-1 ring-inset ring-red-600/20 dark:bg-red-900/30 dark:text-red-400">
-                                Unbalanced (Variance: ৳ {{ $report->variance }})
+                                Unbalanced Ledger
                             </span>
                         @endif
                     </div>
@@ -37,18 +37,18 @@
                             <th scope="col" class="px-6 py-3 font-semibold text-gray-700 dark:text-gray-300">Account Code</th>
                             <th scope="col" class="px-6 py-3 font-semibold text-gray-700 dark:text-gray-300">Account Name</th>
                             <th scope="col" class="px-6 py-3 font-semibold text-gray-700 dark:text-gray-300">Type</th>
-                            <th scope="col" class="px-6 py-3 text-right font-semibold text-gray-700 dark:text-gray-300">Debit (BDT)</th>
-                            <th scope="col" class="px-6 py-3 text-right font-semibold text-gray-700 dark:text-gray-300">Credit (BDT)</th>
+                            <th scope="col" class="px-6 py-3 text-right font-semibold text-gray-700 dark:text-gray-300">Net Debit (BDT)</th>
+                            <th scope="col" class="px-6 py-3 text-right font-semibold text-gray-700 dark:text-gray-300">Net Credit (BDT)</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-                        @forelse($report->rows as $row)
+                        @forelse($report->accounts as $row)
                             <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-700/50">
                                 <td class="whitespace-nowrap px-6 py-4 font-mono font-medium text-gray-900 dark:text-white">{{ $row->accountCode }}</td>
                                 <td class="whitespace-nowrap px-6 py-4 text-gray-700 dark:text-gray-300">{{ $row->accountName }}</td>
                                 <td class="whitespace-nowrap px-6 py-4 capitalize text-gray-500 dark:text-gray-400">{{ $row->accountType }}</td>
-                                <td class="whitespace-nowrap px-6 py-4 text-right font-mono text-gray-900 dark:text-white">৳ {{ $row->debitBalance }}</td>
-                                <td class="whitespace-nowrap px-6 py-4 text-right font-mono text-gray-900 dark:text-white">৳ {{ $row->creditBalance }}</td>
+                                <td class="whitespace-nowrap px-6 py-4 text-right font-mono text-gray-900 dark:text-white">৳ {{ $row->netDebit->getAmount() }}</td>
+                                <td class="whitespace-nowrap px-6 py-4 text-right font-mono text-gray-900 dark:text-white">৳ {{ $row->netCredit->getAmount() }}</td>
                             </tr>
                         @empty
                             <tr>
@@ -61,8 +61,8 @@
                     <tfoot class="border-t-2 border-gray-300 bg-gray-50 font-bold dark:border-gray-600 dark:bg-gray-900/50">
                         <tr>
                             <td colspan="3" class="px-6 py-4 text-gray-900 dark:text-white">Total</td>
-                            <td class="whitespace-nowrap px-6 py-4 text-right font-mono text-gray-900 dark:text-white">৳ {{ $report->totalDebit }}</td>
-                            <td class="whitespace-nowrap px-6 py-4 text-right font-mono text-gray-900 dark:text-white">৳ {{ $report->totalCredit }}</td>
+                            <td class="whitespace-nowrap px-6 py-4 text-right font-mono text-gray-900 dark:text-white">৳ {{ $report->totalDebit->getAmount() }}</td>
+                            <td class="whitespace-nowrap px-6 py-4 text-right font-mono text-gray-900 dark:text-white">৳ {{ $report->totalCredit->getAmount() }}</td>
                         </tr>
                     </tfoot>
                 </table>

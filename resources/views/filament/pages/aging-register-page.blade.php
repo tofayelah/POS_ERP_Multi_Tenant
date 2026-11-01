@@ -9,7 +9,7 @@
                 </div>
                 @if($arAging)
                     <div class="rounded-lg bg-primary-50 px-4 py-2 font-mono font-semibold text-primary-700 dark:bg-primary-950/40 dark:text-primary-300">
-                        Total AR Due: ৳ {{ $arAging->totalAmount }}
+                        Total AR Due: ৳ {{ $arAging->summary->total->getAmount() }}
                     </div>
                 @endif
             </div>
@@ -28,16 +28,16 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-                        @if($arAging && count($arAging->rows) > 0)
-                            @foreach($arAging->rows as $row)
+                        @if($arAging && count($arAging->details) > 0)
+                            @foreach($arAging->details as $row)
                                 <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-700/50">
                                     <td class="whitespace-nowrap px-6 py-4 font-medium text-gray-900 dark:text-white">{{ $row->partyName }}</td>
-                                    <td class="whitespace-nowrap px-6 py-4 text-right font-mono text-gray-700 dark:text-gray-300">৳ {{ $row->b0To30 }}</td>
-                                    <td class="whitespace-nowrap px-6 py-4 text-right font-mono text-gray-700 dark:text-gray-300">৳ {{ $row->b31To60 }}</td>
-                                    <td class="whitespace-nowrap px-6 py-4 text-right font-mono text-gray-700 dark:text-gray-300">৳ {{ $row->b61To90 }}</td>
-                                    <td class="whitespace-nowrap px-6 py-4 text-right font-mono text-gray-700 dark:text-gray-300">৳ {{ $row->b91To120 }}</td>
-                                    <td class="whitespace-nowrap px-6 py-4 text-right font-mono text-gray-700 dark:text-gray-300">৳ {{ $row->bOver120 }}</td>
-                                    <td class="whitespace-nowrap px-6 py-4 text-right font-mono font-bold text-gray-900 dark:text-white">৳ {{ $row->totalDue }}</td>
+                                    <td class="whitespace-nowrap px-6 py-4 text-right font-mono text-gray-700 dark:text-gray-300">৳ {{ $row->buckets->days0To30->getAmount() }}</td>
+                                    <td class="whitespace-nowrap px-6 py-4 text-right font-mono text-gray-700 dark:text-gray-300">৳ {{ $row->buckets->days31To60->getAmount() }}</td>
+                                    <td class="whitespace-nowrap px-6 py-4 text-right font-mono text-gray-700 dark:text-gray-300">৳ {{ $row->buckets->days61To90->getAmount() }}</td>
+                                    <td class="whitespace-nowrap px-6 py-4 text-right font-mono text-gray-700 dark:text-gray-300">৳ {{ $row->buckets->days91To120->getAmount() }}</td>
+                                    <td class="whitespace-nowrap px-6 py-4 text-right font-mono text-gray-700 dark:text-gray-300">৳ {{ $row->buckets->daysOver120->getAmount() }}</td>
+                                    <td class="whitespace-nowrap px-6 py-4 text-right font-mono font-bold text-gray-900 dark:text-white">৳ {{ $row->buckets->total->getAmount() }}</td>
                                 </tr>
                             @endforeach
                         @else
@@ -61,7 +61,7 @@
                 </div>
                 @if($apAging)
                     <div class="rounded-lg bg-amber-50 px-4 py-2 font-mono font-semibold text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">
-                        Total AP Due: ৳ {{ $apAging->totalAmount }}
+                        Total AP Due: ৳ {{ $apAging->summary->total->getAmount() }}
                     </div>
                 @endif
             </div>
@@ -80,16 +80,16 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-                        @if($apAging && count($apAging->rows) > 0)
-                            @foreach($apAging->rows as $row)
+                        @if($apAging && count($apAging->details) > 0)
+                            @foreach($apAging->details as $row)
                                 <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-700/50">
                                     <td class="whitespace-nowrap px-6 py-4 font-medium text-gray-900 dark:text-white">{{ $row->partyName }}</td>
-                                    <td class="whitespace-nowrap px-6 py-4 text-right font-mono text-gray-700 dark:text-gray-300">৳ {{ $row->b0To30 }}</td>
-                                    <td class="whitespace-nowrap px-6 py-4 text-right font-mono text-gray-700 dark:text-gray-300">৳ {{ $row->b31To60 }}</td>
-                                    <td class="whitespace-nowrap px-6 py-4 text-right font-mono text-gray-700 dark:text-gray-300">৳ {{ $row->b61To90 }}</td>
-                                    <td class="whitespace-nowrap px-6 py-4 text-right font-mono text-gray-700 dark:text-gray-300">৳ {{ $row->b91To120 }}</td>
-                                    <td class="whitespace-nowrap px-6 py-4 text-right font-mono text-gray-700 dark:text-gray-300">৳ {{ $row->bOver120 }}</td>
-                                    <td class="whitespace-nowrap px-6 py-4 text-right font-mono font-bold text-gray-900 dark:text-white">৳ {{ $row->totalDue }}</td>
+                                    <td class="whitespace-nowrap px-6 py-4 text-right font-mono text-gray-700 dark:text-gray-300">৳ {{ $row->buckets->days0To30->getAmount() }}</td>
+                                    <td class="whitespace-nowrap px-6 py-4 text-right font-mono text-gray-700 dark:text-gray-300">৳ {{ $row->buckets->days31To60->getAmount() }}</td>
+                                    <td class="whitespace-nowrap px-6 py-4 text-right font-mono text-gray-700 dark:text-gray-300">৳ {{ $row->buckets->days61To90->getAmount() }}</td>
+                                    <td class="whitespace-nowrap px-6 py-4 text-right font-mono text-gray-700 dark:text-gray-300">৳ {{ $row->buckets->days91To120->getAmount() }}</td>
+                                    <td class="whitespace-nowrap px-6 py-4 text-right font-mono text-gray-700 dark:text-gray-300">৳ {{ $row->buckets->daysOver120->getAmount() }}</td>
+                                    <td class="whitespace-nowrap px-6 py-4 text-right font-mono font-bold text-gray-900 dark:text-white">৳ {{ $row->buckets->total->getAmount() }}</td>
                                 </tr>
                             @endforeach
                         @else
