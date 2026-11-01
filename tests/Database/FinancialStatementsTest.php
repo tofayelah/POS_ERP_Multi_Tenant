@@ -268,13 +268,13 @@ class FinancialStatementsTest extends TestCase
                 'status' => 'open',
             ]);
 
-            DB::transaction(function () use ($dueDate, $invId, $idx, $inv, $arAccount, $revenueAccount) {
+            DB::transaction(function () use ($today, $invId, $idx, $inv, $arAccount, $revenueAccount) {
                 $this->postingService->post(new JournalEntryDTO(
                     companyId: $this->company->id,
                     periodId: $this->period->id,
                     documentType: 'INV',
-                    postingDate: $dueDate,
-                    businessDate: $dueDate,
+                    postingDate: $today->toDateString(),
+                    businessDate: $today->toDateString(),
                     referenceType: 'sales_invoice',
                     referenceId: $invId,
                     postedBy: $this->user->id,
