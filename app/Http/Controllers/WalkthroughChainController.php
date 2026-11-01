@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Core\Tenancy\TenantContext;
 use App\Models\Company;
 use App\Models\Customer;
+use App\Models\DeliveryChallan;
 use App\Models\GoodsReceipt;
 use App\Models\ProductVariant;
 use App\Models\PurchaseOrder;
@@ -292,7 +293,7 @@ class WalkthroughChainController extends Controller
             return response()->json(['error' => 'Forbidden: Only Accountant can issue Sales Invoices.'], Response::HTTP_FORBIDDEN);
         }
 
-        $challan = \App\Models\DeliveryChallan::where('tenant_id', $tenant->id)
+        $challan = DeliveryChallan::where('tenant_id', $tenant->id)
             ->where('company_id', $company->id)
             ->where('status', 'confirmed')
             ->latest()
