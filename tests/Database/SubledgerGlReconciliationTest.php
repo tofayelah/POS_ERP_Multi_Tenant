@@ -257,62 +257,64 @@ class SubledgerGlReconciliationTest extends TestCase
             switch ($action) {
                 case 1:
                     // 1. Customer Sales Invoice (AR Debit 1030 / Revenue Credit 4010)
-                    $customer = $this->customers[mt_rand(0, 9)];
-                    $amountFloat = round(mt_rand(10000, 500000) / 100, 2);
-                    $amountStr = number_format($amountFloat, 4, '.', '');
-                    $amountMoney = Money::of($amountStr);
+                    DB::transaction(function () use ($step, $arAccount, $revenueAccount, $today, &$operationCounts) {
+                        $customer = $this->customers[mt_rand(0, 9)];
+                        $amountFloat = round(mt_rand(10000, 500000) / 100, 2);
+                        $amountStr = number_format($amountFloat, 4, '.', '');
+                        $amountMoney = Money::of($amountStr);
 
-                    $invId = (string) Str::uuid();
-                    $invNumber = "INV-SIM-{$step}";
+                        $invId = (string) Str::uuid();
+                        $invNumber = "INV-SIM-{$step}";
 
-                    // Create open item
-                    SubledgerOpenItem::create([
-                        'id' => $invId,
-                        'tenant_id' => $this->tenant->id,
-                        'company_id' => $this->company->id,
-                        'party_type' => 'customer',
-                        'party_id' => $customer->id,
-                        'source_type' => 'sales_invoice',
-                        'source_id' => $invId,
-                        'document_number' => $invNumber,
-                        'document_date' => $today,
-                        'due_date' => $today,
-                        'direction' => 'debit',
-                        'gl_control_account_code' => '1030',
-                        'original_amount' => $amountStr,
-                        'allocated_amount' => '0.0000',
-                        'remaining_amount' => $amountStr,
-                        'status' => 'open',
-                    ]);
+                        // Create open item
+                        SubledgerOpenItem::create([
+                            'id' => $invId,
+                            'tenant_id' => $this->tenant->id,
+                            'company_id' => $this->company->id,
+                            'party_type' => 'customer',
+                            'party_id' => $customer->id,
+                            'source_type' => 'sales_invoice',
+                            'source_id' => $invId,
+                            'document_number' => $invNumber,
+                            'document_date' => $today,
+                            'due_date' => $today,
+                            'direction' => 'debit',
+                            'gl_control_account_code' => '1030',
+                            'original_amount' => $amountStr,
+                            'allocated_amount' => '0.0000',
+                            'remaining_amount' => $amountStr,
+                            'status' => 'open',
+                        ]);
 
-                    // Post balanced GL entry
-                    $this->postingService->post(new JournalEntryDTO(
-                        companyId: $this->company->id,
-                        periodId: $this->period->id,
-                        documentType: 'INV',
-                        postingDate: $today,
-                        businessDate: $today,
-                        referenceType: 'sales_invoice',
-                        referenceId: $invId,
-                        postedBy: $this->creatorUser->id,
-                        branchId: $this->branch->id,
-                        lines: [
-                            new JournalLineDTO(
-                                accountId: $arAccount->id,
-                                debitAmount: $amountMoney,
-                                creditAmount: Money::zero('BDT'),
-                                branchId: $this->branch->id,
-                            ),
-                            new JournalLineDTO(
-                                accountId: $revenueAccount->id,
-                                debitAmount: Money::zero('BDT'),
-                                creditAmount: $amountMoney,
-                                branchId: $this->branch->id,
-                            ),
-                        ]
-                    ));
+                        // Post balanced GL entry
+                        $this->postingService->post(new JournalEntryDTO(
+                            companyId: $this->company->id,
+                            periodId: $this->period->id,
+                            documentType: 'INV',
+                            postingDate: $today,
+                            businessDate: $today,
+                            referenceType: 'sales_invoice',
+                            referenceId: $invId,
+                            postedBy: $this->creatorUser->id,
+                            branchId: $this->branch->id,
+                            lines: [
+                                new JournalLineDTO(
+                                    accountId: $arAccount->id,
+                                    debitAmount: $amountMoney,
+                                    creditAmount: Money::zero('BDT'),
+                                    branchId: $this->branch->id,
+                                ),
+                                new JournalLineDTO(
+                                    accountId: $revenueAccount->id,
+                                    debitAmount: Money::zero('BDT'),
+                                    creditAmount: $amountMoney,
+                                    branchId: $this->branch->id,
+                                ),
+                            ]
+                        ));
 
-                    $operationCounts['ar_invoices']++;
+                        $operationCounts['ar_invoices']++;
+                    });
                     break;
 
                 case 2:
@@ -370,76 +372,78 @@ class SubledgerGlReconciliationTest extends TestCase
 
                 case 3:
                     // 3. Supplier Bill (Purchase Expense Debit 5010 / AP Credit 2010)
-                    $supplier = $this->suppliers[mt_rand(0, 9)];
-                    $amountFloat = round(mt_rand(15000, 600000) / 100, 2);
-                    $amountStr = number_format($amountFloat, 4, '.', '');
-                    $amountMoney = Money::of($amountStr);
+                    DB::transaction(function () use ($step, $expenseAccount, $apAccount, $today, &$operationCounts) {
+                        $supplier = $this->suppliers[mt_rand(0, 9)];
+                        $amountFloat = round(mt_rand(15000, 600000) / 100, 2);
+                        $amountStr = number_format($amountFloat, 4, '.', '');
+                        $amountMoney = Money::of($amountStr);
 
-                    $billId = (string) Str::uuid();
-                    $billNumber = "BILL-SIM-{$step}";
+                        $billId = (string) Str::uuid();
+                        $billNumber = "BILL-SIM-{$step}";
 
-                    $bill = SupplierBill::create([
-                        'id' => $billId,
-                        'tenant_id' => $this->tenant->id,
-                        'company_id' => $this->company->id,
-                        'branch_id' => $this->branch->id,
-                        'supplier_id' => $supplier->id,
-                        'bill_number' => $billNumber,
-                        'bill_date' => $today,
-                        'due_date' => $today,
-                        'subtotal' => $amountStr,
-                        'tax_amount' => '0.0000',
-                        'total_amount' => $amountStr,
-                        'status' => 'approved',
-                        'created_by' => $this->creatorUser->id,
-                    ]);
+                        $bill = SupplierBill::create([
+                            'id' => $billId,
+                            'tenant_id' => $this->tenant->id,
+                            'company_id' => $this->company->id,
+                            'branch_id' => $this->branch->id,
+                            'supplier_id' => $supplier->id,
+                            'bill_number' => $billNumber,
+                            'bill_date' => $today,
+                            'due_date' => $today,
+                            'subtotal' => $amountStr,
+                            'tax_amount' => '0.0000',
+                            'total_amount' => $amountStr,
+                            'status' => 'approved',
+                            'created_by' => $this->creatorUser->id,
+                        ]);
 
-                    SubledgerOpenItem::create([
-                        'id' => (string) Str::uuid(),
-                        'tenant_id' => $this->tenant->id,
-                        'company_id' => $this->company->id,
-                        'party_type' => 'supplier',
-                        'party_id' => $supplier->id,
-                        'source_type' => 'supplier_bill',
-                        'source_id' => $bill->id,
-                        'document_number' => $billNumber,
-                        'document_date' => $today,
-                        'due_date' => $today,
-                        'direction' => 'credit',
-                        'gl_control_account_code' => '2010',
-                        'original_amount' => $amountStr,
-                        'allocated_amount' => '0.0000',
-                        'remaining_amount' => $amountStr,
-                        'status' => 'open',
-                    ]);
+                        SubledgerOpenItem::create([
+                            'id' => (string) Str::uuid(),
+                            'tenant_id' => $this->tenant->id,
+                            'company_id' => $this->company->id,
+                            'party_type' => 'supplier',
+                            'party_id' => $supplier->id,
+                            'source_type' => 'supplier_bill',
+                            'source_id' => $bill->id,
+                            'document_number' => $billNumber,
+                            'document_date' => $today,
+                            'due_date' => $today,
+                            'direction' => 'credit',
+                            'gl_control_account_code' => '2010',
+                            'original_amount' => $amountStr,
+                            'allocated_amount' => '0.0000',
+                            'remaining_amount' => $amountStr,
+                            'status' => 'open',
+                        ]);
 
-                    $this->postingService->post(new JournalEntryDTO(
-                        companyId: $this->company->id,
-                        periodId: $this->period->id,
-                        documentType: 'BILL',
-                        postingDate: $today,
-                        businessDate: $today,
-                        referenceType: 'supplier_bill',
-                        referenceId: $billId,
-                        postedBy: $this->creatorUser->id,
-                        branchId: $this->branch->id,
-                        lines: [
-                            new JournalLineDTO(
-                                accountId: $expenseAccount->id,
-                                debitAmount: $amountMoney,
-                                creditAmount: Money::zero('BDT'),
-                                branchId: $this->branch->id,
-                            ),
-                            new JournalLineDTO(
-                                accountId: $apAccount->id,
-                                debitAmount: Money::zero('BDT'),
-                                creditAmount: $amountMoney,
-                                branchId: $this->branch->id,
-                            ),
-                        ]
-                    ));
+                        $this->postingService->post(new JournalEntryDTO(
+                            companyId: $this->company->id,
+                            periodId: $this->period->id,
+                            documentType: 'BILL',
+                            postingDate: $today,
+                            businessDate: $today,
+                            referenceType: 'supplier_bill',
+                            referenceId: $billId,
+                            postedBy: $this->creatorUser->id,
+                            branchId: $this->branch->id,
+                            lines: [
+                                new JournalLineDTO(
+                                    accountId: $expenseAccount->id,
+                                    debitAmount: $amountMoney,
+                                    creditAmount: Money::zero('BDT'),
+                                    branchId: $this->branch->id,
+                                ),
+                                new JournalLineDTO(
+                                    accountId: $apAccount->id,
+                                    debitAmount: Money::zero('BDT'),
+                                    creditAmount: $amountMoney,
+                                    branchId: $this->branch->id,
+                                ),
+                            ]
+                        ));
 
-                    $operationCounts['ap_bills']++;
+                        $operationCounts['ap_bills']++;
+                    });
                     break;
 
                 case 4:
@@ -485,86 +489,88 @@ class SubledgerGlReconciliationTest extends TestCase
 
                 case 5:
                     // 5. Mushak 6.7 Credit Note / Sales Allowance (Sales Return Debit 4020 / AR Credit 1030)
-                    $customer = $this->customers[mt_rand(0, 9)];
-                    $openItem = SubledgerOpenItem::where('tenant_id', $this->tenant->id)
-                        ->where('party_type', 'customer')
-                        ->where('party_id', $customer->id)
-                        ->whereIn('status', ['open', 'partially_allocated'])
-                        ->first();
+                    DB::transaction(function () use ($step, $arAccount, $today, &$operationCounts) {
+                        $customer = $this->customers[mt_rand(0, 9)];
+                        $openItem = SubledgerOpenItem::where('tenant_id', $this->tenant->id)
+                            ->where('party_type', 'customer')
+                            ->where('party_id', $customer->id)
+                            ->whereIn('status', ['open', 'partially_allocated'])
+                            ->first();
 
-                    if ($openItem) {
-                        $remFloat = (float) $openItem->remaining_amount;
-                        if ($remFloat > 10.00) {
-                            $cnAmountFloat = round(mt_rand(500, min(5000, (int) ($remFloat * 50))) / 100, 2);
-                            if ($cnAmountFloat > 0 && $cnAmountFloat <= $remFloat) {
-                                $cnAmountMoney = Money::of(number_format($cnAmountFloat, 4, '.', ''));
-                                $cnId = (string) Str::uuid();
+                        if ($openItem) {
+                            $remFloat = (float) $openItem->remaining_amount;
+                            if ($remFloat > 10.00) {
+                                $cnAmountFloat = round(mt_rand(500, min(5000, (int) ($remFloat * 50))) / 100, 2);
+                                if ($cnAmountFloat > 0 && $cnAmountFloat <= $remFloat) {
+                                    $cnAmountMoney = Money::of(number_format($cnAmountFloat, 4, '.', ''));
+                                    $cnId = (string) Str::uuid();
 
-                                // Record Credit Note table entry
-                                DB::table('credit_notes')->insert([
-                                    'id' => $cnId,
-                                    'tenant_id' => $this->tenant->id,
-                                    'company_id' => $this->company->id,
-                                    'branch_id' => $this->branch->id,
-                                    'customer_id' => $customer->id,
-                                    'credit_note_number' => "CN-SIM-{$step}",
-                                    'issue_date' => $today,
-                                    'reason' => 'Damaged goods returned',
-                                    'subtotal' => (string) $cnAmountMoney->getBigDecimal(),
-                                    'tax_amount' => '0.0000',
-                                    'total_amount' => (string) $cnAmountMoney->getBigDecimal(),
-                                    'status' => 'approved',
-                                    'created_at' => now(),
-                                    'updated_at' => now(),
-                                ]);
+                                    // Record Credit Note table entry
+                                    DB::table('credit_notes')->insert([
+                                        'id' => $cnId,
+                                        'tenant_id' => $this->tenant->id,
+                                        'company_id' => $this->company->id,
+                                        'branch_id' => $this->branch->id,
+                                        'customer_id' => $customer->id,
+                                        'credit_note_number' => "CN-SIM-{$step}",
+                                        'issue_date' => $today,
+                                        'reason' => 'Damaged goods returned',
+                                        'subtotal' => (string) $cnAmountMoney->getBigDecimal(),
+                                        'tax_amount' => '0.0000',
+                                        'total_amount' => (string) $cnAmountMoney->getBigDecimal(),
+                                        'status' => 'approved',
+                                        'created_at' => now(),
+                                        'updated_at' => now(),
+                                    ]);
 
-                                // Allocate credit note to open item (trigger updates remaining balance)
-                                DB::table('payment_allocations')->insert([
-                                    'id' => (string) Str::uuid(),
-                                    'tenant_id' => $this->tenant->id,
-                                    'company_id' => $this->company->id,
-                                    'payment_id' => null,
-                                    'credit_note_id' => $cnId,
-                                    'open_item_id' => $openItem->id,
-                                    'allocated_amount' => (string) $cnAmountMoney->getBigDecimal(),
-                                    'allocation_date' => $today,
-                                    'notes' => 'Credit Note Return',
-                                    'created_at' => now(),
-                                    'updated_at' => now(),
-                                ]);
+                                    // Allocate credit note to open item (trigger updates remaining balance)
+                                    DB::table('payment_allocations')->insert([
+                                        'id' => (string) Str::uuid(),
+                                        'tenant_id' => $this->tenant->id,
+                                        'company_id' => $this->company->id,
+                                        'payment_id' => null,
+                                        'credit_note_id' => $cnId,
+                                        'open_item_id' => $openItem->id,
+                                        'allocated_amount' => (string) $cnAmountMoney->getBigDecimal(),
+                                        'allocation_date' => $today,
+                                        'notes' => 'Credit Note Return',
+                                        'created_at' => now(),
+                                        'updated_at' => now(),
+                                    ]);
 
-                                // Post GL entry: Debit Sales Return 4020, Credit AR 1030
-                                $returnAccount = ChartOfAccount::where('company_id', $this->company->id)->where('account_code', '4020')->firstOrFail();
-                                $this->postingService->post(new JournalEntryDTO(
-                                    companyId: $this->company->id,
-                                    periodId: $this->period->id,
-                                    documentType: 'CN',
-                                    postingDate: $today,
-                                    businessDate: $today,
-                                    referenceType: 'credit_note',
-                                    referenceId: $cnId,
-                                    postedBy: $this->creatorUser->id,
-                                    branchId: $this->branch->id,
-                                    lines: [
-                                        new JournalLineDTO(
-                                            accountId: $returnAccount->id,
-                                            debitAmount: $cnAmountMoney,
-                                            creditAmount: Money::zero('BDT'),
-                                            branchId: $this->branch->id,
-                                        ),
-                                        new JournalLineDTO(
-                                            accountId: $arAccount->id,
-                                            debitAmount: Money::zero('BDT'),
-                                            creditAmount: $cnAmountMoney,
-                                            branchId: $this->branch->id,
-                                        ),
-                                    ]
-                                ));
+                                    // Post GL entry: Debit Sales Return 4020, Credit AR 1030
+                                    $returnAccount = ChartOfAccount::where('company_id', $this->company->id)->where('account_code', '4020')->firstOrFail();
+                                    $this->postingService->post(new JournalEntryDTO(
+                                        companyId: $this->company->id,
+                                        periodId: $this->period->id,
+                                        documentType: 'CN',
+                                        postingDate: $today,
+                                        businessDate: $today,
+                                        referenceType: 'credit_note',
+                                        referenceId: $cnId,
+                                        postedBy: $this->creatorUser->id,
+                                        branchId: $this->branch->id,
+                                        lines: [
+                                            new JournalLineDTO(
+                                                accountId: $returnAccount->id,
+                                                debitAmount: $cnAmountMoney,
+                                                creditAmount: Money::zero('BDT'),
+                                                branchId: $this->branch->id,
+                                            ),
+                                            new JournalLineDTO(
+                                                accountId: $arAccount->id,
+                                                debitAmount: Money::zero('BDT'),
+                                                creditAmount: $cnAmountMoney,
+                                                branchId: $this->branch->id,
+                                            ),
+                                        ]
+                                    ));
 
-                                $operationCounts['ar_credit_notes']++;
+                                    $operationCounts['ar_credit_notes']++;
+                                }
                             }
                         }
-                    }
+                    });
                     break;
             }
         }
