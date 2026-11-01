@@ -198,8 +198,8 @@ class PosSyncService implements PosSyncServiceContract
 
         // 5. Issue invoice through InvoiceIssuer (NEW-27: draft -> lines -> issued atomically with GL posting)
         $issueRequest = new IssueInvoiceRequest(
-            company: $terminal->company,
-            branch: $terminal->branch,
+            company: $terminal->company ?? $terminal->company_id,
+            branch: $terminal->branch ?? $terminal->branch_id,
             postedBy: $postedBy,
             lines: $lines,
             customer: $customer,

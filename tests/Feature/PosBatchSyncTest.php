@@ -356,9 +356,6 @@ class PosBatchSyncTest extends TestCase
 
         $response1->assertOk();
         $data1 = $response1->json();
-        if ($data1['results'][0]['status'] !== 'committed') {
-            dump($data1['results'][0]['reason']);
-        }
         $this->assertSame('success', $data1['status']);
         $this->assertCount(2, $data1['results']);
         $this->assertSame('committed', $data1['results'][0]['status']);
