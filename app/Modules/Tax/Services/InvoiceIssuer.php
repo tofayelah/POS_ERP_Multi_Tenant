@@ -20,6 +20,7 @@ use App\Modules\Accounting\Contracts\NumberSeriesContract;
 use App\Modules\Accounting\DTOs\JournalEntryDTO;
 use App\Modules\Accounting\DTOs\JournalLineDTO;
 use App\Modules\Accounting\Subledger\Contracts\CustomerCreditCheckerContract;
+use App\Modules\Tax\Contracts\InvoiceIssuerContract;
 use App\Modules\Tax\DTOs\IssueInvoiceRequest;
 use App\Modules\Tax\DTOs\ReturnInvoiceRequest;
 use App\Modules\Tax\TaxCalculator;
@@ -31,7 +32,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
 
-class InvoiceIssuer
+class InvoiceIssuer implements InvoiceIssuerContract
 {
     protected CustomerCreditCheckerContract $creditChecker;
 

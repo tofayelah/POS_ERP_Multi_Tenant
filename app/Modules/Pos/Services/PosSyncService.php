@@ -14,9 +14,9 @@ use App\Modules\Inventory\Contracts\OfflineOversellServiceContract;
 use App\Modules\Pos\Adapters\PosSyncPayloadAdapter;
 use App\Modules\Pos\Contracts\PosSyncServiceContract;
 use App\Modules\Pos\DTOs\SyncSaleDTO;
+use App\Modules\Tax\Contracts\InvoiceIssuerContract;
 use App\Modules\Tax\DTOs\InvoiceLineItemDTO;
 use App\Modules\Tax\DTOs\IssueInvoiceRequest;
-use App\Modules\Tax\Services\InvoiceIssuer;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -26,9 +26,10 @@ class PosSyncService implements PosSyncServiceContract
 {
     public function __construct(
         protected PosSyncPayloadAdapter $adapter,
-        protected InvoiceIssuer $invoiceIssuer,
+        protected ?InvoiceIssuerContract $invoiceIssuer = null,
         protected ?OfflineOversellServiceContract $oversellService = null,
     ) {
+        $this->invoiceIssuer = $invoiceIssuer ?? app(InvoiceIssuerContract::class);
         $this->oversellService = $oversellService ?? app(OfflineOversellServiceContract::class);
     }
 

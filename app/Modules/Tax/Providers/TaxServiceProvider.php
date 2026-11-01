@@ -3,7 +3,9 @@
 namespace App\Modules\Tax\Providers;
 
 use App\Core\Providers\AbstractModuleServiceProvider;
+use App\Modules\Tax\Contracts\InvoiceIssuerContract;
 use App\Modules\Tax\Contracts\TaxRateResolverContract;
+use App\Modules\Tax\Services\InvoiceIssuer;
 use App\Modules\Tax\Services\TaxRateResolver;
 
 class TaxServiceProvider extends AbstractModuleServiceProvider
@@ -13,6 +15,7 @@ class TaxServiceProvider extends AbstractModuleServiceProvider
         parent::register();
 
         $this->app->singleton(TaxRateResolverContract::class, TaxRateResolver::class);
+        $this->app->singleton(InvoiceIssuerContract::class, InvoiceIssuer::class);
     }
 
     public function getIdentifier(): string
