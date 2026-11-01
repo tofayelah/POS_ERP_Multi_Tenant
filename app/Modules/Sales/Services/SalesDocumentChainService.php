@@ -417,7 +417,7 @@ class SalesDocumentChainService implements SalesDocumentChainContract
 
             $totalPayable = $subtotalSum;
 
-            // Create SalesInvoice
+            // Create SalesInvoice in draft status so lines can be attached
             $invoice = SalesInvoice::create([
                 'id' => (string) Str::uuid(),
                 'tenant_id' => $tenantId,
@@ -429,7 +429,7 @@ class SalesDocumentChainService implements SalesDocumentChainContract
                 'invoice_number' => $invoiceNumber,
                 'invoice_date' => $dto->invoiceDate,
                 'business_date' => $dto->invoiceDate,
-                'status' => 'issued',
+                'status' => 'draft',
                 'subtotal' => (string) $subtotalSum->toScale(4, RoundingMode::HalfUp),
                 'discount_amount' => '0.0000',
                 'supplementary_duty_amount' => '0.0000',
@@ -442,6 +442,10 @@ class SalesDocumentChainService implements SalesDocumentChainContract
                 $ild['sales_invoice_id'] = $invoice->id;
                 SalesInvoiceLine::create($ild);
             }
+
+            // Transition to issued once lines are attached
+            $invoice->status = 'issued';
+            $invoice->save();
 
             // Check if SalesOrder is fully delivered and invoiced -> transition to closed
             if ($challan->sales_order_id) {
