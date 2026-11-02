@@ -326,7 +326,6 @@ class PilotDailyCheckCommand extends Command
                 // Unsynced sales older than 4 hours:
                 // a) draft sales older than 4 hours
                 // b) offline sync delays where server_received_time > device_time + 4 hours
-                // c) is_synced_from_offline false and created_at < 4h ago
                 $unsyncedCount = $db->table('sales_invoices')
                     ->where('tenant_id', $tenant->id)
                     ->where('terminal_id', $terminal->id)
@@ -337,9 +336,6 @@ class PilotDailyCheckCommand extends Command
                         })->orWhere(function ($q2) {
                             $q2->where('is_synced_from_offline', true)
                                 ->whereRaw("server_received_time > device_time + INTERVAL '4 hours'");
-                        })->orWhere(function ($q3) use ($fourHoursAgo) {
-                            $q3->where('is_synced_from_offline', false)
-                                ->where('created_at', '<', $fourHoursAgo);
                         });
                     })
                     ->count();

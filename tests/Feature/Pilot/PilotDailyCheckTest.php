@@ -15,6 +15,7 @@ use App\Models\SalesInvoice;
 use App\Models\StockBalance;
 use App\Models\StockMovement;
 use App\Models\StockOversellException;
+use App\Models\TaxCode;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Models\Warehouse;
@@ -91,11 +92,21 @@ test('pilot:daily-check reports each kind of seeded difference and exits non-zer
         'is_active' => true,
     ]);
 
+    $taxCode = TaxCode::create([
+        'id' => (string) Str::uuid(),
+        'tenant_id' => $tenant->id,
+        'company_id' => $company->id,
+        'code' => 'VAT_15',
+        'name_en' => 'Standard VAT 15%',
+        'is_active' => true,
+    ]);
+
     $variant = ProductVariant::create([
         'id' => (string) Str::uuid(),
         'tenant_id' => $tenant->id,
         'company_id' => $company->id,
         'product_id' => $product->id,
+        'tax_code_id' => $taxCode->id,
         'sku' => 'TANG-500G-ORANGE',
         'name_en' => 'Orange',
         'base_uom' => 'PCS',
