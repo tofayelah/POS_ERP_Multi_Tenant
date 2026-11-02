@@ -66,15 +66,28 @@ class RunDisasterRecoveryDrillCommand extends Command
         $defaultSourceDb = ($ownerConfig['database'] ?? '') === 'erp_test' ? 'erp' : (string) ($ownerConfig['database'] ?? 'erp');
         $sourceDb = ! empty($sourceDbOption) ? $sourceDbOption : $defaultSourceDb;
 
+        $originalDefault = (string) Config::get('database.default');
+        $sourceConnectionKey = 'pgsql_dr_source';
+        $scratchConnectionKey = 'pgsql_dr_scratch';
+
+        // Connect explicitly to source database for baseline collection
+        Config::set("database.connections.{$sourceConnectionKey}", array_merge(
+            $ownerConfig,
+            ['database' => $sourceDb]
+        ));
+        DB::purge($sourceConnectionKey);
+        DB::setDefaultConnection($sourceConnectionKey);
+
         // 2. Collect Baseline Metrics from Primary / Source Database
         if (! $isJson) {
-            $this->line('--> Capturing production/source baseline financial and inventory totals...');
+            $this->line("--> Capturing baseline financial and inventory totals from [{$sourceDb}]...");
         }
 
         try {
             $baseline = $this->collectFinancialAndStockMetrics($financialReportService, $inventoryReconciliationService);
         } catch (Throwable $e) {
             $this->error('Failed to collect baseline metrics from source database: '.$e->getMessage());
+            $this->restoreOriginalConnection($originalDefault, $sourceConnectionKey, $scratchConnectionKey, $scratchDb, $host, $port, $user, $password, $keepScratch, $backupPath, false);
 
             return self::FAILURE;
         }
@@ -177,9 +190,6 @@ class RunDisasterRecoveryDrillCommand extends Command
         }
 
         // 6. Connect to Restored Scratch Database
-        $originalDefault = Config::get('database.default');
-        $scratchConnectionKey = 'pgsql_dr_scratch';
-
         Config::set("database.connections.{$scratchConnectionKey}", array_merge(
             $ownerConfig,
             ['database' => $scratchDb]
@@ -212,7 +222,7 @@ class RunDisasterRecoveryDrillCommand extends Command
             }
         } catch (Throwable $e) {
             $this->error('Watchdog inspection encountered exception: '.$e->getMessage());
-            $this->restoreOriginalConnection($originalDefault, $scratchConnectionKey, $scratchDb, $host, $port, $user, $password, $keepScratch, $backupPath, $isGeneratedBackup);
+            $this->restoreOriginalConnection($originalDefault, $sourceConnectionKey, $scratchConnectionKey, $scratchDb, $host, $port, $user, $password, $keepScratch, $backupPath, $isGeneratedBackup);
 
             return self::FAILURE;
         }
@@ -297,7 +307,7 @@ class RunDisasterRecoveryDrillCommand extends Command
             }
         } catch (Throwable $e) {
             $this->error('Reconciliation comparison encountered exception: '.$e->getMessage());
-            $this->restoreOriginalConnection($originalDefault, $scratchConnectionKey, $scratchDb, $host, $port, $user, $password, $keepScratch, $backupPath, $isGeneratedBackup);
+            $this->restoreOriginalConnection($originalDefault, $sourceConnectionKey, $scratchConnectionKey, $scratchDb, $host, $port, $user, $password, $keepScratch, $backupPath, $isGeneratedBackup);
 
             return self::FAILURE;
         }
@@ -306,7 +316,7 @@ class RunDisasterRecoveryDrillCommand extends Command
         $totalRecoveryTime = microtime(true) - $startTime;
 
         // 9. Reconnect to Original Database and Cleanup
-        $this->restoreOriginalConnection($originalDefault, $scratchConnectionKey, $scratchDb, $host, $port, $user, $password, $keepScratch, $backupPath, $isGeneratedBackup);
+        $this->restoreOriginalConnection($originalDefault, $sourceConnectionKey, $scratchConnectionKey, $scratchDb, $host, $port, $user, $password, $keepScratch, $backupPath, $isGeneratedBackup);
 
         $passed = ($watchdogBreaches === 0) && empty($discrepancies);
 
@@ -425,6 +435,7 @@ class RunDisasterRecoveryDrillCommand extends Command
      */
     protected function restoreOriginalConnection(
         string $originalDefault,
+        string $sourceConnectionKey,
         string $scratchConnectionKey,
         string $scratchDb,
         string $host,
@@ -436,6 +447,7 @@ class RunDisasterRecoveryDrillCommand extends Command
         bool $isGeneratedBackup
     ): void {
         DB::purge($scratchConnectionKey);
+        DB::purge($sourceConnectionKey);
         DB::setDefaultConnection($originalDefault);
 
         if (! $keepScratch) {
