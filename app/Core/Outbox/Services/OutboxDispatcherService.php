@@ -61,7 +61,7 @@ class OutboxDispatcherService
             // Set tenant context for this transaction (fail-closed, Rule 4)
             DB::statement("SELECT set_config('app.current_tenant_id', :id, true)", ['id' => $tenantId]);
 
-            /** @var \Illuminate\Database\Eloquent\Collection<int, TransactionalOutbox> $events */
+            /** @var Collection<int, TransactionalOutbox> $events */
             $events = TransactionalOutbox::where('tenant_id', $tenantId)
                 ->where('status', 'pending')
                 ->where('scheduled_at', '<=', Carbon::now())
