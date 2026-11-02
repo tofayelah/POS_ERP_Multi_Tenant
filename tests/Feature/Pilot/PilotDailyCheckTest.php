@@ -56,7 +56,7 @@ test('pilot:daily-check reports each kind of seeded difference and exits non-zer
         'id' => (string) Str::uuid(),
         'tenant_id' => $tenant->id,
         'user_id' => $user->id,
-        'role' => 'admin',
+        'is_active' => true,
         'created_at' => now(),
         'updated_at' => now(),
     ]);
