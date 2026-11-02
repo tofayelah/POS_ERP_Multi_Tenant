@@ -27,8 +27,8 @@ class BuildAuditHashChainWorker
                 ->lockForUpdate()
                 ->first();
 
-            $nextPosition = $lastVerified ? ((int) $lastVerified->chain_position + 1) : 1;
-            $prevHash = $lastVerified?->current_hash ?? str_repeat('0', 64);
+            $nextPosition = $lastVerified !== null ? ((int) $lastVerified->chain_position + 1) : 1;
+            $prevHash = $lastVerified !== null ? $lastVerified->current_hash : str_repeat('0', 64);
 
             // Fetch pending records in deterministic commit order
             $pendingLogs = DB::table('audit_logs')
