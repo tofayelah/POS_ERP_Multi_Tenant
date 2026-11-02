@@ -11,8 +11,7 @@ class TenantOffboardingService
 {
     public function __construct(
         protected TenantExportService $exportService
-    ) {
-    }
+    ) {}
 
     /**
      * Executes the tenant offboarding workflow: archives data, sets retention status,

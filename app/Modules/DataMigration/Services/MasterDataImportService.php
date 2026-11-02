@@ -8,7 +8,6 @@ use App\Models\JournalEntry;
 use App\Models\JournalLine;
 use App\Models\Product;
 use App\Models\ProductVariant;
-use App\Models\Supplier;
 use App\Models\VariantBarcode;
 use Brick\Math\BigDecimal;
 use Carbon\Carbon;

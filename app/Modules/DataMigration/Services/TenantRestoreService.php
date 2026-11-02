@@ -11,8 +11,7 @@ class TenantRestoreService
 {
     public function __construct(
         protected TenantExportService $exportService
-    ) {
-    }
+    ) {}
 
     /**
      * Restores an exported tenant archive into a target tenant database context.
