@@ -1,9 +1,13 @@
 <?php
 
+use App\Http\Controllers\HealthCheckController;
 use App\Http\Controllers\Pos\PosShellController;
 use App\Http\Controllers\RegistrationController;
 use App\Http\Controllers\WalkthroughChainController;
 use Illuminate\Support\Facades\Route;
+
+Route::get('/health', [HealthCheckController::class, 'health'])->name('health');
+Route::get('/ready', [HealthCheckController::class, 'ready'])->name('ready');
 
 Route::get('/', function () {
     return view('welcome');

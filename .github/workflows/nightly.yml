@@ -1,0 +1,76 @@
+name: Nightly Pilot QA & Regression
+
+on:
+  schedule:
+    - cron: '0 2 * * *' # Every night at 02:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  nightly-regression:
+    name: Nightly Regression & Security Gate
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: erp_owner
+          POSTGRES_PASSWORD: secret
+          POSTGRES_DB: erp_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U erp_owner -d erp_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+      redis:
+        image: redis:7
+        ports: ["6379:6379"]
+    env:
+      DB_CONNECTION: pgsql
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
+      DB_DATABASE: erp_test
+      DB_USERNAME: app_rw
+      DB_PASSWORD: secret
+      DB_OWNER_USERNAME: erp_owner
+      DB_OWNER_PASSWORD: secret
+      REDIS_HOST: 127.0.0.1
+      PGPASSWORD: secret
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          extensions: pdo_pgsql, pgsql, redis, bcmath, intl
+          coverage: none
+
+      - name: Composer install
+        run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: Bootstrap PostgreSQL Roles & Schemas
+        run: |
+          psql -h 127.0.0.1 -U erp_owner -d erp_test -c "DO \$\$ BEGIN IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'app_rw') THEN CREATE ROLE app_rw WITH LOGIN PASSWORD 'secret' NOBYPASSRLS; END IF; IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'reporting_ro') THEN CREATE ROLE reporting_ro WITH LOGIN PASSWORD 'secret' NOBYPASSRLS; END IF; END \$\$;"
+          psql -h 127.0.0.1 -U erp_owner -d erp_test -c "GRANT ALL PRIVILEGES ON SCHEMA public TO app_rw;"
+          psql -h 127.0.0.1 -U erp_owner -d erp_test -c "GRANT USAGE ON SCHEMA public TO reporting_ro;"
+          psql -h 127.0.0.1 -U erp_owner -d erp_test -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO app_rw;"
+          psql -h 127.0.0.1 -U erp_owner -d erp_test -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO reporting_ro;"
+
+      - name: Run Migrations
+        run: php artisan migrate --database=pgsql_owner --force
+
+      - name: Verify Forced Row-Level Security
+        run: php artisan db:check-rls
+
+      - name: Run Pint Code Style Verification
+        run: vendor/bin/pint --test
+
+      - name: Run PHPStan Static Analysis (Level 8)
+        run: vendor/bin/phpstan analyse --no-progress
+
+      - name: Run Dependency Security Audit
+        run: composer audit
+
+      - name: Run Full Pest / PHPUnit Test Suite
+        run: php artisan test --compact
