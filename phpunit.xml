@@ -34,6 +34,8 @@
         <env name="DB_PASSWORD" value="secret"/>
         <env name="DB_OWNER_USERNAME" value="erp_owner"/>
         <env name="DB_OWNER_PASSWORD" value="secret"/>
+        <env name="DB_REPORTING_USERNAME" value="reporting_ro"/>
+        <env name="DB_REPORTING_PASSWORD" value="secret"/>
         <env name="DB_URL" value=""/>
         <env name="MAIL_MAILER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
