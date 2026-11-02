@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use App\Core\Audit\Services\HashPendingAuditLogsService;
+use App\Core\Audit\Workers\BuildAuditHashChainWorker;
 use App\Core\Tenancy\TenantContext;
 use App\Models\AuditLog;
 use App\Models\Branch;
@@ -239,7 +239,7 @@ test('pilot:daily-check reports each kind of seeded difference and exits non-zer
     // -------------------------------------------------------------------------
     // Difference 6: Audit-chain verification failure (tamper alert)
     // -------------------------------------------------------------------------
-    $hasher = app(HashPendingAuditLogsService::class);
+    $hasher = app(BuildAuditHashChainWorker::class);
 
     $log1 = AuditLog::create([
         'tenant_id' => $tenant->id,
