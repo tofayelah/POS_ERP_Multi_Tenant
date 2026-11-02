@@ -195,10 +195,11 @@ class PosSyncService implements PosSyncServiceContract
             }
 
             $variantsMap[$variant->id] = $variant;
+            $variantsMap[$item->variantId] = $variant;
 
             // Resolve TaxCode
             $taxCode = null;
-            if ($item->taxCodeId) {
+            if ($item->taxCodeId && Str::isUuid($item->taxCodeId)) {
                 $taxCode = TaxCode::query()
                     ->where('tenant_id', $tenantId)
                     ->where('company_id', $companyId)
@@ -221,7 +222,7 @@ class PosSyncService implements PosSyncServiceContract
 
         // 4. Resolve customer
         $customer = null;
-        if ($sale->customerId) {
+        if ($sale->customerId && Str::isUuid($sale->customerId)) {
             $customer = Customer::query()
                 ->where('tenant_id', $tenantId)
                 ->where('company_id', $companyId)
@@ -258,12 +259,15 @@ class PosSyncService implements PosSyncServiceContract
         if ($this->oversellService && $warehouse) {
             foreach ($sale->items as $item) {
                 $variant = $variantsMap[$item->variantId] ?? null;
-                $unitCost = $variant ? (string) $variant->cost_price : '0.0000';
+                if (! $variant) {
+                    continue;
+                }
+                $unitCost = (string) $variant->cost_price;
 
                 $this->oversellService->recordOfflineSale(
                     companyId: $companyId,
                     warehouseId: $warehouse->id,
-                    productVariantId: $item->variantId,
+                    productVariantId: $variant->id,
                     quantity: $item->quantity,
                     unitCost: $unitCost,
                     salesInvoiceId: $invoice->id,
