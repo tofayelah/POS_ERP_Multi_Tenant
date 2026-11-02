@@ -10,6 +10,9 @@ test('dr:drill command runs automated restoration and verification drill with ze
         '--json' => true,
     ]);
     $output = Artisan::output();
+    if ($exitCode !== 0) {
+        fwrite(STDERR, "ARTISAN OUTPUT: " . $output . PHP_EOL);
+    }
 
     expect($exitCode)->toBe(0);
 
