@@ -36,3 +36,4 @@ Each record uses the following standardized structure:
 - [ADR-017: Statutory Sales Invoice Immutability, Void Flow & Fiscal Enrichment Hardening](ADR-017-invoice-immutability.md)
 - [ADR-018: Bangladesh VAT & Tax Rounding Specification, Cash Tender Adjustment, and Golden Vectors](ADR-018-tax-rounding.md)
 - [ADR-019: AR & AP Subledger Architecture, Module Boundaries & Control Account Reconciliation](ADR-019-subledger-module-boundary.md)
+- [ADR-020: Production Release Freeze Protocol and Peak Eid Scaling Budget Exception](ADR-020-freeze-and-eid-budget.md)
