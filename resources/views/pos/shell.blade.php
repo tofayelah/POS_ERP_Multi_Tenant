@@ -768,6 +768,16 @@
                         this.updatePendingSalesCount();
                     });
 
+                    // Periodic background sync daemon (Design §10.2, §11.2)
+                    setInterval(async () => {
+                        if (navigator.onLine && !this.isOnline) {
+                            this.isOnline = true;
+                        }
+                        if (this.isOnline && this.pendingSalesCount > 0) {
+                            await this.syncOfflineSales();
+                        }
+                    }, 2000);
+
                     await seedCatalog();
                     await this.loadCartFromDexie();
                     await this.updatePendingSalesCount();
