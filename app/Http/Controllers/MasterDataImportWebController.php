@@ -65,7 +65,14 @@ class MasterDataImportWebController extends Controller
 
         try {
             $path = $file->getRealPath();
-            $rows = $this->importService->parseFile($path);
+            $ext = strtolower($file->getClientOriginalExtension());
+
+            $rows = match ($ext) {
+                'xlsx' => $this->importService->parseXlsx($path),
+                'csv' => $this->importService->parseCsv($path),
+                'json' => json_decode((string) file_get_contents($path), true, 512, JSON_THROW_ON_ERROR),
+                default => throw new RuntimeException("Unsupported file extension: .{$ext}. Supported formats: .csv, .xlsx, .json"),
+            };
 
             $result = match ($type) {
                 'customers' => $this->importService->importCustomers($rows, $company->id, $dryRun),
