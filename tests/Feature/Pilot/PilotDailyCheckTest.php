@@ -243,23 +243,27 @@ test('pilot:daily-check reports each kind of seeded difference and exits non-zer
 
     $log1 = AuditLog::create([
         'tenant_id' => $tenant->id,
-        'auditable_type' => 'sales_invoices',
-        'auditable_id' => (string) Str::uuid(),
-        'event' => 'issued',
-        'user_id' => $user->id,
+        'table_name' => 'sales_invoices',
+        'record_id' => (string) Str::uuid(),
+        'action' => 'INSERT',
+        'actor_id' => (string) $user->id,
         'actor_type' => 'user',
-        'payload_hash' => hash('sha256', 'payload-1'),
+        'old_values' => null,
+        'new_values' => ['invoice_number' => 'INV-001', 'total' => '500.00'],
+        'payload_hash' => hash('sha256', (string) json_encode(['invoice_number' => 'INV-001', 'total' => '500.00'])),
         'status' => 'pending_hash',
     ]);
 
     $log2 = AuditLog::create([
         'tenant_id' => $tenant->id,
-        'auditable_type' => 'sales_invoices',
-        'auditable_id' => (string) Str::uuid(),
-        'event' => 'issued',
-        'user_id' => $user->id,
+        'table_name' => 'sales_invoices',
+        'record_id' => (string) Str::uuid(),
+        'action' => 'INSERT',
+        'actor_id' => (string) $user->id,
         'actor_type' => 'user',
-        'payload_hash' => hash('sha256', 'payload-2'),
+        'old_values' => null,
+        'new_values' => ['invoice_number' => 'INV-002', 'total' => '750.00'],
+        'payload_hash' => hash('sha256', (string) json_encode(['invoice_number' => 'INV-002', 'total' => '750.00'])),
         'status' => 'pending_hash',
     ]);
 
