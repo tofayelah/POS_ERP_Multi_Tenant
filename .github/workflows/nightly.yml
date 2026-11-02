@@ -1,4 +1,4 @@
-name: Nightly Pilot QA & Regression
+name: Nightly Pilot QA & Concurrency Gate
 
 on:
   schedule:
@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   nightly-regression:
-    name: Nightly Regression & Security Gate
+    name: Nightly Concurrency, Security & Playwright Gate
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -46,8 +46,19 @@ jobs:
           extensions: pdo_pgsql, pgsql, redis, bcmath, intl
           coverage: none
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
       - name: Composer install
         run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: NPM install
+        run: npm ci
+
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps chromium
 
       - name: Bootstrap PostgreSQL Roles & Schemas
         run: |
@@ -63,6 +74,9 @@ jobs:
       - name: Verify Forced Row-Level Security
         run: php artisan db:check-rls
 
+      - name: Seed Database
+        run: php artisan db:seed --force
+
       - name: Run Pint Code Style Verification
         run: vendor/bin/pint --test
 
@@ -72,5 +86,20 @@ jobs:
       - name: Run Dependency Security Audit
         run: composer audit
 
+      - name: Run NPM Security Audit
+        run: npm audit --audit-level=high
+
+      - name: Run Concurrency Test Suite
+        run: php artisan test tests/Concurrency --compact
+
       - name: Run Full Pest / PHPUnit Test Suite
         run: php artisan test --compact
+
+      - name: Build Frontend Assets
+        run: npm run build
+
+      - name: Serve Application & Execute Playwright E2E Tests
+        run: |
+          php artisan serve --host=127.0.0.1 --port=8080 > /dev/null 2>&1 &
+          sleep 3
+          npx playwright test

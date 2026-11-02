@@ -1,14 +1,14 @@
 import http from 'k6/http';
 import { check } from 'k6';
 
-// Sync Storm Load Test: 50 reconnecting terminals sync batches concurrently
+// Sync Storm Load Test: 50 reconnecting terminals sync batches concurrently (Design §10.2, §13.3)
 export const options = {
     scenarios: {
         sync_storm: {
             executor: 'per-vu-iterations',
             vus: 50, // 50 terminals reconnecting simultaneously
             iterations: 2,
-            maxDuration: '1m',
+            maxDuration: '2m',
         },
     },
     thresholds: {
@@ -17,7 +17,9 @@ export const options = {
     },
 };
 
-const BASE_URL = __ENV.TARGET_URL || 'http://localhost:8080';
+const BASE_URL = __ENV.TARGET_URL || 'http://127.0.0.1:8080';
+const TARGET_HOST = __ENV.TARGET_HOST || 'dev.kcerp.com';
+const CLIENT_VERSION = __ENV.CLIENT_VERSION || '1.2.0';
 
 export default function () {
     const vuId = __VU;
@@ -27,33 +29,38 @@ export default function () {
     // Each terminal sends 5 queued offline sales
     for (let i = 0; i < 5; i++) {
         batch.push({
-            client_txn_id: `OFFLINE-${vuId}-${Date.now()}-${i}`,
+            client_txn_id: `OFFLINE-${vuId}-${Date.now()}-${i}-${Math.floor(Math.random() * 10000)}`,
             terminal_id: terminalId,
             device_time: new Date(Date.now() - (60000 * (5 - i))).toISOString(),
             lines: [
                 {
                     product_variant_id: '01a10000-0000-7000-0000-000000000002',
-                    quantity: '2.000',
-                    unit_price: '50.00',
-                    discount_amount: '0.00',
-                    tax_amount: '15.00',
-                    line_total: '115.00',
+                    quantity: '2.0000',
+                    unit_price: '50.0000',
+                    discount_amount: '0.0000',
+                    tax_amount: '15.0000',
+                    line_total: '115.0000',
                 },
             ],
             payments: [
                 {
                     method: 'cash',
-                    amount: '115.00',
+                    amount: '115.0000',
                 },
             ],
         });
     }
 
-    const payload = JSON.stringify({ sales: batch });
+    const payload = JSON.stringify({
+        batch_id: `BATCH-STORM-${vuId}-${Date.now()}`,
+        terminal_id: terminalId,
+        sales: batch,
+    });
 
     const headers = {
+        'Host': TARGET_HOST,
         'Content-Type': 'application/json',
-        'X-POS-Client-Version': '1.0.0',
+        'X-POS-Client-Version': CLIENT_VERSION,
         'X-POS-Terminal-ID': terminalId,
         'X-POS-Signature': 'mock-sig',
     };

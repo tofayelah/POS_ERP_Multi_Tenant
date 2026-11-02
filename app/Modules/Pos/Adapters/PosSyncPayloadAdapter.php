@@ -17,12 +17,12 @@ class PosSyncPayloadAdapter
      */
     public function adapt(array $payload, string $clientVersion = '1.2.0'): SyncBatchRequestDTO
     {
-        $batchId = (string) ($payload['batch_id'] ?? '');
-        $terminalId = (string) ($payload['terminal_id'] ?? '');
+        $batchId = (string) ($payload['batch_id'] ?? ($payload['sales'][0]['client_txn_id'] ?? \Illuminate\Support\Str::uuid()->toString()));
+        $terminalId = (string) ($payload['terminal_id'] ?? ($payload['sales'][0]['terminal_id'] ?? request()->header('X-POS-Terminal-ID', '')));
         $shiftId = (string) ($payload['shift_id'] ?? '');
         $deviceTimestamp = isset($payload['device_timestamp']) ? Carbon::parse((string) $payload['device_timestamp']) : null;
 
-        if (empty($batchId) || empty($terminalId)) {
+        if (empty($terminalId)) {
             throw new InvalidArgumentException('Missing mandatory batch_id or terminal_id in sync payload.');
         }
 
@@ -44,14 +44,16 @@ class PosSyncPayloadAdapter
             $fiscalSignature = isset($rawSale['fiscal_signature']) && $rawSale['fiscal_signature'] !== '' ? (string) $rawSale['fiscal_signature'] : null;
 
             $items = [];
-            $rawItems = is_array($rawSale['items'] ?? null) ? $rawSale['items'] : [];
+            $rawItems = is_array($rawSale['items'] ?? null)
+                ? $rawSale['items']
+                : (is_array($rawSale['lines'] ?? null) ? $rawSale['lines'] : []);
 
             foreach ($rawItems as $rawItem) {
                 if (! is_array($rawItem)) {
                     continue;
                 }
 
-                $variantId = (string) ($rawItem['variant_id'] ?? '');
+                $variantId = (string) ($rawItem['variant_id'] ?? $rawItem['product_variant_id'] ?? '');
                 $quantity = (string) ($rawItem['quantity'] ?? '1.0000');
 
                 // v1 schema uses 'price', v2 uses 'unit_price'
