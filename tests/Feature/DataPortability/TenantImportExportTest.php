@@ -13,6 +13,7 @@ use App\Models\JournalLine;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\StockBalance;
+use App\Models\Supplier;
 use App\Models\TaxCode;
 use App\Models\Tenant;
 use App\Models\User;
@@ -283,15 +284,15 @@ class TenantImportExportTest extends TestCase
         $first = $importer->importSuppliers($suppliers, $this->company->id, dryRun: false);
         $this->assertTrue($first['valid']);
         $this->assertEquals(1, $first['processed']);
-        $this->assertEquals(1, \App\Models\Supplier::where('tenant_id', $this->tenant->id)->count());
+        $this->assertEquals(1, Supplier::where('tenant_id', $this->tenant->id)->count());
 
         // Second run with updated phone
         $suppliers[0]['phone'] = '+8801700000002';
         $second = $importer->importSuppliers($suppliers, $this->company->id, dryRun: false);
         $this->assertTrue($second['valid']);
-        $this->assertEquals(1, \App\Models\Supplier::where('tenant_id', $this->tenant->id)->count());
+        $this->assertEquals(1, Supplier::where('tenant_id', $this->tenant->id)->count());
 
-        $supplier = \App\Models\Supplier::where('tenant_id', $this->tenant->id)->where('code', 'SUP-001')->first();
+        $supplier = Supplier::where('tenant_id', $this->tenant->id)->where('code', 'SUP-001')->first();
         $this->assertNotNull($supplier);
         $this->assertEquals('+8801700000002', $supplier->phone);
     }
