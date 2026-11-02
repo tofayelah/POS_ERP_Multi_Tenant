@@ -90,13 +90,13 @@ class MasterDataImportService
                 $mrp = number_format((float) $row['mrp'], 2, '.', '');
                 $costPrice = isset($row['cost_price']) ? number_format((float) $row['cost_price'], 2, '.', '') : '0.00';
 
-                /** @var ProductVariant $variant */
+                /** @var ProductVariant|null $variant */
                 $variant = ProductVariant::where('tenant_id', $tenantId)
                     ->where('company_id', $companyId)
                     ->where('sku', $sku)
                     ->first();
 
-                if ($variant) {
+                if ($variant !== null) {
                     $variant->update([
                         'name_en' => (string) $row['name_en'],
                         'mrp' => $mrp,
@@ -230,8 +230,8 @@ class MasterDataImportService
         $totalCredits = BigDecimal::of('0.00');
 
         foreach ($balances as $line) {
-            $debit = BigDecimal::of($line['debit'] ?? '0.00');
-            $credit = BigDecimal::of($line['credit'] ?? '0.00');
+            $debit = BigDecimal::of($line['debit']);
+            $credit = BigDecimal::of($line['credit']);
 
             $totalDebits = $totalDebits->plus($debit);
             $totalCredits = $totalCredits->plus($credit);
@@ -259,8 +259,8 @@ class MasterDataImportService
             ]);
 
             foreach ($balances as $line) {
-                $debit = number_format((float) ($line['debit'] ?? 0), 2, '.', '');
-                $credit = number_format((float) ($line['credit'] ?? 0), 2, '.', '');
+                $debit = number_format((float) $line['debit'], 2, '.', '');
+                $credit = number_format((float) $line['credit'], 2, '.', '');
 
                 JournalLine::create([
                     'id' => (string) Str::uuid(),
