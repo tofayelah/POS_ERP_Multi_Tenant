@@ -65,11 +65,11 @@ class PosSyncService implements PosSyncServiceContract
             throw new InvalidArgumentException('Cannot sync POS batch without active TenantContext.');
         }
 
-        /** @var PosTerminal|null $terminal */
         $terminalQuery = PosTerminal::query()
             ->with(['company', 'branch'])
             ->where('tenant_id', $tenantId);
 
+        /** @var PosTerminal|null $terminal */
         if ($isUuidTerminal) {
             $terminal = $terminalQuery->where('id', $batch->terminalId)->first();
         } else {
