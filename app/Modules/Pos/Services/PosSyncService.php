@@ -8,6 +8,7 @@ use App\Models\PosTerminal;
 use App\Models\ProductVariant;
 use App\Models\SalesInvoice;
 use App\Models\TaxCode;
+use App\Models\TenantMembership;
 use App\Models\User;
 use App\Models\Warehouse;
 use App\Modules\Inventory\Contracts\OfflineOversellServiceContract;
@@ -205,7 +206,7 @@ class PosSyncService implements PosSyncServiceContract
         }
 
         // Resolve poster user
-        $postedBy = auth()->id() ?? User::where('tenant_id', $tenantId)->value('id') ?? (string) Str::uuid();
+        $postedBy = auth()->id() ?? TenantMembership::where('tenant_id', $tenantId)->value('user_id') ?? User::value('id') ?? (string) Str::uuid();
 
         // 5. Issue invoice through InvoiceIssuer (NEW-27: draft -> lines -> issued atomically with GL posting)
         $issueRequest = new IssueInvoiceRequest(
