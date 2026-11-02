@@ -130,8 +130,8 @@ class PilotDailyCheckCommand extends Command
         $this->table(
             ['Tenant', 'Branch', 'Audit Category', 'Discrepancy Details'],
             array_map(fn (array $d): array => [
-                $d['tenant'] ?? 'N/A',
-                $d['branch'] ?? 'All Branches',
+                $d['tenant'],
+                $d['branch'],
                 $d['category'],
                 $d['detail'],
             ], $allDiscrepancies)
@@ -199,7 +199,7 @@ class PilotDailyCheckCommand extends Command
                 $glCashNet = (string) ($glLineNet ?? '0.0000');
             }
 
-            $posCashDec = BigDecimal::of((string) ($posCashCounted ?? '0.0000'));
+            $posCashDec = BigDecimal::of((string) $posCashCountedRaw);
             $glCashDec = BigDecimal::of($glCashNet);
             $cashVariance = $posCashDec->minus($glCashDec);
 
@@ -274,8 +274,8 @@ class PilotDailyCheckCommand extends Command
                 ->where('status', 'issued')
                 ->sum('tax_amount');
 
-            $netRegisterVatDec = BigDecimal::of((string) ($registerVatRaw ?? '0.0000'))
-                ->minus(BigDecimal::of((string) ($creditNoteVatRaw ?? '0.0000')));
+            $netRegisterVatDec = BigDecimal::of((string) $registerVatRaw)
+                ->minus(BigDecimal::of((string) $creditNoteVatRaw));
 
             $vatAccount = $db->table('chart_of_accounts')
                 ->where('tenant_id', $tenant->id)
