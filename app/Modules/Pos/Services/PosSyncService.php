@@ -70,6 +70,8 @@ class PosSyncService implements PosSyncServiceContract
             ->where('tenant_id', $tenantId);
 
         /** @var PosTerminal|null $terminal */
+        $terminal = null;
+
         if ($isUuidTerminal) {
             $terminal = $terminalQuery->where('id', $batch->terminalId)->first();
         } else {
