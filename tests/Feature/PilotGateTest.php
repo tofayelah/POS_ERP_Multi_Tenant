@@ -2,8 +2,6 @@
 
 namespace Tests\Feature;
 
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class PilotGateTest extends TestCase
