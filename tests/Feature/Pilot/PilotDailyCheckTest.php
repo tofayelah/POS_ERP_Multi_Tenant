@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Core\Audit\Services\HashPendingAuditLogsService;
+use App\Core\Tenancy\TenantContext;
 use App\Models\AuditLog;
 use App\Models\Branch;
 use App\Models\Company;
@@ -29,6 +30,8 @@ test('pilot:daily-check reports each kind of seeded difference and exits non-zer
         'subdomain' => 'dailycheck-'.Str::lower(Str::random(6)),
         'status' => 'active',
     ]);
+
+    TenantContext::set($tenant);
 
     $company = Company::create([
         'id' => (string) Str::uuid(),
