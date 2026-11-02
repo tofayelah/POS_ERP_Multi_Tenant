@@ -21,7 +21,7 @@ class IntegrityWatchdogService
         /** @var Tenant[] $activeTenants */
         $activeTenants = Tenant::query()
             ->where('status', 'active')
-            ->orderBy('created_at', 'ASC')
+            ->orderBy('created_at', 'asc')
             ->get();
 
         foreach ($activeTenants as $tenant) {
@@ -77,7 +77,7 @@ class IntegrityWatchdogService
             throw new RuntimeException('Tenant context is empty; watchdog cannot proceed.');
         }
 
-        $tenantName = $tenant?->name ?? Tenant::where('id', $activeTenantId)->value('name') ?? 'Tenant '.$activeTenantId;
+        $tenantName = $tenant ? $tenant->name : (Tenant::where('id', $activeTenantId)->value('name') ?? 'Tenant '.$activeTenantId);
 
         // 2. Check: Posted journals balance (debits == credits per posted entry)
         $unbalancedJournals = $this->findUnbalancedJournals($activeTenantId);
