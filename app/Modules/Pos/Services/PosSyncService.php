@@ -44,6 +44,14 @@ class PosSyncService implements PosSyncServiceContract
         $batch = $this->adapter->adapt($payload, $clientVersion);
 
         $tenantId = TenantContext::id();
+        if (! $tenantId && ! empty($batch->terminalId)) {
+            $matchedTerminal = PosTerminal::query()->where('id', $batch->terminalId)->first();
+            if ($matchedTerminal) {
+                TenantContext::setById($matchedTerminal->tenant_id);
+                $tenantId = $matchedTerminal->tenant_id;
+            }
+        }
+
         if (! $tenantId) {
             throw new InvalidArgumentException('Cannot sync POS batch without active TenantContext.');
         }
