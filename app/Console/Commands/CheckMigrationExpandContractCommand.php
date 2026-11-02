@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
-use SplFileInfo;
 
 class CheckMigrationExpandContractCommand extends Command
 {
