@@ -9,6 +9,7 @@ use App\Models\JournalLine;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\Supplier;
+use App\Models\TaxCode;
 use App\Models\VariantBarcode;
 use Brick\Math\BigDecimal;
 use Carbon\Carbon;
@@ -98,12 +99,17 @@ class MasterDataImportService
                     ->where('sku', $sku)
                     ->first();
 
+                $taxCodeId = ! empty($row['tax_code_id'])
+                    ? (string) $row['tax_code_id']
+                    : (TaxCode::where('tenant_id', $tenantId)->where('company_id', $companyId)->where('is_active', true)->value('id')
+                        ?? TaxCode::where('tenant_id', $tenantId)->value('id'));
+
                 if ($variant !== null) {
                     $variant->update([
                         'name_en' => (string) $row['name_en'],
                         'mrp' => $mrp,
                         'cost_price' => $costPrice,
-                        'tax_code_id' => $row['tax_code_id'] ?? $variant->tax_code_id,
+                        'tax_code_id' => $taxCodeId ?? $variant->tax_code_id,
                     ]);
                 } else {
                     $variant = ProductVariant::create([
@@ -111,7 +117,7 @@ class MasterDataImportService
                         'tenant_id' => $tenantId,
                         'company_id' => $companyId,
                         'product_id' => $product->id,
-                        'tax_code_id' => $row['tax_code_id'] ?? null,
+                        'tax_code_id' => $taxCodeId,
                         'sku' => $sku,
                         'name_en' => (string) $row['name_en'],
                         'name_bn' => isset($row['name_bn']) ? (string) $row['name_bn'] : null,
