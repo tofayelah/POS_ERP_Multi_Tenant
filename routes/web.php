@@ -14,6 +14,8 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+Route::get('/login', fn () => redirect('/admin/acme/login'))->name('login');
+
 Route::get('/pos', [PosShellController::class, 'index'])->name('pos.shell');
 
 Route::get('/import/master-data', [MasterDataImportWebController::class, 'index'])->name('import.master-data');
