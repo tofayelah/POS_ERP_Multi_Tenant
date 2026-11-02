@@ -25,11 +25,6 @@ return new class extends TenantMigration
             $table->string('status', 32)->default('pending_hash');
             $table->timestampTz('hashed_at')->nullable();
             $table->timestampsTz();
-
-            $table->foreign('tenant_id')
-                ->references('id')
-                ->on('tenants')
-                ->onDelete('restrict');
         });
 
         DB::connection('pgsql_owner')->unprepared("
