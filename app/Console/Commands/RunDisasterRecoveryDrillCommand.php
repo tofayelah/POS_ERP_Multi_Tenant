@@ -26,6 +26,7 @@ class RunDisasterRecoveryDrillCommand extends Command
      */
     protected $signature = 'dr:drill
                             {--backup= : Path to backup archive (creates fresh snapshot if omitted)}
+                            {--source-db= : Source database to snapshot (defaults to erp)}
                             {--scratch-db=erp_dr_scratch : Name of the temporary scratch database}
                             {--keep : Retain scratch database after verification completes}
                             {--json : Output machine-readable JSON metrics}';
@@ -61,7 +62,9 @@ class RunDisasterRecoveryDrillCommand extends Command
         $port = (string) ($ownerConfig['port'] ?? '5432');
         $user = (string) ($ownerConfig['username'] ?? 'erp_owner');
         $password = (string) ($ownerConfig['password'] ?? '');
-        $sourceDb = (string) ($ownerConfig['database'] ?? 'erp');
+        $sourceDbOption = (string) ($this->option('source-db') ?? '');
+        $defaultSourceDb = ($ownerConfig['database'] ?? '') === 'erp_test' ? 'erp' : (string) ($ownerConfig['database'] ?? 'erp');
+        $sourceDb = ! empty($sourceDbOption) ? $sourceDbOption : $defaultSourceDb;
 
         // 2. Collect Baseline Metrics from Primary / Source Database
         if (! $isJson) {
@@ -384,8 +387,10 @@ class RunDisasterRecoveryDrillCommand extends Command
         /** @var Collection<int, Tenant> $tenants */
         $tenants = Tenant::where('status', 'active')->get();
 
+        $activeConnection = (string) DB::getDefaultConnection();
+
         foreach ($tenants as $tenant) {
-            TenantContext::set($tenant);
+            TenantContext::set($tenant, $activeConnection);
             $companies = Company::where('tenant_id', $tenant->id)->get();
 
             $companyMetrics = [];
@@ -409,7 +414,7 @@ class RunDisasterRecoveryDrillCommand extends Command
                 'companies' => $companyMetrics,
             ];
 
-            TenantContext::clear();
+            TenantContext::clear($activeConnection);
         }
 
         return $metrics;

@@ -5,7 +5,10 @@ declare(strict_types=1);
 use Illuminate\Support\Facades\Artisan;
 
 test('dr:drill command runs automated restoration and verification drill with zero drift', function () {
-    $exitCode = Artisan::call('dr:drill', ['--json' => true]);
+    $exitCode = Artisan::call('dr:drill', [
+        '--source-db' => 'erp',
+        '--json' => true,
+    ]);
     $output = Artisan::output();
 
     expect($exitCode)->toBe(0);
