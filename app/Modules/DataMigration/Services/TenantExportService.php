@@ -130,21 +130,18 @@ class TenantExportService
             }
         }
 
-        // Fetch foreign key relationships
+        // Fetch foreign key relationships directly from pg_constraint catalog
         $fkRows = DB::select("
             SELECT 
-                tc.table_name AS dependent_table,
-                ccu.table_name AS referenced_table
-            FROM information_schema.table_constraints tc
-            JOIN information_schema.referential_constraints rc
-                ON tc.constraint_name = rc.constraint_name
-                AND tc.constraint_schema = rc.constraint_schema
-            JOIN information_schema.constraint_column_usage ccu
-                ON rc.unique_constraint_name = ccu.constraint_name
-                AND rc.unique_constraint_schema = ccu.constraint_schema
-            WHERE tc.constraint_type = 'FOREIGN KEY'
-                AND tc.table_schema = 'public'
-                AND tc.table_name != ccu.table_name
+                c.relname AS dependent_table,
+                conf.relname AS referenced_table
+            FROM pg_constraint con
+            JOIN pg_class c ON c.oid = con.conrelid
+            JOIN pg_class conf ON conf.oid = con.confrelid
+            JOIN pg_namespace n ON n.oid = c.relnamespace
+            WHERE con.contype = 'f'
+                AND n.nspname = 'public'
+                AND con.conrelid != con.confrelid
         ");
 
         /** @var array<string, array<int, string>> $dependencies */

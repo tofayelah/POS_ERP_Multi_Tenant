@@ -53,6 +53,10 @@ class TenantOffboardingService
 
                     $deletedTotal = 0;
 
+                    // Break self-referential nullable foreign keys to allow smooth deletion
+                    DB::connection('pgsql_owner')->statement('UPDATE journal_entries SET reversed_entry_id = NULL WHERE tenant_id = :id', ['id' => $tenantId]);
+                    DB::connection('pgsql_owner')->statement('UPDATE chart_of_accounts SET parent_id = NULL WHERE tenant_id = :id', ['id' => $tenantId]);
+
                     foreach ($reverseTables as $table) {
                         $deleted = DB::connection('pgsql_owner')
                             ->table($table)
