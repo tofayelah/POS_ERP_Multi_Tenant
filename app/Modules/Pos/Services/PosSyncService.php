@@ -103,7 +103,7 @@ class PosSyncService implements PosSyncServiceContract
                 });
                 $results[] = $result;
             } catch (\Throwable $e) {
-                Log::warning("POS Sync Sale Failed [{$sale->clientTxnId}]: " . $e->getMessage(), ['exception' => $e]);
+                Log::warning("POS Sync Sale Failed [{$sale->clientTxnId}]: ".$e->getMessage(), ['exception' => $e]);
                 $results[] = [
                     'client_txn_id' => $sale->clientTxnId,
                     'status' => 'failed',
