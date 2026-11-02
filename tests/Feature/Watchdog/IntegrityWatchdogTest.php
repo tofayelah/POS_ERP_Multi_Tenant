@@ -300,8 +300,8 @@ class IntegrityWatchdogTest extends TestCase
 
     public function test_watchdog_allows_negative_stock_with_adr016_exception_but_reports_orphan_negative_stock(): void
     {
-        // Variant A: Negative balance (-5) WITH an active ADR-016 exception
-        DB::statement("SELECT set_config('app.allow_negative_stock', 'true', true)");
+        // Allow negative stock for seeding offline oversell test state
+        DB::statement("SELECT set_config('app.allow_negative_stock', 'true', false)");
 
         StockBalance::create([
             'tenant_id' => $this->tenant->id,
@@ -361,6 +361,8 @@ class IntegrityWatchdogTest extends TestCase
             'reference_type' => 'sales_invoice',
             'reference_id' => (string) Str::uuid(),
         ]);
+
+        DB::statement("SELECT set_config('app.allow_negative_stock', 'false', false)");
 
         $result = $this->watchdog->checkTenant($this->tenant);
 
