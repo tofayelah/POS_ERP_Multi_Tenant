@@ -322,7 +322,7 @@ class RunDisasterRecoveryDrillCommand extends Command
 
         // 10. Report Output
         if ($isJson) {
-            $this->line(json_encode([
+            $this->line((string) json_encode([
                 'status' => $passed ? 'passed' : 'failed',
                 'recovery_time_seconds' => round($totalRecoveryTime, 2),
                 'metrics' => [
