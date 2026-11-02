@@ -20,6 +20,7 @@ use App\Modules\Tax\DTOs\InvoiceLineItemDTO;
 use App\Modules\Tax\DTOs\IssueInvoiceRequest;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
 
@@ -102,7 +103,7 @@ class PosSyncService implements PosSyncServiceContract
                 });
                 $results[] = $result;
             } catch (\Throwable $e) {
-                \Illuminate\Support\Facades\Log::warning("POS Sync Sale Failed [{$sale->clientTxnId}]: " . $e->getMessage(), ['exception' => $e]);
+                Log::warning("POS Sync Sale Failed [{$sale->clientTxnId}]: " . $e->getMessage(), ['exception' => $e]);
                 $results[] = [
                     'client_txn_id' => $sale->clientTxnId,
                     'status' => 'failed',
