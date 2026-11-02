@@ -1159,6 +1159,7 @@
                         sdc_invoice_number: sdcInvoiceNo,
                         fiscal_signature: fiscalSig,
                         is_provisional: isProvisional,
+                        items: JSON.parse(JSON.stringify(this.cart)),
                         created_at: new Date().toISOString(),
                         status: this.isOnline 
                             ? 'synced' 
@@ -1323,7 +1324,12 @@
                                 payment_status: s.status === 'pending_sync' ? 'paid' : 'pending',
                                 fiscal_signature: s.fiscal_signature || null,
                                 sdc_invoice_number: s.sdc_invoice_number || null,
-                                items: s.items || []
+                                items: (s.items || []).map(item => ({
+                                    variant_id: item.variant_id,
+                                    quantity: String(item.qty || item.quantity || 1),
+                                    unit_price: String(item.mrp_price || item.unit_price || 0),
+                                    tax_rate: item.tax_rate !== undefined ? String(item.tax_rate) : null
+                                }))
                             }))
                         };
 

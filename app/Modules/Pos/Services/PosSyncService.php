@@ -45,8 +45,16 @@ class PosSyncService implements PosSyncServiceContract
         $batch = $this->adapter->adapt($payload, $clientVersion);
 
         $tenantId = TenantContext::id();
+        $isUuidTerminal = Str::isUuid($batch->terminalId);
+
         if (! $tenantId && ! empty($batch->terminalId)) {
-            $matchedTerminal = PosTerminal::query()->where('id', $batch->terminalId)->first();
+            $terminalQuery = PosTerminal::query();
+            if ($isUuidTerminal) {
+                $terminalQuery->where('id', $batch->terminalId);
+            } else {
+                $terminalQuery->where('terminal_code', $batch->terminalId);
+            }
+            $matchedTerminal = $terminalQuery->first();
             if ($matchedTerminal) {
                 TenantContext::setById($matchedTerminal->tenant_id);
                 $tenantId = $matchedTerminal->tenant_id;
@@ -58,11 +66,16 @@ class PosSyncService implements PosSyncServiceContract
         }
 
         /** @var PosTerminal|null $terminal */
-        $terminal = PosTerminal::query()
+        $terminalQuery = PosTerminal::query()
             ->with(['company', 'branch'])
-            ->where('tenant_id', $tenantId)
-            ->where('id', $batch->terminalId)
-            ->first();
+            ->where('tenant_id', $tenantId);
+
+        if ($isUuidTerminal) {
+            $terminal = $terminalQuery->where('id', $batch->terminalId)->first();
+        } else {
+            $terminal = (clone $terminalQuery)->where('terminal_code', $batch->terminalId)->first()
+                ?? $terminalQuery->first();
+        }
 
         if (! $terminal) {
             throw new InvalidArgumentException("POS Terminal [{$batch->terminalId}] not found for tenant.");
