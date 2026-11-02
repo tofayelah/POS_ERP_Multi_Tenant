@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Core\Watchdog\DTOs\TenantWatchdogResult;
 use App\Core\Watchdog\Services\IntegrityWatchdogService;
 use App\Models\Tenant;
 use Illuminate\Console\Command;
@@ -61,12 +62,12 @@ class CheckIntegrityWatchdogCommand extends Command
             return Command::FAILURE;
         }
 
-        $this->info("✓ Integrity Watchdog PASSED: All active tenants satisfy GL balance and inventory movement invariants.");
+        $this->info('✓ Integrity Watchdog PASSED: All active tenants satisfy GL balance and inventory movement invariants.');
 
         return Command::SUCCESS;
     }
 
-    protected function renderBreaches(\App\Core\Watchdog\DTOs\TenantWatchdogResult $result): void
+    protected function renderBreaches(TenantWatchdogResult $result): void
     {
         $this->warn("--- Breaches for {$result->tenantName} ({$result->tenantId}) ---");
 

@@ -7,7 +7,6 @@ use App\Core\Watchdog\DTOs\TenantWatchdogResult;
 use App\Core\Watchdog\DTOs\WatchdogReport;
 use App\Models\Tenant;
 use Illuminate\Support\Facades\DB;
-use InvalidArgumentException;
 use RuntimeException;
 
 class IntegrityWatchdogService
@@ -105,7 +104,7 @@ class IntegrityWatchdogService
      */
     protected function findUnbalancedJournals(string $tenantId): array
     {
-        $rows = DB::select("
+        $rows = DB::select('
             SELECT e.id AS journal_entry_id,
                    e.entry_number,
                    e.company_id,
@@ -117,7 +116,7 @@ class IntegrityWatchdogService
               AND e.tenant_id = ?
             GROUP BY e.id, e.entry_number, e.company_id
             HAVING COALESCE(SUM(l.debit_amount), 0) <> COALESCE(SUM(l.credit_amount), 0)
-        ", [$tenantId]);
+        ', [$tenantId]);
 
         return array_map(fn ($r) => (array) $r, $rows);
     }
@@ -129,7 +128,7 @@ class IntegrityWatchdogService
      */
     protected function findStockDiscrepancies(string $tenantId): array
     {
-        $rows = DB::select("
+        $rows = DB::select('
             SELECT b.id AS stock_balance_id,
                    b.warehouse_id,
                    b.product_variant_id,
@@ -142,7 +141,7 @@ class IntegrityWatchdogService
             WHERE b.tenant_id = ?
             GROUP BY b.id, b.warehouse_id, b.product_variant_id, b.quantity_on_hand
             HAVING b.quantity_on_hand <> COALESCE(SUM(m.quantity), 0)
-        ", [$tenantId]);
+        ', [$tenantId]);
 
         return array_map(fn ($r) => (array) $r, $rows);
     }
