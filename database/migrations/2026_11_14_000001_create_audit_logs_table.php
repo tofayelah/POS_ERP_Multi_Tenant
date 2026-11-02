@@ -28,10 +28,9 @@ return new class extends TenantMigration
         });
 
         DB::connection('pgsql_owner')->unprepared("
-            -- Unique constraint on chain_position per tenant
-            ALTER TABLE audit_logs
-                ADD CONSTRAINT uq_audit_logs_chain_position
-                UNIQUE NULLS NOT DISTINCT (tenant_id, chain_position);
+            -- Unique constraint on chain_position per tenant for assigned rows
+            CREATE UNIQUE INDEX uq_audit_logs_chain_position ON audit_logs (tenant_id, chain_position)
+                WHERE chain_position IS NOT NULL;
 
             -- Indexes for pending hashing and verification traversal
             CREATE INDEX idx_audit_logs_pending_hash ON audit_logs (tenant_id, created_at ASC)
