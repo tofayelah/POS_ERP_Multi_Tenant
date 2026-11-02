@@ -48,6 +48,19 @@ class PosSyncService implements PosSyncServiceContract
         $tenantId = TenantContext::id();
         $isUuidTerminal = Str::isUuid($batch->terminalId);
 
+        if (! $tenantId) {
+            $user = auth()->user() ?? request()?->user();
+            if ($user) {
+                $userTenantId = TenantMembership::where('user_id', $user->id)
+                    ->where('is_active', true)
+                    ->value('tenant_id');
+                if ($userTenantId) {
+                    TenantContext::setById($userTenantId);
+                    $tenantId = $userTenantId;
+                }
+            }
+        }
+
         if (! $tenantId && ! empty($batch->terminalId)) {
             $terminalQuery = PosTerminal::query();
             if ($isUuidTerminal) {

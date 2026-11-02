@@ -368,6 +368,7 @@ class PosBatchSyncTest extends TestCase
 
         // First submission: should commit both sales
         $response1 = $this->actingAs($this->cashier)
+            ->withHeader('Host', "{$this->tenant->subdomain}.kcerp.com")
             ->withHeader('X-POS-Client-Version', '1.2.0')
             ->postJson('/api/v1/pos/sync-batch', $payload);
 
@@ -382,6 +383,7 @@ class PosBatchSyncTest extends TestCase
 
         // Second submission of the exact same payload: should return already_synced for both
         $response2 = $this->actingAs($this->cashier)
+            ->withHeader('Host', "{$this->tenant->subdomain}.kcerp.com")
             ->withHeader('X-POS-Client-Version', '1.2.0')
             ->postJson('/api/v1/pos/sync-batch', $payload);
 
@@ -395,6 +397,7 @@ class PosBatchSyncTest extends TestCase
         $this->assertSame($invNum2, $data2['results'][1]['invoice_number']);
 
         // Assert strictly 2 invoices exist in database
+        TenantContext::set($this->tenant);
         $this->assertSame(2, SalesInvoice::where('tenant_id', $this->tenant->id)->count());
 
         // Assert strictly 2 GL journal entries exist
@@ -455,6 +458,7 @@ class PosBatchSyncTest extends TestCase
         ];
 
         $response = $this->actingAs($this->cashier)
+            ->withHeader('Host', "{$this->tenant->subdomain}.kcerp.com")
             ->withHeader('X-POS-Client-Version', '1.2.0')
             ->postJson('/api/v1/pos/sync-batch', $payload);
 
@@ -468,6 +472,7 @@ class PosBatchSyncTest extends TestCase
         $this->assertSame('committed', $data['results'][2]['status']);
 
         // Assert that exactly 2 invoices are saved in the database
+        TenantContext::set($this->tenant);
         $this->assertSame(2, SalesInvoice::where('tenant_id', $this->tenant->id)->count());
         $this->assertNotNull(SalesInvoice::where('client_txn_id', 'TXN-PARTIAL-001')->first());
         $this->assertNull(SalesInvoice::where('client_txn_id', 'TXN-PARTIAL-002')->first());
@@ -500,11 +505,13 @@ class PosBatchSyncTest extends TestCase
         ];
 
         $response = $this->actingAs($this->cashier)
+            ->withHeader('Host', "{$this->tenant->subdomain}.kcerp.com")
             ->withHeader('X-POS-Client-Version', '1.2.0')
             ->postJson('/api/v1/pos/sync-batch', $payload);
 
         $response->assertOk();
 
+        TenantContext::set($this->tenant);
         $invoice = SalesInvoice::where('client_txn_id', 'TXN-NEW27-001')->firstOrFail();
         $this->assertSame('issued', $invoice->status);
         $this->assertTrue($invoice->is_synced_from_offline);
