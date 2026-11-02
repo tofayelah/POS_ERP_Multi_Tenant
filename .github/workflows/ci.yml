@@ -4,6 +4,7 @@ on:
   pull_request:
   push:
     branches: [main]
+    tags: ['v*']
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -52,6 +53,8 @@ jobs:
       - run: cp .env.example .env && php artisan key:generate
       - run: vendor/bin/pint --test
       - run: vendor/bin/phpstan analyse --no-progress
+      - name: Check Expand-and-Contract Migration Rule (§15.1)
+        run: php artisan db:check-expand-contract
       - run: psql -v ON_ERROR_STOP=1 -v app_password=secret -h 127.0.0.1 -U erp_owner -d erp_test -f database/sql/roles.sql
       - run: php artisan migrate --database=pgsql_owner --force
       - run: php artisan db:check-rls
