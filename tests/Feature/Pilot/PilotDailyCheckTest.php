@@ -26,6 +26,7 @@ test('pilot:daily-check reports each kind of seeded difference and exits non-zer
     $tenant = Tenant::create([
         'id' => (string) Str::uuid(),
         'name' => 'Daily Check Test Tenant',
+        'subdomain' => 'dailycheck-'.Str::lower(Str::random(6)),
         'status' => 'active',
     ]);
 
