@@ -53,6 +53,7 @@ test.describe('Offline POS Shell & Cashier Flow (Step 8, POS-04, POS-07, POS-08,
 
     // 11. Restore network and verify automatic sync to server
     await context.setOffline(false);
+    await page.evaluate(() => window.dispatchEvent(new Event('online')));
     await expect(page.getByTestId('sync-status')).toHaveText('Synced', { timeout: 30000 });
   });
 
@@ -172,6 +173,7 @@ test.describe('Offline POS Shell & Cashier Flow (Step 8, POS-04, POS-07, POS-08,
 
     // 12. Restore network and assert all offline sales synchronize
     await context.setOffline(false);
+    await page.evaluate(() => window.dispatchEvent(new Event('online')));
     await expect(page.getByTestId('sync-status')).toHaveText('Synced', { timeout: 30000 });
   });
 
