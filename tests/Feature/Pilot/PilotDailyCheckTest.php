@@ -85,9 +85,10 @@ test('pilot:daily-check reports each kind of seeded difference and exits non-zer
         'id' => (string) Str::uuid(),
         'tenant_id' => $tenant->id,
         'company_id' => $company->id,
-        'name' => 'Tang Instant Drink 500g',
-        'type' => 'storable',
-        'status' => 'active',
+        'code' => 'PROD-TANG-500',
+        'name_en' => 'Tang Instant Drink 500g',
+        'base_uom' => 'PCS',
+        'is_active' => true,
     ]);
 
     $variant = ProductVariant::create([
@@ -96,9 +97,11 @@ test('pilot:daily-check reports each kind of seeded difference and exits non-zer
         'company_id' => $company->id,
         'product_id' => $product->id,
         'sku' => 'TANG-500G-ORANGE',
-        'name' => 'Orange',
-        'barcode' => '8941100992211',
-        'retail_price' => '350.0000',
+        'name_en' => 'Orange',
+        'base_uom' => 'PCS',
+        'mrp' => '350.0000',
+        'cost_price' => '250.0000',
+        'is_active' => true,
     ]);
 
     // -------------------------------------------------------------------------
