@@ -11,6 +11,7 @@ use App\Models\Tenant;
 use App\Modules\Accounting\Services\FinancialReportService;
 use App\Modules\Inventory\Services\InventoryGlReconciliationService;
 use Illuminate\Console\Command;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\Process\Process;
@@ -380,7 +381,7 @@ class RunDisasterRecoveryDrillCommand extends Command
         InventoryGlReconciliationService $inventoryReconciliationService
     ): array {
         $metrics = [];
-        /** @var \Illuminate\Database\Eloquent\Collection<int, Tenant> $tenants */
+        /** @var Collection<int, Tenant> $tenants */
         $tenants = Tenant::where('status', 'active')->get();
 
         foreach ($tenants as $tenant) {
