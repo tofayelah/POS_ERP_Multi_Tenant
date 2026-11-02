@@ -255,7 +255,7 @@ class MasterDataImportService
                 'business_date' => Carbon::now()->toDateString(),
                 'reference_type' => 'OPENING_BALANCE',
                 'narration' => 'Opening Balance Sheet Import',
-                'is_posted' => true,
+                'is_posted' => false,
                 'posted_by' => $userId,
             ]);
 
@@ -278,6 +278,9 @@ class MasterDataImportService
                     'line_description' => $line['line_description'] ?? 'Opening balance import',
                 ]);
             }
+
+            // Post entry after lines are recorded to satisfy triggers
+            $entry->update(['is_posted' => true]);
 
             return $entry;
         });

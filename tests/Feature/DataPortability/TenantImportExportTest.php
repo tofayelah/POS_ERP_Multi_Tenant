@@ -224,7 +224,7 @@ class TenantImportExportTest extends TestCase
 
         $firstVariant = ProductVariant::where('sku', 'TEA-500G')->first();
         $this->assertNotNull($firstVariant);
-        $this->assertEquals('250.00', $firstVariant->mrp);
+        $this->assertEquals('250.00', number_format((float) $firstVariant->mrp, 2, '.', ''));
 
         // Second run with updated price
         $validRows[0]['mrp'] = '275.00';
@@ -236,7 +236,7 @@ class TenantImportExportTest extends TestCase
         $this->assertEquals(1, ProductVariant::where('tenant_id', $this->tenant->id)->count());
 
         $firstVariant->refresh();
-        $this->assertEquals('275.00', $firstVariant->mrp);
+        $this->assertEquals('275.00', number_format((float) $firstVariant->mrp, 2, '.', ''));
     }
 
     public function test_opening_balances_import_posts_single_balanced_journal_entry(): void
@@ -317,7 +317,7 @@ class TenantImportExportTest extends TestCase
             'posting_date' => Carbon::now()->toDateString(),
             'business_date' => Carbon::now()->toDateString(),
             'reference_type' => 'MANUAL',
-            'is_posted' => true,
+            'is_posted' => false,
             'posted_by' => $this->user->id,
         ]);
 
@@ -348,6 +348,8 @@ class TenantImportExportTest extends TestCase
             'base_debit_amount' => '0.00',
             'base_credit_amount' => '2500.00',
         ]);
+
+        $entry->update(['is_posted' => true]);
 
         $product = Product::create([
             'id' => (string) Str::uuid(),

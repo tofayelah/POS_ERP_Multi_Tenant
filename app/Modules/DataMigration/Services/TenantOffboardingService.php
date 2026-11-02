@@ -50,13 +50,20 @@ class TenantOffboardingService
 
                 $deletedTotal = 0;
 
-                foreach ($reverseTables as $table) {
-                    $deleted = DB::connection('pgsql_owner')
-                        ->table($table)
-                        ->where('tenant_id', $tenantId)
-                        ->delete();
+                // Temporarily disable audit immutability trigger for the offboarding purge
+                DB::connection('pgsql_owner')->statement('ALTER TABLE audit_logs DISABLE TRIGGER trg_audit_logs_immutable');
 
-                    $deletedTotal += $deleted;
+                try {
+                    foreach ($reverseTables as $table) {
+                        $deleted = DB::connection('pgsql_owner')
+                            ->table($table)
+                            ->where('tenant_id', $tenantId)
+                            ->delete();
+
+                        $deletedTotal += $deleted;
+                    }
+                } finally {
+                    DB::connection('pgsql_owner')->statement('ALTER TABLE audit_logs ENABLE TRIGGER trg_audit_logs_immutable');
                 }
 
                 // Delete tenant memberships, subscriptions and entitlements

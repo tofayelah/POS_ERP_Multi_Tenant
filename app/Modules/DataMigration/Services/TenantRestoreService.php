@@ -49,6 +49,7 @@ class TenantRestoreService
 
             $tablesInArchive = $archive['tables'];
             $restoredTableCount = 0;
+            $postedJournalEntryIds = [];
 
             foreach ($orderedTables as $table) {
                 if (! isset($tablesInArchive[$table]) || empty($tablesInArchive[$table])) {
@@ -58,8 +59,15 @@ class TenantRestoreService
                 $rows = $tablesInArchive[$table];
 
                 // Remap tenant_id for every row
-                $batch = array_map(function ($row) use ($targetTenantId) {
+                $batch = array_map(function ($row) use ($targetTenantId, $table, &$postedJournalEntryIds) {
                     $row['tenant_id'] = $targetTenantId;
+
+                    if ($table === 'journal_entries') {
+                        if (! empty($row['is_posted'])) {
+                            $postedJournalEntryIds[] = $row['id'];
+                            $row['is_posted'] = false;
+                        }
+                    }
 
                     return $row;
                 }, $rows);
@@ -67,6 +75,15 @@ class TenantRestoreService
                 // Insert into target table
                 DB::connection('pgsql_owner')->table($table)->insert($batch);
                 $restoredTableCount++;
+            }
+
+            // Transition posted journal entries back to is_posted = true now that lines exist
+            if (! empty($postedJournalEntryIds)) {
+                DB::connection('pgsql_owner')
+                    ->table('journal_entries')
+                    ->where('tenant_id', $targetTenantId)
+                    ->whereIn('id', $postedJournalEntryIds)
+                    ->update(['is_posted' => true]);
             }
 
             // Recalculate financial and inventory totals in target tenant

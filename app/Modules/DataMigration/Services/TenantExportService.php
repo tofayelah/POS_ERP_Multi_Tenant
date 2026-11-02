@@ -10,6 +10,19 @@ use RuntimeException;
 class TenantExportService
 {
     /**
+     * Tables exempt from single-tenant data export/import/purge:
+     * - tenant_memberships, roles, model_has_roles, model_has_permissions
+     *
+     * @var array<int, string>
+     */
+    protected array $exemptTables = [
+        'tenant_memberships',
+        'roles',
+        'model_has_roles',
+        'model_has_permissions',
+    ];
+
+    /**
      * Exports a tenant's complete database records into a portable, verified JSON structure.
      *
      * @return array<string, mixed>
@@ -47,12 +60,18 @@ class TenantExportService
         $totalRecords = 0;
 
         foreach ($orderedTables as $table) {
-            $rows = DB::table($table)
-                ->where('tenant_id', $tenantId)
-                ->orderBy('id', 'asc')
-                ->get()
-                ->map(fn ($row) => (array) $row)
-                ->toArray();
+            $query = DB::table($table)->where('tenant_id', $tenantId);
+
+            $hasId = DB::selectOne("
+                SELECT 1 FROM information_schema.columns 
+                WHERE table_schema = 'public' AND table_name = :tbl AND column_name = 'id'
+            ", ['tbl' => $table]);
+
+            if ($hasId) {
+                $query->orderBy('id', 'asc');
+            }
+
+            $rows = $query->get()->map(fn ($row) => (array) $row)->toArray();
 
             if (! empty($rows)) {
                 $tablesData[$table] = $rows;
@@ -105,7 +124,10 @@ class TenantExportService
         /** @var array<string, bool> $allTenantTables */
         $allTenantTables = [];
         foreach ($tenantColumns as $col) {
-            $allTenantTables[(string) $col->table_name] = true;
+            $tableName = (string) $col->table_name;
+            if (! in_array($tableName, $this->exemptTables, true)) {
+                $allTenantTables[$tableName] = true;
+            }
         }
 
         // Fetch foreign key relationships
