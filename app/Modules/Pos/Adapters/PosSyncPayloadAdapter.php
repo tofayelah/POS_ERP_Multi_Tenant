@@ -6,6 +6,7 @@ use App\Modules\Pos\DTOs\SyncBatchRequestDTO;
 use App\Modules\Pos\DTOs\SyncSaleDTO;
 use App\Modules\Pos\DTOs\SyncSaleItemDTO;
 use Carbon\Carbon;
+use Illuminate\Support\Str;
 use InvalidArgumentException;
 
 class PosSyncPayloadAdapter
@@ -17,7 +18,7 @@ class PosSyncPayloadAdapter
      */
     public function adapt(array $payload, string $clientVersion = '1.2.0'): SyncBatchRequestDTO
     {
-        $batchId = (string) ($payload['batch_id'] ?? ($payload['sales'][0]['client_txn_id'] ?? \Illuminate\Support\Str::uuid()->toString()));
+        $batchId = (string) ($payload['batch_id'] ?? ($payload['sales'][0]['client_txn_id'] ?? Str::uuid()->toString()));
         $terminalId = (string) ($payload['terminal_id'] ?? ($payload['sales'][0]['terminal_id'] ?? request()->header('X-POS-Terminal-ID', '')));
         $shiftId = (string) ($payload['shift_id'] ?? '');
         $deviceTimestamp = isset($payload['device_timestamp']) ? Carbon::parse((string) $payload['device_timestamp']) : null;
