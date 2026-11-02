@@ -67,8 +67,7 @@ class OutboxDispatcherService
                 ->where('scheduled_at', '<=', Carbon::now())
                 ->orderBy('scheduled_at', 'asc')
                 ->limit($batchSize)
-                ->lockForUpdate()
-                ->skipLocked()
+                ->lock('FOR UPDATE SKIP LOCKED')
                 ->get();
 
             $processedInTenant = 0;
