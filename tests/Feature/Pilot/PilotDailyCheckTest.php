@@ -183,7 +183,7 @@ test('pilot:daily-check reports each kind of seeded difference and exits non-zer
     // -------------------------------------------------------------------------
     // Difference 4A: Unsynced sales older than 4 hours
     // -------------------------------------------------------------------------
-    SalesInvoice::create([
+    $unsynced = SalesInvoice::create([
         'id' => (string) Str::uuid(),
         'tenant_id' => $tenant->id,
         'company_id' => $company->id,
@@ -196,9 +196,11 @@ test('pilot:daily-check reports each kind of seeded difference and exits non-zer
         'status' => 'draft',
         'subtotal' => '1000.0000',
         'total_payable' => '1000.0000',
-        'created_at' => now()->subHours(6),
-        'updated_at' => now()->subHours(6),
     ]);
+
+    DB::table('sales_invoices')
+        ->where('id', $unsynced->id)
+        ->update(['created_at' => now()->subHours(6)]);
 
     // -------------------------------------------------------------------------
     // Difference 4B: Unfiscalized invoice for terminal
