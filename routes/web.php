@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\HealthCheckController;
+use App\Http\Controllers\MasterDataImportWebController;
 use App\Http\Controllers\Pos\PosShellController;
 use App\Http\Controllers\RegistrationController;
 use App\Http\Controllers\WalkthroughChainController;
@@ -14,6 +15,9 @@ Route::get('/', function () {
 });
 
 Route::get('/pos', [PosShellController::class, 'index'])->name('pos.shell');
+
+Route::get('/import/master-data', [MasterDataImportWebController::class, 'index'])->name('import.master-data');
+Route::post('/import/master-data', [MasterDataImportWebController::class, 'upload'])->name('import.master-data.upload');
 
 Route::get('/signup', fn () => redirect('/register'));
 Route::get('/register', [RegistrationController::class, 'showForm'])->name('register');
