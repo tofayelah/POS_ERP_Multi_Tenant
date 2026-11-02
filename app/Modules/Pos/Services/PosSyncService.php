@@ -49,7 +49,7 @@ class PosSyncService implements PosSyncServiceContract
         $isUuidTerminal = Str::isUuid($batch->terminalId);
 
         if (! $tenantId) {
-            $user = auth()->user() ?? request()?->user();
+            $user = auth()->user() ?? request()->user();
             if ($user) {
                 $userTenantId = TenantMembership::where('user_id', $user->id)
                     ->where('is_active', true)
