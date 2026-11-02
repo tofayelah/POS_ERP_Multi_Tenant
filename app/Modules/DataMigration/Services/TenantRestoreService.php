@@ -4,6 +4,7 @@ namespace App\Modules\DataMigration\Services;
 
 use App\Models\Tenant;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use RuntimeException;
 
 class TenantRestoreService
@@ -51,6 +52,24 @@ class TenantRestoreService
             $restoredTableCount = 0;
             $postedJournalEntryIds = [];
 
+            /** @var array<string, string> $idMap */
+            $idMap = [];
+            if (isset($archive['metadata']['tenant_id'])) {
+                $idMap[(string) $archive['metadata']['tenant_id']] = $targetTenantId;
+            }
+
+            // Pre-generate unique UUIDs for all rows in the archive
+            foreach ($orderedTables as $table) {
+                if (! isset($tablesInArchive[$table])) {
+                    continue;
+                }
+                foreach ($tablesInArchive[$table] as $row) {
+                    if (isset($row['id']) && is_string($row['id'])) {
+                        $idMap[$row['id']] = (string) Str::uuid();
+                    }
+                }
+            }
+
             foreach ($orderedTables as $table) {
                 if (! isset($tablesInArchive[$table]) || empty($tablesInArchive[$table])) {
                     continue;
@@ -58,9 +77,19 @@ class TenantRestoreService
 
                 $rows = $tablesInArchive[$table];
 
-                // Remap tenant_id for every row
-                $batch = array_map(function ($row) use ($targetTenantId, $table, &$postedJournalEntryIds) {
+                // Remap tenant_id and entity IDs for every row
+                $batch = array_map(function ($row) use ($targetTenantId, $table, &$postedJournalEntryIds, $idMap) {
                     $row['tenant_id'] = $targetTenantId;
+
+                    if (isset($row['id'], $idMap[$row['id']])) {
+                        $row['id'] = $idMap[$row['id']];
+                    }
+
+                    foreach ($row as $col => $val) {
+                        if ($col !== 'id' && is_string($val) && isset($idMap[$val])) {
+                            $row[$col] = $idMap[$val];
+                        }
+                    }
 
                     if ($table === 'journal_entries') {
                         if (! empty($row['is_posted'])) {

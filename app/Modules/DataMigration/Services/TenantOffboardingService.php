@@ -37,23 +37,22 @@ class TenantOffboardingService
         $purgedCount = 0;
 
         if ($purgeImmediately) {
-            $purgedCount = DB::connection('pgsql_owner')->transaction(function () use ($tenantId) {
-                // Set context
-                DB::connection('pgsql_owner')->statement(
-                    "SELECT set_config('app.current_tenant_id', :id, true)",
-                    ['id' => $tenantId]
-                );
+            DB::connection('pgsql_owner')->statement('ALTER TABLE audit_logs DISABLE TRIGGER trg_audit_logs_immutable');
 
-                // Get tables in topological order, then reverse them so children are deleted before parents
-                $topologicalTables = $this->exportService->getTopologicalTenantTables();
-                $reverseTables = array_reverse($topologicalTables);
+            try {
+                $purgedCount = DB::connection('pgsql_owner')->transaction(function () use ($tenantId) {
+                    // Set context
+                    DB::connection('pgsql_owner')->statement(
+                        "SELECT set_config('app.current_tenant_id', :id, true)",
+                        ['id' => $tenantId]
+                    );
 
-                $deletedTotal = 0;
+                    // Get tables in topological order, then reverse them so children are deleted before parents
+                    $topologicalTables = $this->exportService->getTopologicalTenantTables();
+                    $reverseTables = array_reverse($topologicalTables);
 
-                // Temporarily disable audit immutability trigger for the offboarding purge
-                DB::connection('pgsql_owner')->statement('ALTER TABLE audit_logs DISABLE TRIGGER trg_audit_logs_immutable');
+                    $deletedTotal = 0;
 
-                try {
                     foreach ($reverseTables as $table) {
                         $deleted = DB::connection('pgsql_owner')
                             ->table($table)
@@ -62,34 +61,34 @@ class TenantOffboardingService
 
                         $deletedTotal += $deleted;
                     }
-                } finally {
-                    DB::connection('pgsql_owner')->statement('ALTER TABLE audit_logs ENABLE TRIGGER trg_audit_logs_immutable');
-                }
 
-                // Delete tenant memberships, subscriptions and entitlements
-                DB::connection('pgsql_owner')
-                    ->table('tenant_memberships')
-                    ->where('tenant_id', $tenantId)
-                    ->delete();
+                    // Delete tenant memberships, subscriptions and entitlements
+                    DB::connection('pgsql_owner')
+                        ->table('tenant_memberships')
+                        ->where('tenant_id', $tenantId)
+                        ->delete();
 
-                DB::connection('pgsql_owner')
-                    ->table('tenant_module_entitlements')
-                    ->where('tenant_id', $tenantId)
-                    ->delete();
+                    DB::connection('pgsql_owner')
+                        ->table('tenant_module_entitlements')
+                        ->where('tenant_id', $tenantId)
+                        ->delete();
 
-                DB::connection('pgsql_owner')
-                    ->table('tenant_subscriptions')
-                    ->where('tenant_id', $tenantId)
-                    ->delete();
+                    DB::connection('pgsql_owner')
+                        ->table('tenant_subscriptions')
+                        ->where('tenant_id', $tenantId)
+                        ->delete();
 
-                // Finally delete the tenant row
-                DB::connection('pgsql_owner')
-                    ->table('tenants')
-                    ->where('id', $tenantId)
-                    ->delete();
+                    // Finally delete the tenant row
+                    DB::connection('pgsql_owner')
+                        ->table('tenants')
+                        ->where('id', $tenantId)
+                        ->delete();
 
-                return $deletedTotal;
-            });
+                    return $deletedTotal;
+                });
+            } finally {
+                DB::connection('pgsql_owner')->statement('ALTER TABLE audit_logs ENABLE TRIGGER trg_audit_logs_immutable');
+            }
         }
 
         return [
