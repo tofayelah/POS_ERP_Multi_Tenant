@@ -5,7 +5,7 @@ namespace App\Core\Outbox\Services;
 use App\Core\Outbox\Models\TransactionalOutbox;
 use App\Models\Tenant;
 use Carbon\Carbon;
-use Closure;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Throwable;

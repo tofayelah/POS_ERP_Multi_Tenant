@@ -10,8 +10,7 @@ class WebhookDispatcher
 {
     public function __construct(
         protected SsrfProtectionService $ssrfProtection
-    ) {
-    }
+    ) {}
 
     /**
      * Builds standard HMAC-SHA256 authenticated webhook headers with a timestamp.
