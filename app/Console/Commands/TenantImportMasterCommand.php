@@ -4,16 +4,17 @@ namespace App\Console\Commands;
 
 use App\Modules\DataMigration\Services\MasterDataImportService;
 use Illuminate\Console\Command;
+use Throwable;
 
 class TenantImportMasterCommand extends Command
 {
     protected $signature = 'tenant:import-master
-                            {file : Path to CSV or JSON file containing master records}
+                            {file : Path to CSV, XLSX, or JSON file containing master records}
                             {--company= : Company UUID}
-                            {--type=products : Type of master records (products, customers)}
+                            {--type=products : Type of master records (products, customers, suppliers)}
                             {--dry-run : Run in dry-run validation mode without inserting records}';
 
-    protected $description = 'Imports or validates master records (products, customers) with dry-run error reporting';
+    protected $description = 'Imports or validates master records (products, customers, suppliers) with dry-run error reporting';
 
     public function handle(MasterDataImportService $importer): int
     {
@@ -34,19 +35,19 @@ class TenantImportMasterCommand extends Command
             return self::FAILURE;
         }
 
-        $content = (string) file_get_contents($filePath);
-        $rows = json_decode($content, true);
-
-        if (! is_array($rows)) {
-            $this->error('File must contain a valid JSON array of records.');
+        try {
+            $rows = $importer->parseFile($filePath);
+        } catch (Throwable $e) {
+            $this->error("Failed to parse file: {$e->getMessage()}");
 
             return self::FAILURE;
         }
 
-        $this->info("Processing {$type} import (Dry-run: ".($dryRun ? 'YES' : 'NO').')...');
+        $this->info("Processing {$type} import with ".count($rows).' row(s) (Dry-run: '.($dryRun ? 'YES' : 'NO').')...');
 
         $result = match ($type) {
             'customers' => $importer->importCustomers($rows, $companyId, $dryRun),
+            'suppliers' => $importer->importSuppliers($rows, $companyId, $dryRun),
             default => $importer->importProducts($rows, $companyId, $dryRun),
         };
 

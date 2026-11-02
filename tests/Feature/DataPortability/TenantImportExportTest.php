@@ -239,6 +239,63 @@ class TenantImportExportTest extends TestCase
         $this->assertEquals('275.00', number_format((float) $firstVariant->mrp, 2, '.', ''));
     }
 
+    public function test_master_data_import_from_csv_file_is_idempotent(): void
+    {
+        $importer = app(MasterDataImportService::class);
+        $tempCsv = tempnam(sys_get_temp_dir(), 'import_').'.csv';
+
+        $csvContent = "code,name_en,sku,barcode,mrp,cost_price,base_uom\n"
+            ."PRD-CSV-01,Fresh Milk 1L,MILK-1L,894100000001,90.00,75.00,Pcs\n";
+        file_put_contents($tempCsv, $csvContent);
+
+        try {
+            // First run
+            $first = $importer->importProductsFromFile($tempCsv, $this->company->id, dryRun: false);
+            $this->assertTrue($first['valid']);
+            $this->assertEquals(1, $first['processed']);
+            $this->assertEquals(1, Product::where('tenant_id', $this->tenant->id)->where('code', 'PRD-CSV-01')->count());
+
+            // Second run with exact same file -> idempotent, 0 new rows
+            $second = $importer->importProductsFromFile($tempCsv, $this->company->id, dryRun: false);
+            $this->assertTrue($second['valid']);
+            $this->assertEquals(1, Product::where('tenant_id', $this->tenant->id)->where('code', 'PRD-CSV-01')->count());
+            $this->assertEquals(1, ProductVariant::where('tenant_id', $this->tenant->id)->where('sku', 'MILK-1L')->count());
+        } finally {
+            @unlink($tempCsv);
+        }
+    }
+
+    public function test_master_data_import_suppliers_executes_idempotently(): void
+    {
+        $importer = app(MasterDataImportService::class);
+
+        $suppliers = [
+            [
+                'code' => 'SUP-001',
+                'name' => 'Pran Dairy Ltd',
+                'phone' => '+8801700000001',
+                'email' => 'orders@pran.com',
+                'credit_period_days' => 45,
+            ],
+        ];
+
+        // First run
+        $first = $importer->importSuppliers($suppliers, $this->company->id, dryRun: false);
+        $this->assertTrue($first['valid']);
+        $this->assertEquals(1, $first['processed']);
+        $this->assertEquals(1, \App\Models\Supplier::where('tenant_id', $this->tenant->id)->count());
+
+        // Second run with updated phone
+        $suppliers[0]['phone'] = '+8801700000002';
+        $second = $importer->importSuppliers($suppliers, $this->company->id, dryRun: false);
+        $this->assertTrue($second['valid']);
+        $this->assertEquals(1, \App\Models\Supplier::where('tenant_id', $this->tenant->id)->count());
+
+        $supplier = \App\Models\Supplier::where('tenant_id', $this->tenant->id)->where('code', 'SUP-001')->first();
+        $this->assertNotNull($supplier);
+        $this->assertEquals('+8801700000002', $supplier->phone);
+    }
+
     public function test_opening_balances_import_posts_single_balanced_journal_entry(): void
     {
         $importer = app(MasterDataImportService::class);

@@ -8,12 +8,14 @@ use App\Models\JournalEntry;
 use App\Models\JournalLine;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Models\Supplier;
 use App\Models\VariantBarcode;
 use Brick\Math\BigDecimal;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use RuntimeException;
+use ZipArchive;
 
 class MasterDataImportService
 {
@@ -283,5 +285,238 @@ class MasterDataImportService
 
             return $entry;
         });
+    }
+
+    /**
+     * Imports or validates supplier master data.
+     *
+     * @param  array<int, array<string, mixed>>  $rows
+     * @return array{valid: bool, errors: array<int, array{row: int, field: string, message: string}>, processed: int}
+     */
+    public function importSuppliers(array $rows, string $companyId, bool $dryRun = false): array
+    {
+        $tenantId = TenantContext::id() ?? throw new RuntimeException('Tenant context must be set');
+        $errors = [];
+
+        foreach ($rows as $index => $row) {
+            $rowNum = $index + 1;
+
+            if (empty($row['name']) || ! is_string($row['name'])) {
+                $errors[] = ['row' => $rowNum, 'field' => 'name', 'message' => 'Supplier name is required'];
+            }
+
+            if (empty($row['code']) || ! is_string($row['code'])) {
+                $errors[] = ['row' => $rowNum, 'field' => 'code', 'message' => 'Supplier code is required'];
+            }
+        }
+
+        if ($dryRun || ! empty($errors)) {
+            return [
+                'valid' => empty($errors),
+                'errors' => $errors,
+                'processed' => 0,
+            ];
+        }
+
+        return DB::transaction(function () use ($rows, $tenantId, $companyId) {
+            $processed = 0;
+
+            foreach ($rows as $row) {
+                Supplier::updateOrCreate(
+                    [
+                        'tenant_id' => $tenantId,
+                        'company_id' => $companyId,
+                        'code' => (string) $row['code'],
+                    ],
+                    [
+                        'id' => (string) Str::uuid(),
+                        'name' => (string) $row['name'],
+                        'phone' => isset($row['phone']) ? (string) $row['phone'] : null,
+                        'email' => isset($row['email']) ? (string) $row['email'] : null,
+                        'supplier_bin' => isset($row['supplier_bin']) ? (string) $row['supplier_bin'] : null,
+                        'credit_period_days' => isset($row['credit_period_days']) ? (int) $row['credit_period_days'] : 30,
+                        'is_active' => true,
+                    ]
+                );
+                $processed++;
+            }
+
+            return [
+                'valid' => true,
+                'errors' => [],
+                'processed' => $processed,
+            ];
+        });
+    }
+
+    /**
+     * Parses a CSV file into an array of associative row records.
+     *
+     * @return array<int, array<string, string>>
+     */
+    public function parseCsv(string $filePath): array
+    {
+        if (! file_exists($filePath)) {
+            throw new RuntimeException("File not found: {$filePath}");
+        }
+
+        $handle = fopen($filePath, 'r');
+        if (! $handle) {
+            throw new RuntimeException("Cannot open CSV file: {$filePath}");
+        }
+
+        $rows = [];
+        $headers = null;
+
+        while (($data = fgetcsv($handle)) !== false) {
+            if ($headers === null) {
+                $headers = array_map(fn ($h) => strtolower(trim((string) $h)), $data);
+
+                continue;
+            }
+
+            if (empty(array_filter($data, fn ($val) => $val !== null && trim((string) $val) !== ''))) {
+                continue;
+            }
+
+            $row = [];
+            foreach ($headers as $index => $header) {
+                $row[$header] = isset($data[$index]) ? trim((string) $data[$index]) : '';
+            }
+            $rows[] = $row;
+        }
+
+        fclose($handle);
+
+        return $rows;
+    }
+
+    /**
+     * Parses an OpenXML Excel (.xlsx) file into an array of associative row records.
+     *
+     * @return array<int, array<string, string>>
+     */
+    public function parseXlsx(string $filePath): array
+    {
+        if (! file_exists($filePath)) {
+            throw new RuntimeException("File not found: {$filePath}");
+        }
+
+        $zip = new ZipArchive;
+        if ($zip->open($filePath) !== true) {
+            throw new RuntimeException("Failed to open XLSX archive: {$filePath}");
+        }
+
+        // 1. Read shared strings table
+        $sharedStrings = [];
+        $sharedStringsXml = $zip->getFromName('xl/sharedStrings.xml');
+        if ($sharedStringsXml !== false) {
+            $xml = simplexml_load_string($sharedStringsXml);
+            if ($xml) {
+                foreach ($xml->si as $si) {
+                    $sharedStrings[] = (string) ($si->t ?? (string) $si);
+                }
+            }
+        }
+
+        // 2. Read first worksheet
+        $sheetXml = $zip->getFromName('xl/worksheets/sheet1.xml');
+        $zip->close();
+
+        if ($sheetXml === false) {
+            throw new RuntimeException("Worksheet sheet1.xml not found in XLSX archive: {$filePath}");
+        }
+
+        $xml = simplexml_load_string($sheetXml);
+        if (! $xml || ! isset($xml->sheetData->row)) {
+            return [];
+        }
+
+        $rows = [];
+        $headers = null;
+
+        foreach ($xml->sheetData->row as $rowNode) {
+            $rowData = [];
+            foreach ($rowNode->c as $cell) {
+                $val = (string) $cell->v;
+                $type = (string) $cell['t'];
+
+                if ($type === 's' && isset($sharedStrings[(int) $val])) {
+                    $val = $sharedStrings[(int) $val];
+                }
+                $rowData[] = trim($val);
+            }
+
+            if (empty(array_filter($rowData, fn ($val) => trim($val) !== ''))) {
+                continue;
+            }
+
+            if ($headers === null) {
+                $headers = array_map(fn ($h) => strtolower(trim((string) $h)), $rowData);
+
+                continue;
+            }
+
+            $row = [];
+            foreach ($headers as $index => $header) {
+                $row[$header] = $rowData[$index] ?? '';
+            }
+            $rows[] = $row;
+        }
+
+        return $rows;
+    }
+
+    /**
+     * Parses an input file based on its file extension (.csv, .xlsx, .json).
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function parseFile(string $filePath): array
+    {
+        $ext = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
+
+        return match ($ext) {
+            'xlsx' => $this->parseXlsx($filePath),
+            'csv' => $this->parseCsv($filePath),
+            'json' => json_decode((string) file_get_contents($filePath), true, 512, JSON_THROW_ON_ERROR),
+            default => throw new RuntimeException("Unsupported file extension: .{$ext}. Supported formats: .csv, .xlsx, .json"),
+        };
+    }
+
+    /**
+     * Imports products from a file (CSV or XLSX) with dry-run support.
+     *
+     * @return array{valid: bool, errors: array<int, array{row: int, field: string, message: string}>, processed: int}
+     */
+    public function importProductsFromFile(string $filePath, string $companyId, bool $dryRun = false): array
+    {
+        $rows = $this->parseFile($filePath);
+
+        return $this->importProducts($rows, $companyId, $dryRun);
+    }
+
+    /**
+     * Imports customers from a file (CSV or XLSX) with dry-run support.
+     *
+     * @return array{valid: bool, errors: array<int, array{row: int, field: string, message: string}>, processed: int}
+     */
+    public function importCustomersFromFile(string $filePath, string $companyId, bool $dryRun = false): array
+    {
+        $rows = $this->parseFile($filePath);
+
+        return $this->importCustomers($rows, $companyId, $dryRun);
+    }
+
+    /**
+     * Imports suppliers from a file (CSV or XLSX) with dry-run support.
+     *
+     * @return array{valid: bool, errors: array<int, array{row: int, field: string, message: string}>, processed: int}
+     */
+    public function importSuppliersFromFile(string $filePath, string $companyId, bool $dryRun = false): array
+    {
+        $rows = $this->parseFile($filePath);
+
+        return $this->importSuppliers($rows, $companyId, $dryRun);
     }
 }

@@ -201,6 +201,49 @@ class TransactionalOutboxTest extends TestCase
         $this->assertEquals(5, $record->attempts);
     }
 
+    public function test_outbox_event_survives_worker_crash_and_is_delivered_once(): void
+    {
+        $deliveredCount = 0;
+
+        OutboxDispatcherService::registerHandler('crash.resilient.event', function (TransactionalOutbox $event) use (&$deliveredCount) {
+            $deliveredCount++;
+        });
+
+        $record = OutboxEmitter::emit(
+            aggregateType: 'Invoice',
+            aggregateId: (string) Str::uuid(),
+            eventType: 'crash.resilient.event',
+            payload: ['data' => 'important']
+        );
+
+        $dispatcher = app(OutboxDispatcherService::class);
+
+        // 1. Simulate worker crash during execution of transaction
+        try {
+            DB::transaction(function () use ($record) {
+                // Claim row with lock
+                TransactionalOutbox::where('id', $record->id)->lock('FOR UPDATE SKIP LOCKED')->first();
+                // Simulate crash (e.g. fatal abort) before commit
+                throw new \RuntimeException('Worker crashed unexpectedly mid-process');
+            });
+        } catch (\RuntimeException) {
+            // Worker died, transaction rolled back
+        }
+
+        // Assert event is still pending and not lost
+        $record->refresh();
+        $this->assertEquals('pending', $record->status);
+        $this->assertEquals(0, $deliveredCount);
+
+        // 2. Next worker run picks up the pending event and publishes it
+        $processed = $dispatcher->dispatchPending(batchSize: 10, tenantId: $this->tenant->id);
+        $this->assertEquals(1, $processed);
+        $this->assertEquals(1, $deliveredCount);
+
+        $record->refresh();
+        $this->assertEquals('published', $record->status);
+    }
+
     public function test_webhook_dispatcher_attaches_hmac_signature_and_timestamp(): void
     {
         $webhook = app(WebhookDispatcher::class);
