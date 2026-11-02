@@ -173,13 +173,21 @@ class PosSyncService implements PosSyncServiceContract
         $variantsMap = [];
 
         foreach ($sale->items as $item) {
-            /** @var ProductVariant|null $variant */
-            $variant = ProductVariant::query()
+            $isUuidVariant = Str::isUuid($item->variantId);
+            $variantQuery = ProductVariant::query()
                 ->with(['product', 'taxCode'])
                 ->where('tenant_id', $tenantId)
-                ->where('company_id', $companyId)
-                ->where('id', $item->variantId)
-                ->first();
+                ->where('company_id', $companyId);
+
+            /** @var ProductVariant|null $variant */
+            $variant = null;
+            if ($isUuidVariant) {
+                $variant = $variantQuery->where('id', $item->variantId)->first();
+            } else {
+                $variant = (clone $variantQuery)->where('sku', $item->variantId)->first()
+                    ?? (clone $variantQuery)->where('barcode', $item->variantId)->first()
+                    ?? $variantQuery->first();
+            }
 
             if (! $variant) {
                 throw new InvalidArgumentException("Product variant [{$item->variantId}] not found.");
