@@ -187,7 +187,6 @@ class PosSyncService implements PosSyncServiceContract
                 $variant = $variantQuery->where('id', $item->variantId)->first();
             } else {
                 $variant = (clone $variantQuery)->where('sku', $item->variantId)->first()
-                    ?? (clone $variantQuery)->where('barcode', $item->variantId)->first()
                     ?? $variantQuery->first();
             }
 
