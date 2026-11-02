@@ -10,6 +10,7 @@ use App\Models\Branch;
 use App\Models\Tenant;
 use Brick\Math\BigDecimal;
 use Illuminate\Console\Command;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 
@@ -57,7 +58,7 @@ class PilotDailyCheckCommand extends Command
 
             $tenants = collect([$tenant]);
         } else {
-            /** @var \Illuminate\Support\Collection<int, Tenant> $tenants */
+            /** @var Collection<int, Tenant> $tenants */
             $tenants = Tenant::where('status', 'active')->get();
         }
 
