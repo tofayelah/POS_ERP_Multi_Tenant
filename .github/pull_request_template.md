@@ -9,6 +9,7 @@ Step {N}: {title}. Closes review IDs: {IDs}.
 - [ ] CI green (GitHub runners, not the dev server)
 - [ ] A database rule test for every new trigger, constraint or policy
 - [ ] Screenshots or a recording for UI changes
+- [ ] Release PR: Step 8 Cashier's Day browser flow verified against staging with recording attached
 
 ## Checks
 - [ ] Migrations are additive (design §15.1)

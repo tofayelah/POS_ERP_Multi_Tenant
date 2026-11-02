@@ -10,6 +10,8 @@ ssh erp-dev through a jump user on the Proxmox host. The user gives the details
 (ssh alias, project folder, branch, test database) in the first message of each
 conversation. If they're missing, ask. Never connect to the Proxmox host
 (kcerp-prox) or any other container unless the prompt says so.
+The dev server is the only machine in the agent's SSH block: never give it SSH access
+or credentials for staging or production.
 Never ask for, read or print a private key, passphrase or password, never read
 ~/.ssh, and never print or copy a .env file. When a prompt asks you to change
 one non-secret setting in the server's .env, use sed without displaying it.
@@ -40,3 +42,12 @@ one non-secret setting in the server's .env, use sed without displaying it.
   reverse proxy publishes it as https://dev.kcerp.com; open that in the browser.
 - To look at a file the server produced (a screenshot, a PDF, a k6 summary),
   copy it here with scp into .scratch/, which Git ignores.
+
+## Pilot and release operations
+- During the pilot, paste a failing pilot:daily-check output into a new conversation
+  with prompt R4, using anonymised data on the dev server.
+- The dev server is the only machine in the agent's SSH block: never give it SSH access
+  or credentials for staging or production.
+- Before every release, run the cashier's day from Step 8 against staging in the browser
+  and attach the recording to the release pull request.
+
