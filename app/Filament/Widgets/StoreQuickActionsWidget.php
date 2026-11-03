@@ -6,6 +6,8 @@ use Filament\Widgets\Widget;
 
 class StoreQuickActionsWidget extends Widget
 {
+    protected static ?bool $isLazyLoaded = false;
+
     protected static ?int $sort = 2;
 
     protected int|string|array $columnSpan = 'full';

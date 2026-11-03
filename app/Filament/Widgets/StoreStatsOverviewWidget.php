@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\DB;
 
 class StoreStatsOverviewWidget extends StatsOverviewWidget
 {
+    protected static ?bool $isLazyLoaded = false;
+
     protected static ?int $sort = 1;
 
     protected int|string|array $columnSpan = 'full';

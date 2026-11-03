@@ -11,6 +11,8 @@ use Filament\Widgets\StatsOverviewWidget\Stat;
 
 class PlatformStatsOverviewWidget extends StatsOverviewWidget
 {
+    protected static ?bool $isLazyLoaded = false;
+
     protected static ?int $sort = 1;
 
     protected int|string|array $columnSpan = 'full';
