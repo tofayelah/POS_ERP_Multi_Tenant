@@ -32,6 +32,37 @@ class Tenant extends Model
         'data_residency_region',
     ];
 
+    protected static function booted(): void
+    {
+        static::saving(function (Tenant $tenant): void {
+            if (isset($tenant->subdomain) && is_string($tenant->subdomain)) {
+                $tenant->subdomain = strtolower(trim($tenant->subdomain));
+            }
+            if (isset($tenant->name) && is_string($tenant->name)) {
+                $tenant->name = trim($tenant->name);
+            }
+        });
+    }
+
+    /**
+     * Retrieve the model for a bound value.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder<static>  $query
+     * @param  mixed  $value
+     * @param  string|null  $field
+     * @return \Illuminate\Database\Eloquent\Builder<static>
+     */
+    public function resolveRouteBindingQuery($query, $value, $field = null)
+    {
+        $field = $field ?? $this->getRouteKeyName();
+
+        if ($field === 'subdomain') {
+            return $query->whereRaw('LOWER(subdomain) = ?', [strtolower((string) $value)]);
+        }
+
+        return parent::resolveRouteBindingQuery($query, $value, $field);
+    }
+
     /**
      * Get the companies belonging to this tenant.
      *

@@ -44,7 +44,8 @@ class TenantResource extends Resource
                     ->unique(Tenant::class, 'subdomain', ignoreRecord: true)
                     ->required()
                     ->alphaDash()
-                    ->maxLength(63),
+                    ->maxLength(63)
+                    ->dehydrateStateUsing(fn (?string $state): ?string => $state ? strtolower(trim($state)) : null),
 
                 Select::make('subscription_plan')
                     ->label('Initial Plan Tier')

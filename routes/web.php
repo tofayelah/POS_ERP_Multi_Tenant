@@ -25,8 +25,12 @@ Route::get('/admin/{tenant}/login', function (string $tenant) {
 Route::get('/pos', [PosShellController::class, 'index'])->name('pos.shell');
 Route::redirect('/pos/app', '/pos');
 
+Route::get('/admin/{tenant}/pos', fn () => redirect('/pos'));
 Route::get('/admin/{tenant}/mushak-reports', fn (string $tenant) => redirect("/admin/{$tenant}/mushak-reports-page"));
 Route::get('/admin/{tenant}/trial-balance', fn (string $tenant) => redirect("/admin/{$tenant}/trial-balance-page"));
+Route::get('/admin/{tenant}/stock', fn (string $tenant) => redirect("/admin/{$tenant}/stock-balances"));
+Route::get('/admin/{tenant}/aging', fn (string $tenant) => redirect("/admin/{$tenant}/aging-register-page"));
+Route::get('/admin/{tenant}/journals', fn (string $tenant) => redirect("/admin/{$tenant}/journals-page"));
 
 Route::get('/import/master-data', [MasterDataImportWebController::class, 'index'])->name('import.master-data');
 Route::post('/import/master-data', [MasterDataImportWebController::class, 'upload'])->name('import.master-data.upload');
