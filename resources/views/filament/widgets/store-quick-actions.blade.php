@@ -16,7 +16,7 @@
             </span>
         </x-slot>
 
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 1.25rem; margin-top: 1rem;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 1rem; margin-top: 1rem;">
             <!-- Launch POS Cashier -->
             <x-filament::section :compact="true" style="height: 100%;">
                 <div style="display: flex; flex-direction: column; height: 100%; justify-content: space-between; min-height: 190px;">

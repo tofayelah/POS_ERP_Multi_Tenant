@@ -11,13 +11,42 @@ class PlatformPlanDistributionChart extends ChartWidget
 
     protected ?string $heading = 'Subscription Plans Distribution';
 
+    protected ?string $description = 'Active tenant subscriptions grouped by tier';
+
     protected static ?int $sort = 3;
 
-    protected int|string|array $columnSpan = 'full';
+    protected int|string|array $columnSpan = 1;
+
+    protected ?string $maxHeight = '270px';
 
     protected function getType(): string
     {
         return 'doughnut';
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    protected function getOptions(): array
+    {
+        return [
+            'maintainAspectRatio' => false,
+            'cutout' => '65%',
+            'plugins' => [
+                'legend' => [
+                    'display' => true,
+                    'position' => 'bottom',
+                    'labels' => [
+                        'boxWidth' => 12,
+                        'padding' => 14,
+                        'font' => [
+                            'size' => 12,
+                            'weight' => '500',
+                        ],
+                    ],
+                ],
+            ],
+        ];
     }
 
     /**

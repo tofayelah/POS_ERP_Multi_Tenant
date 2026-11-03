@@ -18,6 +18,17 @@ class PlatformStatsOverviewWidget extends StatsOverviewWidget
     protected int|string|array $columnSpan = 'full';
 
     /**
+     * @var int | array<string, ?int> | null
+     */
+    protected int|array|null $columns = [
+        'default' => 1,
+        'sm' => 2,
+        'md' => 2,
+        'lg' => 4,
+        'xl' => 4,
+    ];
+
+    /**
      * @return array<Stat>
      */
     protected function getStats(): array
