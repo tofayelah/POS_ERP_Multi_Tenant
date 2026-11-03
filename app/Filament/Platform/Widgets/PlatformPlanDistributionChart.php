@@ -7,7 +7,7 @@ use Filament\Widgets\ChartWidget;
 
 class PlatformPlanDistributionChart extends ChartWidget
 {
-    protected static ?string $heading = 'Subscription Plans Distribution';
+    protected ?string $heading = 'Subscription Plans Distribution';
 
     protected static ?int $sort = 3;
 
