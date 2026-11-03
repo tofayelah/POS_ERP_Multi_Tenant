@@ -54,7 +54,7 @@ class BranchCodeAutoGenerationTest extends TestCase
             'id' => (string) Str::uuid(),
             'name' => 'Super User',
             'email' => 'super-'.Str::random(6).'@kcerp.com',
-            'password' => bcrypt('Password123!'),
+            'password' => 'Password123!',
         ]);
         $ownerRole = Role::firstOrCreate(['name' => 'Tenant Owner', 'guard_name' => 'web', 'tenant_id' => $this->tenant->id]);
         $this->superUser->assignRole($ownerRole);
@@ -64,7 +64,7 @@ class BranchCodeAutoGenerationTest extends TestCase
             'id' => (string) Str::uuid(),
             'name' => 'Regular User',
             'email' => 'cashier-'.Str::random(6).'@kcerp.com',
-            'password' => bcrypt('Password123!'),
+            'password' => 'Password123!',
         ]);
         $cashierRole = Role::firstOrCreate(['name' => 'Cashier', 'guard_name' => 'web', 'tenant_id' => $this->tenant->id]);
         $this->regularUser->assignRole($cashierRole);
