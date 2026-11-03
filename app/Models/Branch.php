@@ -60,7 +60,9 @@ class Branch extends Model
             if ($branch->isDirty('code') && $branch->getOriginal('code') !== null) {
                 /** @var User|null $user */
                 $user = auth()->user();
-                $isSuperUser = app()->runningInConsole() || ($user instanceof User && $user->hasRole(['Tenant Owner', 'Tenant Admin']));
+                $isSuperUser = $user instanceof User
+                    ? $user->hasRole(['Tenant Owner', 'Tenant Admin'])
+                    : app()->runningInConsole();
 
                 if (! $isSuperUser) {
                     $branch->code = (string) $branch->getOriginal('code');
