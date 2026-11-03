@@ -49,17 +49,32 @@ class BranchResource extends Resource
 
                         return $tenant?->companies()->first()?->id;
                     })
+                    ->live()
+                    ->afterStateUpdated(function (?string $state, callable $set): void {
+                        if ($state) {
+                            $set('code', Branch::generateNextCode(companyId: $state));
+                        }
+                    })
                     ->required(),
 
                 TextInput::make('name')
                     ->label('Branch Name / শাখার নাম')
+                    ->placeholder('e.g. Dhanmondi Outlet')
                     ->required()
                     ->maxLength(255),
 
                 TextInput::make('code')
                     ->label('Branch Code / কোড')
+                    ->default(function (callable $get): string {
+                        $companyId = $get('company_id');
+
+                        return Branch::generateNextCode(companyId: is_string($companyId) ? $companyId : null);
+                    })
+                    ->disabled()
+                    ->dehydrated()
                     ->required()
-                    ->maxLength(50),
+                    ->maxLength(50)
+                    ->helperText('Auto-generated branch code (Read-only) / স্বয়ংক্রিয় কোড (অপরিবর্তনীয়)'),
 
                 Toggle::make('is_active')
                     ->label('Active / সক্রিয়')
