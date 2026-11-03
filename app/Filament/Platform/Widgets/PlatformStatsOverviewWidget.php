@@ -13,7 +13,7 @@ class PlatformStatsOverviewWidget extends StatsOverviewWidget
 {
     protected static ?int $sort = 1;
 
-    protected int | string | array $columnSpan = 'full';
+    protected int|string|array $columnSpan = 'full';
 
     /**
      * @return array<Stat>
@@ -46,7 +46,7 @@ class PlatformStatsOverviewWidget extends StatsOverviewWidget
                 ->color('success')
                 ->chart([1, 2, 3, 4, 5, max(6, $totalTenants)]),
 
-            Stat::make('Platform MRR', '৳ ' . number_format($mrr, 0))
+            Stat::make('Platform MRR', '৳ '.number_format($mrr, 0))
                 ->description("Recurring revenue across {$activeTenants} active chains")
                 ->descriptionIcon('heroicon-m-banknotes')
                 ->color('primary')

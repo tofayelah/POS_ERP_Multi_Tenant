@@ -11,7 +11,7 @@ class PlatformPlanDistributionChart extends ChartWidget
 
     protected static ?int $sort = 3;
 
-    protected int | string | array $columnSpan = [
+    protected int|string|array $columnSpan = [
         'default' => 'full',
         'lg' => 1,
     ];
