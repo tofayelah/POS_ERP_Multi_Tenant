@@ -314,7 +314,7 @@
             <nav class="top-nav">
                 <a href="/pos" class="btn-outline">🛒 POS Terminal</a>
                 <a href="/register" class="btn-outline">✍️ Register Store</a>
-                <a href="/admin/acme/login" class="btn-outline" style="border-color: var(--primary); color: #38bdf8;">🔑 Tenant Login</a>
+                <a href="/admin/login" class="btn-outline" style="border-color: var(--primary); color: #38bdf8;">🔑 Tenant Login</a>
             </nav>
         </header>
 
@@ -337,12 +337,12 @@
                     </div>
                     <p class="card-desc">Complete store operations: branch management, inventory ledger, purchasing, double-entry GL, and Mushak 6.1/6.2/6.3/6.7/6.8 tax reports.</p>
                     <div class="credentials-box">
-                        <div><span>URL:</span><span class="val">/admin/acme/login</span></div>
+                        <div><span>URL:</span><span class="val">/admin/login</span></div>
                         <div><span>Email:</span><span class="val">admin@acme.com</span></div>
                         <div><span>Password:</span><span class="val">Password123!</span></div>
                     </div>
                 </div>
-                <a href="/admin/acme/login" class="btn-primary">Login to Acme Store →</a>
+                <a href="/admin/login" class="btn-primary">Login to Store ERP →</a>
             </div>
 
             <!-- 2. Offline-First POS Shell -->
@@ -410,19 +410,19 @@
         <div class="tenant-selector">
             <h3><span>🏬</span> Active Seeded Tenants Directory</h3>
             <div class="tenant-links">
-                <a href="/admin/acme/login" class="tenant-chip">
+                <a href="/admin/acme" class="tenant-chip">
                     <span class="dot"></span>
                     <span><strong>Acme Retail BD</strong> (/admin/acme)</span>
                 </a>
-                <a href="/admin/staging/login" class="tenant-chip">
+                <a href="/admin/staging" class="tenant-chip">
                     <span class="dot"></span>
                     <span><strong>Staging Pilot Mart</strong> (/admin/staging)</span>
                 </a>
-                <a href="/admin/kazi-retail/login" class="tenant-chip">
+                <a href="/admin/kazi-retail" class="tenant-chip">
                     <span class="dot"></span>
                     <span><strong>Kazi Retail Mart</strong> (/admin/kazi-retail)</span>
                 </a>
-                <a href="/admin/demo-mart/login" class="tenant-chip">
+                <a href="/admin/demo-mart" class="tenant-chip">
                     <span class="dot"></span>
                     <span><strong>Demo Mart</strong> (/admin/demo-mart)</span>
                 </a>

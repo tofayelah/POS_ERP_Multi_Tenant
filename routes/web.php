@@ -14,7 +14,13 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/login', fn () => redirect('/admin/acme/login'))->name('login');
+Route::get('/login', fn () => redirect('/admin/login'))->name('login');
+
+Route::get('/admin/{tenant}/login', function (string $tenant) {
+    session()->put('url.intended', url("/admin/{$tenant}"));
+
+    return redirect('/admin/login');
+});
 
 Route::get('/pos', [PosShellController::class, 'index'])->name('pos.shell');
 
