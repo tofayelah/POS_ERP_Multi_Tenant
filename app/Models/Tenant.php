@@ -36,10 +36,10 @@ class Tenant extends Model
     protected static function booted(): void
     {
         static::saving(function (Tenant $tenant): void {
-            if (isset($tenant->subdomain) && is_string($tenant->subdomain)) {
+            if (isset($tenant->subdomain)) {
                 $tenant->subdomain = strtolower(trim($tenant->subdomain));
             }
-            if (isset($tenant->name) && is_string($tenant->name)) {
+            if (isset($tenant->name)) {
                 $tenant->name = trim($tenant->name);
             }
         });
@@ -61,7 +61,10 @@ class Tenant extends Model
             return $query->whereRaw('LOWER(subdomain) = ?', [strtolower((string) $value)]);
         }
 
-        return parent::resolveRouteBindingQuery($query, $value, $field);
+        /** @var Builder<static> $resolved */
+        $resolved = parent::resolveRouteBindingQuery($query, $value, $field);
+
+        return $resolved;
     }
 
     /**
