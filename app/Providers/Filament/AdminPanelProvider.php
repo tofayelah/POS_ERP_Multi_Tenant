@@ -39,7 +39,7 @@ class AdminPanelProvider extends PanelProvider
                 FilamentTenantContextMiddleware::class,
                 VerifySupportAccessActive::class,
                 EnforceTenantState::class,
-            ])
+            ], isPersistent: true)
             ->brandName('KC ERP')
             ->colors([
                 'primary' => Color::Sky,

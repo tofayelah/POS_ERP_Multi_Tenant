@@ -48,6 +48,14 @@ class Branch extends Model
         ];
     }
 
+    /**
+     * Map branch scoping identifier to the branch table primary key.
+     */
+    public function getLocationScopeBranchColumn(): string
+    {
+        return 'id';
+    }
+
     protected static function booted(): void
     {
         static::creating(function (Branch $branch): void {

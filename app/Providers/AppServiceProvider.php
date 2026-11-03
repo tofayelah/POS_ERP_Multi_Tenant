@@ -2,8 +2,12 @@
 
 namespace App\Providers;
 
+use App\Core\Tenancy\TenantContext;
+use App\Models\Tenant;
+use Filament\Events\TenantSet;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
@@ -34,6 +38,12 @@ class AppServiceProvider extends ServiceProvider
             $email = (string) $request->input('email');
 
             return Limit::perMinute(5)->by($email.$request->ip());
+        });
+
+        Event::listen(TenantSet::class, function (TenantSet $event): void {
+            if ($event->tenant instanceof Tenant) {
+                TenantContext::set($event->tenant);
+            }
         });
     }
 }

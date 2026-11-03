@@ -4,12 +4,15 @@ namespace Tests\Database;
 
 use App\Core\Tenancy\TenantContext;
 use App\Filament\Resources\Branches\BranchResource;
+use App\Filament\Resources\Branches\Pages\EditBranch;
 use App\Models\Branch;
 use App\Models\Company;
 use App\Models\Tenant;
 use App\Models\User;
+use Filament\Facades\Filament;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
+use Livewire\Livewire;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
@@ -170,5 +173,63 @@ class BranchCodeAutoGenerationTest extends TestCase
 
         $nextCode = Branch::generateNextCode($this->tenant->id, $this->company->id);
         $this->assertSame('BR-03', $nextCode);
+    }
+
+    public function test_branch_can_be_inactivated_and_reactivated(): void
+    {
+        Auth::login($this->superUser);
+
+        $branch = Branch::create([
+            'id' => (string) Str::uuid(),
+            'tenant_id' => $this->tenant->id,
+            'company_id' => $this->company->id,
+            'name' => 'Outlet to Inactivate',
+            'is_active' => true,
+        ]);
+
+        $this->assertTrue($branch->is_active);
+
+        // Inactivate branch
+        $branch->update(['is_active' => false]);
+        $branch->refresh();
+        $this->assertFalse($branch->is_active);
+
+        // Inactive branch remains queryable in the resource query
+        $found = Branch::where('id', $branch->id)->first();
+        $this->assertNotNull($found);
+        $this->assertFalse($found->is_active);
+
+        // Reactivate branch
+        $branch->update(['is_active' => true]);
+        $branch->refresh();
+        $this->assertTrue($branch->is_active);
+    }
+
+    public function test_livewire_edit_branch_inactivates_and_redirects_to_index(): void
+    {
+        Auth::login($this->superUser);
+        Filament::setCurrentPanel(Filament::getPanel('admin'));
+        Filament::setTenant($this->tenant);
+
+        $branch = Branch::create([
+            'id' => (string) Str::uuid(),
+            'tenant_id' => $this->tenant->id,
+            'company_id' => $this->company->id,
+            'name' => 'Livewire Inactivation Test Outlet',
+            'is_active' => true,
+        ]);
+
+        Livewire::actingAs($this->superUser)
+            ->test(EditBranch::class, [
+                'record' => $branch->id,
+            ])
+            ->assertSet('data.is_active', true)
+            ->set('data.is_active', false)
+            ->call('save')
+            ->assertHasNoErrors()
+            ->assertRedirect(BranchResource::getUrl('index'));
+
+        $branch->refresh();
+        $this->assertFalse($branch->is_active);
     }
 }
