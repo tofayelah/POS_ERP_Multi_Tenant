@@ -8,7 +8,9 @@ use App\Filament\Resources\Branches\Pages\ListBranches;
 use App\Models\Branch;
 use App\Models\Company;
 use App\Models\Tenant;
+use App\Models\User;
 use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Facades\Filament;
@@ -20,6 +22,7 @@ use Filament\Schemas\Schema;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 
 class BranchResource extends Resource
 {
@@ -70,16 +73,45 @@ class BranchResource extends Resource
 
                         return Branch::generateNextCode(companyId: is_string($companyId) ? $companyId : null);
                     })
-                    ->disabled()
+                    ->disabled(function (): bool {
+                        /** @var User|null $user */
+                        $user = auth()->user();
+
+                        return ! ($user instanceof User && $user->hasRole(['Tenant Owner', 'Tenant Admin']));
+                    })
                     ->dehydrated()
                     ->required()
                     ->maxLength(50)
-                    ->helperText('Auto-generated branch code (Read-only) / স্বয়ংক্রিয় কোড (অপরিবর্তনীয়)'),
+                    ->helperText(function (): string {
+                        /** @var User|null $user */
+                        $user = auth()->user();
+                        $isSuper = $user instanceof User && $user->hasRole(['Tenant Owner', 'Tenant Admin']);
+
+                        return $isSuper
+                            ? 'Auto-generated code (Editable by Super User / সুপার ইউজার পরিবর্তন করতে পারেন)'
+                            : 'Auto-generated branch code (Read-only / শুধুমাত্র সুপার ইউজার পরিবর্তন করতে পারবেন)';
+                    }),
 
                 Toggle::make('is_active')
                     ->label('Active / সক্রিয়')
                     ->default(true),
             ]);
+    }
+
+    public static function canDelete(Model $record): bool
+    {
+        /** @var User|null $user */
+        $user = auth()->user();
+
+        return $user instanceof User && $user->hasRole(['Tenant Owner', 'Tenant Admin']);
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        /** @var User|null $user */
+        $user = auth()->user();
+
+        return $user instanceof User && $user->hasRole(['Tenant Owner', 'Tenant Admin']);
     }
 
     public static function table(Table $table): Table
@@ -113,6 +145,7 @@ class BranchResource extends Resource
             ])
             ->actions([
                 EditAction::make(),
+                DeleteAction::make(),
             ])
             ->bulkActions([
                 BulkActionGroup::make([

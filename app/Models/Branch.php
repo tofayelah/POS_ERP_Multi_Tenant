@@ -58,7 +58,13 @@ class Branch extends Model
 
         static::updating(function (Branch $branch): void {
             if ($branch->isDirty('code') && $branch->getOriginal('code') !== null) {
-                $branch->code = (string) $branch->getOriginal('code');
+                /** @var User|null $user */
+                $user = auth()->user();
+                $isSuperUser = app()->runningInConsole() || ($user instanceof User && $user->hasRole(['Tenant Owner', 'Tenant Admin']));
+
+                if (! $isSuperUser) {
+                    $branch->code = (string) $branch->getOriginal('code');
+                }
             }
         });
     }

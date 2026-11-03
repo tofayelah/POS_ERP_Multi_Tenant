@@ -3,10 +3,14 @@
 namespace Tests\Database;
 
 use App\Core\Tenancy\TenantContext;
+use App\Filament\Resources\Branches\BranchResource;
 use App\Models\Branch;
 use App\Models\Company;
 use App\Models\Tenant;
+use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
+use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class BranchCodeAutoGenerationTest extends TestCase
@@ -14,6 +18,10 @@ class BranchCodeAutoGenerationTest extends TestCase
     protected Tenant $tenant;
 
     protected Company $company;
+
+    protected User $superUser;
+
+    protected User $regularUser;
 
     protected function setUp(): void
     {
@@ -28,6 +36,10 @@ class BranchCodeAutoGenerationTest extends TestCase
 
         TenantContext::set($this->tenant);
 
+        if (function_exists('setPermissionsTeamId')) {
+            setPermissionsTeamId($this->tenant->id);
+        }
+
         $this->company = Company::create([
             'id' => (string) Str::uuid(),
             'tenant_id' => $this->tenant->id,
@@ -36,6 +48,26 @@ class BranchCodeAutoGenerationTest extends TestCase
             'fiscal_year_start_month' => 7,
             'tax_regime' => 'standard_vat',
         ]);
+
+        // Create Super User (Tenant Owner)
+        $this->superUser = User::create([
+            'id' => (string) Str::uuid(),
+            'name' => 'Super User',
+            'email' => 'super-'.Str::random(6).'@kcerp.com',
+            'password' => bcrypt('Password123!'),
+        ]);
+        $ownerRole = Role::firstOrCreate(['name' => 'Tenant Owner', 'guard_name' => 'web', 'tenant_id' => $this->tenant->id]);
+        $this->superUser->assignRole($ownerRole);
+
+        // Create Regular User (Cashier)
+        $this->regularUser = User::create([
+            'id' => (string) Str::uuid(),
+            'name' => 'Regular User',
+            'email' => 'cashier-'.Str::random(6).'@kcerp.com',
+            'password' => bcrypt('Password123!'),
+        ]);
+        $cashierRole = Role::firstOrCreate(['name' => 'Cashier', 'guard_name' => 'web', 'tenant_id' => $this->tenant->id]);
+        $this->regularUser->assignRole($cashierRole);
     }
 
     public function test_generates_br01_when_no_branches_exist(): void
@@ -75,22 +107,50 @@ class BranchCodeAutoGenerationTest extends TestCase
         $this->assertSame('BR-03', $branch3->code);
     }
 
-    public function test_branch_code_is_immutable_on_update(): void
+    public function test_super_user_can_update_branch_code(): void
     {
+        Auth::login($this->superUser);
+
         $branch = Branch::create([
             'id' => (string) Str::uuid(),
             'tenant_id' => $this->tenant->id,
             'company_id' => $this->company->id,
-            'name' => 'Original Outlet',
+            'name' => 'Editable Outlet',
             'code' => 'BR-01',
         ]);
 
-        $this->assertSame('BR-01', $branch->code);
+        $this->assertTrue(BranchResource::canDelete($branch));
+        $this->assertTrue(BranchResource::canDeleteAny());
 
-        // Attempt to update the code
+        $branch->update([
+            'name' => 'Renamed Outlet',
+            'code' => 'BR-CUSTOM-01',
+        ]);
+
+        $branch->refresh();
+        $this->assertSame('BR-CUSTOM-01', $branch->code);
+        $this->assertSame('Renamed Outlet', $branch->name);
+    }
+
+    public function test_non_super_user_cannot_update_branch_code(): void
+    {
+        Auth::login($this->regularUser);
+
+        $branch = Branch::create([
+            'id' => (string) Str::uuid(),
+            'tenant_id' => $this->tenant->id,
+            'company_id' => $this->company->id,
+            'name' => 'Protected Outlet',
+            'code' => 'BR-01',
+        ]);
+
+        $this->assertFalse(BranchResource::canDelete($branch));
+        $this->assertFalse(BranchResource::canDeleteAny());
+
+        // Regular user attempts to change code
         $branch->update([
             'name' => 'Updated Outlet Name',
-            'code' => 'BR-999-TAMPERED',
+            'code' => 'BR-TAMPERED',
         ]);
 
         $branch->refresh();
@@ -100,7 +160,6 @@ class BranchCodeAutoGenerationTest extends TestCase
 
     public function test_sequence_skips_existing_non_prefixed_or_padded_numbers(): void
     {
-        // Suppose a branch was manually seeded with code '02' or 'BR-02'
         Branch::create([
             'id' => (string) Str::uuid(),
             'tenant_id' => $this->tenant->id,
