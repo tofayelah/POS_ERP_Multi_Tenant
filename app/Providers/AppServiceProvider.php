@@ -41,8 +41,9 @@ class AppServiceProvider extends ServiceProvider
         });
 
         Event::listen(TenantSet::class, function (TenantSet $event): void {
-            if ($event->tenant instanceof Tenant) {
-                TenantContext::set($event->tenant);
+            $tenant = $event->getTenant();
+            if ($tenant instanceof Tenant) {
+                TenantContext::set($tenant);
             }
         });
     }
