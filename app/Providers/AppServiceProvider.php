@@ -22,6 +22,14 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        set_error_handler(function (int $severity, string $message): bool {
+            if (str_contains($message, 'touch(): Utime failed')) {
+                return true;
+            }
+
+            return false;
+        }, E_WARNING);
+
         RateLimiter::for('login', function (Request $request) {
             $email = (string) $request->input('email');
 
