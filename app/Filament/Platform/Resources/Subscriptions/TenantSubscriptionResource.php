@@ -2,10 +2,13 @@
 
 namespace App\Filament\Platform\Resources\Subscriptions;
 
+use App\Filament\Platform\Resources\Subscriptions\Pages\CreateTenantSubscription;
+use App\Filament\Platform\Resources\Subscriptions\Pages\EditTenantSubscription;
 use App\Filament\Platform\Resources\Subscriptions\Pages\ListTenantSubscriptions;
 use App\Models\Plan;
 use App\Models\Tenant;
 use App\Models\TenantSubscription;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
@@ -29,31 +32,51 @@ class TenantSubscriptionResource extends Resource
         return $schema
             ->components([
                 Select::make('tenant_id')
-                    ->label('Tenant')
-                    ->options(Tenant::pluck('name', 'id'))
+                    ->label('Organization / Tenant')
+                    ->options(Tenant::query()->pluck('name', 'id'))
+                    ->searchable()
+                    ->preload()
                     ->required(),
 
                 Select::make('plan_id')
-                    ->label('Plan')
-                    ->options(Plan::pluck('name', 'id'))
+                    ->label('Subscription Plan Tier')
+                    ->options(
+                        Plan::query()
+                            ->where('is_active', true)
+                            ->get()
+                            ->mapWithKeys(fn (Plan $plan): array => [
+                                $plan->id => "{$plan->name} (৳" . number_format((float) $plan->price_bdt, 0) . " / {$plan->billing_interval})",
+                            ])
+                    )
+                    ->searchable()
+                    ->preload()
                     ->required(),
 
                 Select::make('status')
-                    ->label('Status')
+                    ->label('Subscription Status')
                     ->options([
                         'active' => 'Active',
                         'in_arrears' => 'In Arrears',
                         'cancelled' => 'Cancelled',
                         'expired' => 'Expired',
                     ])
+                    ->default('active')
                     ->required(),
 
                 DateTimePicker::make('starts_at')
                     ->label('Starts At')
+                    ->default(now())
+                    ->required(),
+
+                DateTimePicker::make('current_period_starts_at')
+                    ->label('Current Period Starts')
+                    ->default(now())
                     ->required(),
 
                 DateTimePicker::make('current_period_ends_at')
-                    ->label('Expires / Renews At'),
+                    ->label('Expires / Renews At')
+                    ->default(now()->addMonth())
+                    ->required(),
             ]);
     }
 
@@ -62,13 +85,25 @@ class TenantSubscriptionResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('tenant.name')
-                    ->label('Tenant')
+                    ->label('Tenant Organization')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->weight('bold')
+                    ->icon('heroicon-m-building-office-2'),
 
                 TextColumn::make('plan.name')
-                    ->label('Plan')
-                    ->badge(),
+                    ->label('Plan Tier')
+                    ->badge()
+                    ->color(fn (?string $state): string => match (strtolower($state ?? '')) {
+                        'enterprise plan' => 'success',
+                        'standard retail plan', 'standard plan' => 'info',
+                        default => 'warning',
+                    }),
+
+                TextColumn::make('plan.price_bdt')
+                    ->label('Rate (৳)')
+                    ->money('BDT')
+                    ->sortable(),
 
                 TextColumn::make('status')
                     ->label('Status')
@@ -82,16 +117,17 @@ class TenantSubscriptionResource extends Resource
 
                 TextColumn::make('starts_at')
                     ->label('Started')
-                    ->dateTime()
+                    ->dateTime('M d, Y')
                     ->sortable(),
 
                 TextColumn::make('current_period_ends_at')
-                    ->label('Current Period End')
-                    ->dateTime()
+                    ->label('Renewal Date')
+                    ->dateTime('M d, Y')
                     ->sortable(),
             ])
             ->actions([
                 EditAction::make(),
+                DeleteAction::make(),
             ]);
     }
 
@@ -99,6 +135,8 @@ class TenantSubscriptionResource extends Resource
     {
         return [
             'index' => ListTenantSubscriptions::route('/'),
+            'create' => CreateTenantSubscription::route('/create'),
+            'edit' => EditTenantSubscription::route('/{record}/edit'),
         ];
     }
 }
