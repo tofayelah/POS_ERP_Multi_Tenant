@@ -1,3 +1,12 @@
+@php
+    $tenant = \Filament\Facades\Filament::getTenant();
+    $tenantSlug = $tenant?->subdomain ?? request()->route('tenant');
+    $posUrl = url('/pos');
+    $mushakUrl = url("/admin/{$tenantSlug}/mushak-reports-page");
+    $stockUrl = url("/admin/{$tenantSlug}/stock-balances");
+    $trialBalanceUrl = url("/admin/{$tenantSlug}/trial-balance-page");
+@endphp
+
 <x-filament-widgets::widget>
     <x-filament::section>
         <x-slot name="heading">
@@ -37,7 +46,7 @@
                     <div style="margin-top: auto;">
                         <x-filament::button
                             tag="a"
-                            :href="url('/pos/app')"
+                            :href="$posUrl"
                             target="_blank"
                             icon="heroicon-m-arrow-top-right-on-square"
                             icon-position="after"
@@ -70,7 +79,7 @@
                     <div style="margin-top: auto;">
                         <x-filament::button
                             tag="a"
-                            :href="url()->current() . '/mushak-reports'"
+                            :href="$mushakUrl"
                             icon="heroicon-m-arrow-right"
                             icon-position="after"
                             color="warning"
@@ -102,7 +111,7 @@
                     <div style="margin-top: auto;">
                         <x-filament::button
                             tag="a"
-                            :href="url()->current() . '/stock-balances'"
+                            :href="$stockUrl"
                             icon="heroicon-m-arrow-right"
                             icon-position="after"
                             color="success"
@@ -134,7 +143,7 @@
                     <div style="margin-top: auto;">
                         <x-filament::button
                             tag="a"
-                            :href="url()->current() . '/trial-balance'"
+                            :href="$trialBalanceUrl"
                             icon="heroicon-m-arrow-right"
                             icon-position="after"
                             color="primary"

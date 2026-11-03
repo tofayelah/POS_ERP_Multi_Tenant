@@ -70,7 +70,7 @@
                     <div style="margin-top: auto;">
                         <x-filament::button
                             tag="a"
-                            :href="url('/pos/app')"
+                            :href="url('/pos')"
                             target="_blank"
                             icon="heroicon-m-arrow-top-right-on-square"
                             icon-position="after"
