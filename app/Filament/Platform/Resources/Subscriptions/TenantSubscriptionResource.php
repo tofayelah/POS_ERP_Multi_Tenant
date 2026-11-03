@@ -45,7 +45,7 @@ class TenantSubscriptionResource extends Resource
                             ->where('is_active', true)
                             ->get()
                             ->mapWithKeys(fn (Plan $plan): array => [
-                                $plan->id => "{$plan->name} (৳" . number_format((float) $plan->price_bdt, 0) . " / {$plan->billing_interval})",
+                                $plan->id => "{$plan->name} (৳".number_format((float) $plan->price_bdt, 0)." / {$plan->billing_interval})",
                             ])
                     )
                     ->searchable()
