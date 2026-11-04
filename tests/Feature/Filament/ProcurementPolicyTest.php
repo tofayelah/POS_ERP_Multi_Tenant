@@ -5,6 +5,7 @@ namespace Tests\Feature\Filament;
 use App\Core\Tenancy\TenantContext;
 use App\Models\Branch;
 use App\Models\Company;
+use App\Models\Customer;
 use App\Models\GoodsReceipt;
 use App\Models\GoodsReceiptLine;
 use App\Models\Product;
@@ -14,6 +15,7 @@ use App\Models\PurchaseOrderLine;
 use App\Models\Quotation;
 use App\Models\QuotationLine;
 use App\Models\Supplier;
+use App\Models\TaxCode;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Models\UserLocationScope;
@@ -40,6 +42,10 @@ class ProcurementPolicyTest extends TestCase
     protected Warehouse $warehouseB;
 
     protected Supplier $supplier;
+
+    protected Customer $customer;
+
+    protected TaxCode $taxCode;
 
     protected Product $product;
 
@@ -122,12 +128,30 @@ class ProcurementPolicyTest extends TestCase
             'is_active' => true,
         ]);
 
-        // 5. Create Supplier, Product & Variant
+        // 5. Create Supplier, Customer, TaxCode, Product & Variant
         $this->supplier = Supplier::create([
             'id' => (string) Str::uuid(),
             'tenant_id' => $this->tenant->id,
             'company_id' => $this->company->id,
             'name' => 'Apex Raw Materials Ltd',
+            'is_active' => true,
+        ]);
+
+        $this->customer = Customer::create([
+            'id' => (string) Str::uuid(),
+            'tenant_id' => $this->tenant->id,
+            'company_id' => $this->company->id,
+            'name' => 'Apex Wholesale Buyer Ltd',
+            'is_active' => true,
+        ]);
+
+        $this->taxCode = TaxCode::create([
+            'id' => (string) Str::uuid(),
+            'tenant_id' => $this->tenant->id,
+            'company_id' => $this->company->id,
+            'code' => 'TAX-EXEMPT',
+            'name_en' => 'Exempt Item',
+            'description' => 'Exempt item',
             'is_active' => true,
         ]);
 
@@ -145,6 +169,7 @@ class ProcurementPolicyTest extends TestCase
             'tenant_id' => $this->tenant->id,
             'company_id' => $this->company->id,
             'product_id' => $this->product->id,
+            'tax_code_id' => $this->taxCode->id,
             'sku' => 'SKU-STEEL-10MM',
             'name_en' => '10mm Steel Bar',
             'cost_price' => '120.0000',
@@ -372,7 +397,7 @@ class ProcurementPolicyTest extends TestCase
             'tenant_id' => $this->tenant->id,
             'company_id' => $this->company->id,
             'branch_id' => $this->branchA->id,
-            'customer_id' => (string) Str::uuid(),
+            'customer_id' => $this->customer->id,
             'quotation_number' => 'QT-TEST-0001',
             'quotation_date' => Carbon::today()->toDateString(),
             'valid_until' => Carbon::today()->addDays(10)->toDateString(),
