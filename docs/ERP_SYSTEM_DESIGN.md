@@ -96,7 +96,7 @@ To prevent numbering ambiguities, platform surfaces are identified by functional
 | ID | Topic | Question / Issue | Architectural Resolution / Default Stance | Owner | Target Decision Date |
 |---|---|---|---|---|---|
 | **OQ-01** | **NBR EFD/SDC Mandate** | Are fiscal devices mandatory for MVP retail launch? | **Yes.** EFD/SDC integration is legally required for 25 retail categories in Bangladesh. An EFD/SDC fiscal adapter is included in Phase 1 scope. | Legal / Tax Lead | Target: Week 2 |
-| **OQ-02** | **Offline Stock Collisions** | How are stock conflicts resolved when offline terminals oversell a product? | **Resolution:** Terminal checkout is never rejected on sync. If server inventory is insufficient, the transaction posts, inventory records a supervised negative variance, and an urgent discrepancy alert is created for the Branch Manager. Online checkout rejects insufficient stock. | Product Owner | Target: Week 4 |
+| **OQ-02** | **Offline Stock Collisions** | How are stock conflicts resolved when offline terminals oversell a product? | **Resolution (ADR-016):** Terminal checkout is never rejected on sync. If server inventory is insufficient, the transaction posts, inventory records an `OFFLINE_OVERSELL` movement, warehouse balance temporarily becomes negative, moving average cost is frozen, and a blocking item is atomically opened in the Supervisor Exception Queue (`stock_oversell_exceptions`) with a 24-hour escalation SLA. Online checkout rejects insufficient stock. | Product Owner | Closed (ADR-016) |
 | **OQ-03** | **Invoice Numbering vs Gapless Law** | How can offline POS issue gapless tax invoices? | **Resolution:** Terminals are assigned unique, pre-allocated sequential number blocks (e.g., `INV-DHA01-T01-000001`). Offline receipts carry this formal number, matching NBR branch/terminal series rules. | Legal / Tax Lead | Target: Week 2 |
 | **OQ-04** | **Data Residency & Staging Hosting** | Where are development, staging, and production environments hosted? | **Resolution:** Development and staging are deployed to the private Proxmox cluster (`tofa-prox.hprbd.com`, LXC 104 `dev.kcerp.com`), eliminating cloud droplet costs while providing 40GB RAM for high-load concurrency testing. Production defaults to Singapore / Bangladesh-compliant infrastructure with daily offsite backups. | Infrastructure Lead | Closed (Week 1) |
 
@@ -1787,7 +1787,7 @@ The 27-week delivery is staffed by a dedicated 4-person engineering squad:
 | **RSK-02** | **Browser Storage Eviction:** Device storage pressure clears offline sales before sync. | Critical | Low | Frontend Lead | Request persistent storage via `navigator.storage.persist()`. Trigger visual supervisor alert when unsynced sales cross 4 hours. |
 | **RSK-03** | **NBR EFD Regulation Shift:** Tax authorities revise electronic fiscal signing specs. | High | Medium | Legal / Tax Lead | Build fiscal device interactions behind an interchangeable adapter interface (`FiscalDeviceInterface`). |
 | **RSK-04** | **Unbalanced Ledger Drift:** Bug records sales revenue without balancing inventory asset credit. | High | Low | Backend Lead | Database constraint trigger `trg_journal_entry_immutability` rejects commit at database level if debits != credits. |
-| **RSK-05** | **Offline Inventory Overselling:** Multiple disconnected POS terminals sell identical stock. | Medium | High | Product Owner | Enforce strict single stock policy: no-negative-stock invariant. Overselling is blocked at database commit; backorders recorded separately. |
+| **RSK-05** | **Offline Inventory Overselling:** Multiple disconnected POS terminals sell identical stock. | Medium | High | Product Owner | Permit offline POS sync to commit without failure via `OFFLINE_OVERSELL` movements; capture deficits in Supervisor Exception Queue with automated escalation; freeze WAC and true-up on GRN; online checkouts remain strictly blocked from overselling via row locks (see ADR-016). |
 | **RSK-06** | **Database Connection Exhaustion:** Web container autoscaling saturates managed DB pool. | High | Medium | DevOps Lead | Strictly cap web containers to 2 instances (24 PHP workers); enforce primary DB connection ceiling at 44 connections. |
 | **RSK-07** | **Key-Person Dependency on VAT Rules:** Complex NBR rules bottleneck on single domain expert. | Medium | Medium | Project Lead | Codify VAT logic into machine-readable golden test vectors; document statutory references directly in code comments. |
 | **RSK-08** | **Peak-Season Eid Transaction Surge:** Pre-Eid retail volume (10x surge) saturates web/DB capacity. | High | Medium | Tech Lead | Pre-scale Managed DB from 2GB to 4GB (97 connections) 14 days before Ramadan; configure PgBouncer transaction pooling; enforce 14-day pre-Eid code freeze; benchmark at 50 checkouts/min. |
@@ -1800,113 +1800,23 @@ The 27-week delivery is staffed by a dedicated 4-person engineering squad:
 
 ## 20. Architecture Decision Records (ADRs) & Version Changelog
 
-### ADR-001: Selection of Modular Monolith over Distributed Microservices
-- **Status:** Accepted
-- **Context:** Delivering an ERP within a 4–6 month timeframe with a 3–5 person engineering team and a $100–$200/month infrastructure budget.
-- **Alternatives Considered:** (1) Distributed Microservices (rejected due to high network latency, distributed 2PC saga transaction complexity, and high Kubernetes hosting costs); (2) Unstructured Monolith (rejected due to risk of spaghetti code and unmanageable module coupling).
-- **Decision:** Build as an encapsulated modular monolith in Laravel 13 where modules communicate via typed interfaces and domain events.
-- **Consequences:** Maximizes development velocity, eliminates network serialization latency, and guarantees atomic database transactions across modules.
+The Architecture Decision Records (ADRs) have been extracted to dedicated documents in [docs/adr/](adr/README.md):
 
-### ADR-002: Multi-Tenancy via Shared Database / Shared Schema with PostgreSQL RLS
-- **Status:** Accepted
-- **Context:** Needs cost-effective hosting for hundreds of SMBs while guaranteeing enterprise-grade data isolation.
-- **Alternatives Considered:** (1) Database-per-Tenant (rejected for Phase 1 due to massive RAM overhead and complex multi-database schema migration loops; no dedicated database tier exists in Phase 1); (2) Schema-per-Tenant (rejected due to PostgreSQL connection cache bloat and slow migration execution across 1,000 schemas).
-- **Decision:** All tenants share a common database and schema in Phase 1, isolated by mandatory `tenant_id` foreign keys and PostgreSQL Row-Level Security (RLS) policies.
-- **Consequences:** Operates within a 2GB RAM database footprint, supports seamless global reporting, and eliminates multi-database connection overhead.
-
-### ADR-003: Double-Entry Financial Immutability & Reversals Pattern
-- **Status:** Accepted
-- **Context:** Financial compliance and NBR statutory audit readiness require that financial history can never be altered or purged.
-- **Alternatives Considered:** (1) Soft deletes with `deleted_at` timestamp (rejected due to legal non-compliance and risk of unauthorized restoration); (2) Editable journal entries with audit triggers (rejected due to forensic fraud vulnerability).
-- **Decision:** Enforce absolute database-level immutability for posted journal entries, issued tax invoices, and stock movements. Corrections must occur exclusively through linked reversal entries or credit notes.
-- **Consequences:** Guarantees a tamper-evident, mathematically verifiable audit trail and eliminates silent ledger corruption.
-
-### ADR-004: Client-Side PWA POS (Alpine.js + IndexedDB) over Livewire Server-Side Rendering
-- **Status:** Accepted
-- **Context:** Retail checkouts require sub-50ms barcode scanning latency and 100% operational continuity during internet outages.
-- **Alternatives Considered:** (1) Livewire 4 Server-Side Rendering (rejected because every scan/click requires network round-trips, failing completely during outages); (2) Heavy React/Electron Native App (rejected due to high maintenance overhead and complex cross-platform distribution).
-- **Decision:** Build POS checkout as a client-side Alpine.js SPA with Dexie.js IndexedDB persistence packaged as an offline-first PWA.
-- **Consequences:** Zero scanning latency, 100% offline checkout resilience, and seamless background synchronization.
-
-### ADR-005: Transactional Outbox Pattern for Webhook & Integration Dispatch
-- **Status:** Accepted
-- **Context:** Third-party webhooks (e.g., eCommerce sync, SMS gateways) must never fail silently or break internal database transactions.
-- **Alternatives Considered:** (1) Synchronous HTTP dispatch within database transactions (rejected due to risk of hanging transactions and third-party latency); (2) Standard Laravel queue dispatch without outbox (rejected due to risk of message loss if the queue worker crashes before queue commit).
-- **Decision:** Implement the Transactional Outbox pattern writing integration events into `outbox_events` within the same database transaction, polled by an asynchronous worker.
-- **Consequences:** Guarantees at-least-once webhook delivery and decouples internal transactions from external network failures.
-
-### ADR-006: Hardware Abstraction Layer & Local Print Bridge for Raw ESC/POS
-- **Status:** Accepted
-- **Context:** Web browsers cannot directly open USB or serial COM ports to send raw ESC/POS commands or trigger cash drawers without user interaction prompts.
-- **Alternatives Considered:** (1) Browser `window.print()` (rejected due to slow rendering, margin defects, lack of cash drawer kick, and inability to print raster Bengali); (2) WebUSB API (rejected due to lack of broad browser support and inability to access RS-232 serial ports).
-- **Decision:** Deploy a lightweight compiled Go background daemon listening on `ws://127.0.0.1:9191` that receives raw byte streams and communicates directly with printers and SDC devices.
-- **Consequences:** High-speed raw ESC/POS thermal printing, reliable Bengali text rendering via raster bit images, and zero-prompt cash drawer kicks.
-
-### ADR-007: Framework Baseline: Laravel 13, Filament v5, PHP 8.4+
-- **Status:** Accepted
-- **Context:** Establishing a cutting-edge, long-term supported technology foundation for development commencing late 2026.
-- **Alternatives Considered:** (1) Laravel 11 / Filament v3 (rejected due to impending EOL during the platform's multi-year operational lifecycle).
-- **Decision:** Adopt PHP 8.4+, Laravel 13, and Filament v5 as the mandatory engineering baseline.
-- **Consequences:** Native UUIDv7 primary keys via Laravel `HasUuids`, improved JIT performance, and modern Filament UI components.
-
-### ADR-008: Local Native Print Bridge Security via Origin Checking & Pairing Handshake
-- **Status:** Accepted
-- **Context:** A local daemon listening on `127.0.0.1:9191` could be vulnerable to cross-site WebSocket hijacking (CSWSH) from malicious browser tabs.
-- **Alternatives Considered:** (1) Unauthenticated open WebSocket (rejected as an unacceptable security vulnerability).
-- **Decision:** Enforce strict `Origin` header validation against registered tenant domains and require an initial 64-character cryptographic pairing token handshake.
-- **Consequences:** Complete immunity to cross-site print hijacking and unauthorized fiscal device access.
-
-### ADR-009: Strict No-Negative-Stock Inventory Valuation Policy
-- **Status:** Accepted
-- **Context:** Divergent inventory valuation policies create reconciliation gaps between physical warehouses and General Ledger accounts.
-- **Alternatives Considered:** (1) Permissive negative stock with retroactive recalculation (rejected due to severe distortion of Weighted Average Cost and tax reporting).
-- **Decision:** Enforce a strict no-negative-stock invariant at the database engine level via `quantity_on_hand >= 0` check constraints.
-- **Consequences:** Guarantees 100% mathematical integrity of inventory assets and prevents phantom stock write-offs.
-
-### ADR-010: Zero-Downtime Expand/Contract Database Migrations
-- **Status:** Accepted
-- **Context:** Production ERP databases cannot tolerate downtime or table locks during continuous deployment cycles.
-- **Alternatives Considered:** (1) Direct schema modification during maintenance windows (rejected due to disruption of 24/7 retail operations).
-- **Decision:** Enforce the three-phase Expand/Contract migration pattern for all schema alterations.
-- **Consequences:** Seamless deployments with zero user disruption and backward compatibility during multi-node rolling updates.
-
-### ADR-011: UUIDv7 Primary Keys for Time-Ordered High-Throughput Ingestion
-- **Status:** Accepted
-- **Context:** High-frequency transaction tables (POS sales, stock movements, journal entries) require globally unique identifiers that avoid B-tree index fragmentation.
-- **Alternatives Considered:** (1) Auto-incrementing BIGSERIAL (rejected due to enumeration vulnerability across multi-tenant APIs); (2) Random UUIDv4 (rejected due to severe B-tree fragmentation and write degradation).
-- **Decision:** Utilize time-ordered UUIDv7 generated application-side via Laravel's native `HasUuids` trait.
-- **Consequences:** Optimal B-tree insert performance, natural chronological sorting, and secure non-sequential public identifiers.
-
-### ADR-012: OpenTelemetry and Sentry Unified Telemetry Fabric
-- **Status:** Accepted
-- **Context:** Operational visibility must span frontend offline PWAs, local hardware bridges, background workers, and PostgreSQL database queries.
-- **Alternatives Considered:** (1) Disconnected log files (rejected due to lack of correlation and slow incident triage).
-- **Decision:** Implement a unified telemetry fabric using Sentry for exception tracking and OpenTelemetry for distributed APM tracing.
-- **Consequences:** Sub-minute mean time to detection (MTTD) for production anomalies and end-to-end visibility across all execution tiers.
-
-### ADR-013: Pre-Scaling and Transaction Pooling for Eid Surge Workloads
-- **Status:** Accepted
-- **Context:** Bangladesh retail experiences a 10x transaction surge during Ramadan and the weeks preceding Eid-ul-Fitr and Eid-ul-Adha.
-- **Alternatives Considered:** (1) Uncapped container autoscaling (rejected because it quickly exhausts the 47-connection limit of managed PostgreSQL); (2) Static year-round over-provisioning (rejected as cost-inefficient under the $200/mo budget).
-- **Decision:** Implement a scheduled vertical scale-up of the managed database (from 2GB to 4GB / 97 connections) 14 days before Ramadan, transition to PgBouncer transaction-mode pooling (port 25060) if scaling web containers beyond 2 instances, and enforce a strict 14-day pre-Eid code freeze.
-- **Consequences:** Guarantees platform availability under extreme retail peak loads while maintaining strict connection governance and budget discipline.
-
-### ADR-014: Staged Stream Gates and Ramadan-Aware Data Migration Protocol
-- **Status:** Accepted
-- **Context:** Aligning multi-stream engineering dependencies with real-world retailer availability during religious holiday seasons.
-- **Alternatives Considered:** (1) Unstructured agile sprint starts without governance gates (rejected due to risk of building on unverified foundational layers); (2) Onboarding pilot retailers during Ramadan (rejected because retailers are at peak retail intensity and cannot perform data migration).
-- **Decision:** Establish 6 formal staging gates settling prerequisites before each development stream begins, and schedule all pilot retailer data imports in January/February (Weeks 13–18) prior to Ramadan.
-- **Consequences:** Eliminates architectural rework, guarantees operational readiness, and aligns project delivery with retail market cycles.
-
-### ADR-015: In-House Proxmox Private Cloud Containerization for Development and Staging (`dev.kcerp.com`)
-- **Status:** Accepted
-- **Context:** Staging and concurrency testing require realistic database connection pools, memory-intensive stress tests (simulating parallel checkouts and RLS isolation), and high-throughput background queues, but public cloud staging instances are constrained by a strict $25/month budget ceiling (1GB RAM, 1 vCPU).
-- **Alternatives Considered:**
-  1. *Public Cloud Basic Droplets ($25/mo):* Severely RAM-constrained (1GB RAM), prone to OOM errors during concurrent Pest test runs, and incapable of hosting co-located PostgreSQL 17 + Redis + PHP 8.4-FPM + Horizon.
-  2. *Shared Multi-Tenant Staging on Production Cluster:* Rejected due to unacceptable risk of staging load degrading production SLAs and potential cross-environment data contamination.
-  3. *Dedicated Private Cloud Proxmox Container:* High-spec LXC container (4 vCPU, 40GB RAM, 80GB NVMe storage) on host `tofa-prox.hprbd.com` with internal IP `192.168.100.104` and reverse-proxy ingress on port 8080.
-- **Decision:** Adopt the dedicated Proxmox LXC Container 104 (`dev.kcerp.com`) for all continuous integration, development, and staging workloads. Configure Nginx inside container 104 to bind to `0.0.0.0:8080`, receiving traffic forwarded from the upstream reverse proxy. Co-locate dedicated PostgreSQL 17+, Redis 7+, and Horizon workers tuned for 40GB RAM.
-- **Consequences:** Provides enterprise-grade testing capacity (40GB RAM vs 1GB RAM) at zero marginal monthly cloud cost, saves $25/mo in operational expenditure, enables running comprehensive multi-process concurrency tests (QA-01) with hundreds of parallel checkouts, and maintains strict isolation from production.
+- [ADR-001: Selection of Modular Monolith over Distributed Microservices](adr/ADR-001-modular-monolith.md)
+- [ADR-002: Multi-Tenancy via Shared Database / Shared Schema with PostgreSQL RLS](adr/ADR-002-multi-tenancy-rls.md)
+- [ADR-003: Double-Entry Financial Immutability & Reversals Pattern](adr/ADR-003-financial-immutability.md)
+- [ADR-004: Client-Side PWA POS (Alpine.js + IndexedDB) over Livewire Server-Side Rendering](adr/ADR-004-client-side-pwa-pos.md)
+- [ADR-005: Transactional Outbox Pattern for Webhook & Integration Dispatch](adr/ADR-005-transactional-outbox.md)
+- [ADR-006: Hardware Abstraction Layer & Local Print Bridge for Raw ESC/POS](adr/ADR-006-hardware-print-bridge.md)
+- [ADR-007: Framework Baseline: Laravel 13, Filament v5, PHP 8.4+](adr/ADR-007-framework-baseline.md)
+- [ADR-008: Local Native Print Bridge Security via Origin Checking & Pairing Handshake](adr/ADR-008-print-bridge-security.md)
+- [ADR-009: Strict No-Negative-Stock Inventory Valuation Policy](adr/ADR-009-no-negative-stock.md)
+- [ADR-010: Zero-Downtime Expand/Contract Database Migrations](adr/ADR-010-zero-downtime-migrations.md)
+- [ADR-011: UUIDv7 Primary Keys for Time-Ordered High-Throughput Ingestion](adr/ADR-011-uuidv7-primary-keys.md)
+- [ADR-012: OpenTelemetry and Sentry Unified Telemetry Fabric](adr/ADR-012-telemetry-fabric.md)
+- [ADR-013: Pre-Scaling and Transaction Pooling for Eid Surge Workloads](adr/ADR-013-eid-surge-pooling.md)
+- [ADR-014: Staged Stream Gates and Ramadan-Aware Data Migration Protocol](adr/ADR-014-staged-stream-gates.md)
+- [ADR-015: In-House Proxmox Private Cloud Containerization for Development and Staging (dev.kcerp.com)](adr/ADR-015-proxmox-staging-containerization.md)
 
 ---
 

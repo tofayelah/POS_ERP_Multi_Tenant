@@ -2,16 +2,21 @@
 
 namespace App\Providers\Filament;
 
+use App\Core\Http\Middleware\EnforceTenantState;
+use App\Core\Http\Middleware\FilamentTenantContextMiddleware;
+use App\Core\Http\Middleware\SetLocaleMiddleware;
+use App\Core\Http\Middleware\VerifySupportAccessActive;
+use App\Models\Tenant;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use Filament\Navigation\MenuItem;
 use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
 use Filament\Widgets\AccountWidget;
-use Filament\Widgets\FilamentInfoWidget;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
@@ -27,7 +32,14 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
+            ->authGuard('web')
             ->login()
+            ->tenant(Tenant::class, slugAttribute: 'subdomain')
+            ->tenantMiddleware([
+                FilamentTenantContextMiddleware::class,
+                VerifySupportAccessActive::class,
+                EnforceTenantState::class,
+            ], isPersistent: true)
             ->brandName('KC ERP')
             ->colors([
                 'primary' => Color::Sky,
@@ -56,7 +68,16 @@ class AdminPanelProvider extends PanelProvider
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
             ->widgets([
                 AccountWidget::class,
-                FilamentInfoWidget::class,
+            ])
+            ->userMenuItems([
+                'language_en' => MenuItem::make()
+                    ->label('English')
+                    ->icon('heroicon-o-globe-alt')
+                    ->url(fn (): string => request()->fullUrlWithQuery(['lang' => 'en'])),
+                'language_bn' => MenuItem::make()
+                    ->label('বাংলা')
+                    ->icon('heroicon-o-language')
+                    ->url(fn (): string => request()->fullUrlWithQuery(['lang' => 'bn'])),
             ])
             ->middleware([
                 EncryptCookies::class,
@@ -68,7 +89,7 @@ class AdminPanelProvider extends PanelProvider
                 SubstituteBindings::class,
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
-                \App\Http\Middleware\ResolveTenantContext::class,
+                SetLocaleMiddleware::class,
             ])
             ->authMiddleware([
                 Authenticate::class,

@@ -1,0 +1,150 @@
+name: Deploy
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Deployment Target Environment"
+        required: true
+        default: "staging"
+        type: choice
+        options:
+          - staging
+          - production
+
+permissions:
+  contents: read
+
+jobs:
+  deploy-staging:
+    name: Deploy to Staging
+    if: >-
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.target == 'staging') ||
+      (github.event_name == 'workflow_run' &&
+       github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.head_branch == 'main')
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+      url: https://dev.kcerp.com
+    steps:
+      - name: Checkout Code at Verified CI Commit
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - name: Setup SSH Connection
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -p ${{ secrets.DEPLOY_PORT || '22' }} -H "${{ secrets.DEPLOY_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null || true
+
+      - name: Transfer Release Payload to Target Host
+        run: |
+          RELEASE_ID="${{ github.event.workflow_run.head_sha || github.sha }}"
+          DEPLOY_PATH="${{ secrets.DEPLOY_PATH }}"
+          RELEASE_DIR="${DEPLOY_PATH}/releases/${RELEASE_ID}"
+
+          echo "Preparing release directory on remote host: ${RELEASE_DIR}..."
+          ssh -i ~/.ssh/deploy_key -p ${{ secrets.DEPLOY_PORT || '22' }} \
+            -o StrictHostKeyChecking=accept-new \
+            ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} \
+            "mkdir -p '${RELEASE_DIR}'"
+
+          echo "Synchronizing application codebase to target host..."
+          rsync -avz -e "ssh -i ~/.ssh/deploy_key -p ${{ secrets.DEPLOY_PORT || '22' }} -o StrictHostKeyChecking=accept-new" \
+            --delete \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='node_modules' \
+            --exclude='tests' \
+            --exclude='.scratch' \
+            ./ "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:${RELEASE_DIR}/"
+
+      - name: Execute Zero-Downtime Release Script
+        run: |
+          RELEASE_ID="${{ github.event.workflow_run.head_sha || github.sha }}"
+          DEPLOY_PATH="${{ secrets.DEPLOY_PATH }}"
+          HEALTH_URL="${{ secrets.HEALTH_URL || 'http://127.0.0.1:8080/ready' }}"
+
+          echo "Executing host release script..."
+          ssh -i ~/.ssh/deploy_key -p ${{ secrets.DEPLOY_PORT || '22' }} \
+            -o StrictHostKeyChecking=accept-new \
+            ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} \
+            "DEPLOY_PATH='${DEPLOY_PATH}' \
+             RELEASE_ID='${RELEASE_ID}' \
+             HEALTH_URL='${HEALTH_URL}' \
+             bash '${DEPLOY_PATH}/releases/${RELEASE_ID}/deploy/release.sh'"
+
+      - name: Cleanup Runner SSH Credentials
+        if: always()
+        run: rm -f ~/.ssh/deploy_key
+
+  deploy-production:
+    name: Deploy to Production
+    if: >-
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.target == 'production') ||
+      (github.event_name == 'workflow_run' &&
+       github.event.workflow_run.conclusion == 'success' &&
+       startsWith(github.event.workflow_run.head_branch, 'v'))
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://kcerp.com
+    steps:
+      - name: Checkout Code at Verified CI Tag / Commit
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - name: Setup SSH Connection
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -p ${{ secrets.DEPLOY_PORT || '22' }} -H "${{ secrets.DEPLOY_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null || true
+
+      - name: Transfer Release Payload to Target Host
+        run: |
+          RELEASE_ID="${{ github.event.workflow_run.head_sha || github.sha }}"
+          DEPLOY_PATH="${{ secrets.DEPLOY_PATH }}"
+          RELEASE_DIR="${DEPLOY_PATH}/releases/${RELEASE_ID}"
+
+          echo "Preparing production release directory: ${RELEASE_DIR}..."
+          ssh -i ~/.ssh/deploy_key -p ${{ secrets.DEPLOY_PORT || '22' }} \
+            -o StrictHostKeyChecking=accept-new \
+            ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} \
+            "mkdir -p '${RELEASE_DIR}'"
+
+          echo "Synchronizing application codebase to production..."
+          rsync -avz -e "ssh -i ~/.ssh/deploy_key -p ${{ secrets.DEPLOY_PORT || '22' }} -o StrictHostKeyChecking=accept-new" \
+            --delete \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='node_modules' \
+            --exclude='tests' \
+            --exclude='.scratch' \
+            ./ "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:${RELEASE_DIR}/"
+
+      - name: Execute Zero-Downtime Release Script
+        run: |
+          RELEASE_ID="${{ github.event.workflow_run.head_sha || github.sha }}"
+          DEPLOY_PATH="${{ secrets.DEPLOY_PATH }}"
+          HEALTH_URL="${{ secrets.HEALTH_URL || 'https://kcerp.com/ready' }}"
+
+          echo "Executing host release script in production..."
+          ssh -i ~/.ssh/deploy_key -p ${{ secrets.DEPLOY_PORT || '22' }} \
+            -o StrictHostKeyChecking=accept-new \
+            ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} \
+            "DEPLOY_PATH='${DEPLOY_PATH}' \
+             RELEASE_ID='${RELEASE_ID}' \
+             HEALTH_URL='${HEALTH_URL}' \
+             bash '${DEPLOY_PATH}/releases/${RELEASE_ID}/deploy/release.sh'"
+
+      - name: Cleanup Runner SSH Credentials
+        if: always()
+        run: rm -f ~/.ssh/deploy_key

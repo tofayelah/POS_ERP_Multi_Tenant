@@ -1,0 +1,37 @@
+<?php
+
+namespace App\Filament\Pages;
+
+use App\Models\User;
+use Filament\Pages\Page;
+use Illuminate\Support\Facades\Auth;
+
+class JournalsPage extends Page
+{
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-book-open';
+
+    protected static ?string $navigationLabel = 'Journals';
+
+    protected ?string $heading = 'General Ledger Journals';
+
+    protected static \UnitEnum|string|null $navigationGroup = 'Finance Accounting';
+
+    protected string $view = 'filament.pages.placeholder';
+
+    public static function canAccess(): bool
+    {
+        $user = Auth::user();
+        if (! $user instanceof User) {
+            return false;
+        }
+
+        // Cashier: None, Shift Supervisor: None, Branch Manager: Read, Accountant: Full, Tenant Owner: Full
+        return $user->hasAnyRole([
+            'Tenant Owner',
+            'Tenant Admin',
+            'Branch Manager',
+            'Accountant',
+            'Auditor',
+        ]);
+    }
+}

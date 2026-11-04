@@ -2,49 +2,86 @@
 
 namespace App\Models;
 
-use App\Models\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property string $id
+ * @property string $tenant_id
+ * @property string $company_id
+ * @property string|null $category_id
+ * @property string $code
+ * @property string $name_en
+ * @property string|null $name_bn
+ * @property string $base_uom
+ * @property string|null $description
+ * @property bool $is_active
+ * @property Carbon $created_at
+ * @property Carbon $updated_at
+ */
 class Product extends Model
 {
-    use HasFactory, HasUuids, BelongsToTenant;
+    use HasUuids;
 
-    protected $guarded = [];
+    protected $table = 'products';
 
-    protected $casts = [
-        'has_variants' => 'boolean',
-        'is_active' => 'boolean',
+    protected $keyType = 'string';
+
+    public $incrementing = false;
+
+    protected $fillable = [
+        'id',
+        'tenant_id',
+        'company_id',
+        'category_id',
+        'code',
+        'name_en',
+        'name_bn',
+        'base_uom',
+        'description',
+        'is_active',
     ];
 
-    public function company(): BelongsTo
+    /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
     {
-        return $this->belongsTo(Company::class, 'company_id');
+        return [
+            'is_active' => 'boolean',
+        ];
     }
 
+    /**
+     * @return BelongsTo<Tenant, $this>
+     */
+    public function tenant(): BelongsTo
+    {
+        return $this->belongsTo(Tenant::class);
+    }
+
+    /**
+     * @return BelongsTo<Company, $this>
+     */
+    public function company(): BelongsTo
+    {
+        return $this->belongsTo(Company::class);
+    }
+
+    /**
+     * @return BelongsTo<Category, $this>
+     */
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class, 'category_id');
     }
 
-    public function brand(): BelongsTo
-    {
-        return $this->belongsTo(Brand::class, 'brand_id');
-    }
-
-    public function uom(): BelongsTo
-    {
-        return $this->belongsTo(UnitOfMeasure::class, 'uom_id');
-    }
-
-    public function supplier(): BelongsTo
-    {
-        return $this->belongsTo(Supplier::class, 'supplier_id');
-    }
-
+    /**
+     * @return HasMany<ProductVariant, $this>
+     */
     public function variants(): HasMany
     {
         return $this->hasMany(ProductVariant::class, 'product_id');

@@ -1,0 +1,9 @@
+{
+    "agents": [
+        "antigravity"
+    ],
+    "guidelines": true,
+    "packages": [
+        "filament/filament"
+    ]
+}

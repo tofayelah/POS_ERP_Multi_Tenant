@@ -36,3 +36,20 @@ _ide_helper.php
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Local settings and secrets
+CLAUDE.md
+.env.*
+!.env.example
+.mcp.json
+*.pub
+
+# Test and build output
+tests/Browser/Screenshots
+/playwright-report
+/test-results/
+/recordings/
+/screenshots/
+.scratch/
+/*.txt
+/bridge/dist/
