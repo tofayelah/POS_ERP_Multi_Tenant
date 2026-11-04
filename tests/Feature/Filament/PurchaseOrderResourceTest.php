@@ -21,6 +21,7 @@ use App\Models\User;
 use App\Models\UserLocationScope;
 use App\Modules\Procurement\Contracts\ProcurementDocumentChainContract;
 use Carbon\Carbon;
+use Filament\Facades\Filament;
 use Illuminate\Support\Str;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Role;
@@ -64,6 +65,7 @@ class PurchaseOrderResourceTest extends TestCase
         ]);
 
         TenantContext::set($this->tenantA);
+        Filament::setTenant($this->tenantA);
         setPermissionsTeamId($this->tenantA->id);
 
         $this->companyA = Company::create([
