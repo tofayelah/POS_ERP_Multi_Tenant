@@ -101,7 +101,7 @@ class PurchaseOrderPolicy
      */
     public function cancel(User $user, PurchaseOrder $po): bool
     {
-        if (in_array($po->status, ['received', 'closed', 'cancelled'], true)) {
+        if (in_array($po->status, ['partially_received', 'received', 'closed', 'cancelled'], true)) {
             return false;
         }
 

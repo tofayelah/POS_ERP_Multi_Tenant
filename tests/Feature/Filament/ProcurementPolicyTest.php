@@ -319,6 +319,7 @@ class ProcurementPolicyTest extends TestCase
 
         $draftPo->status = 'partially_received';
         $draftPo->save();
+        $draftPo->refresh();
 
         $this->assertFalse(Gate::forUser($this->procurementMgr)->allows('cancel', $draftPo));
         $this->assertFalse(Gate::forUser($this->procurementMgr)->allows('deleteAny', PurchaseOrder::class));
