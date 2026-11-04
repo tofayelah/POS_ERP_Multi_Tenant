@@ -24,7 +24,7 @@ use App\Models\UserLocationScope;
 use App\Modules\Sales\Contracts\SalesDocumentChainContract;
 use App\Modules\Sales\DTOs\CreateQuotationDTO;
 use App\Modules\Sales\DTOs\CreateQuotationLineDTO;
-use App\Support\TenantContext;
+use App\Core\Tenancy\TenantContext;
 use Filament\Facades\Filament;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
