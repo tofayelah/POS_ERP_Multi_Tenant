@@ -3,11 +3,18 @@
 namespace App\Providers;
 
 use App\Core\Tenancy\TenantContext;
+use App\Models\GoodsReceipt;
+use App\Models\PurchaseOrder;
+use App\Models\Quotation;
 use App\Models\Tenant;
+use App\Policies\GoodsReceiptPolicy;
+use App\Policies\PurchaseOrderPolicy;
+use App\Policies\QuotationPolicy;
 use Filament\Events\TenantSet;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
@@ -46,5 +53,9 @@ class AppServiceProvider extends ServiceProvider
                 TenantContext::set($tenant);
             }
         });
+
+        Gate::policy(PurchaseOrder::class, PurchaseOrderPolicy::class);
+        Gate::policy(GoodsReceipt::class, GoodsReceiptPolicy::class);
+        Gate::policy(Quotation::class, QuotationPolicy::class);
     }
 }
