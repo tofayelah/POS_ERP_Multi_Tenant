@@ -17,6 +17,7 @@ use App\Models\QuotationLine;
 use App\Models\Supplier;
 use App\Models\TaxCode;
 use App\Models\Tenant;
+use App\Models\TenantMembership;
 use App\Models\User;
 use App\Models\UserLocationScope;
 use App\Models\Warehouse;
@@ -228,11 +229,18 @@ class ProcurementPolicyTest extends TestCase
 
         $user->assignRole($role);
 
+        $membership = TenantMembership::create([
+            'id' => (string) Str::uuid(),
+            'tenant_id' => $this->tenant->id,
+            'user_id' => $user->id,
+            'is_active' => true,
+        ]);
+
         foreach ($scopes as $scope) {
             UserLocationScope::create([
                 'id' => (string) Str::uuid(),
-                'user_id' => $user->id,
                 'tenant_id' => $this->tenant->id,
+                'membership_id' => $membership->id,
                 'company_id' => $scope['company_id'],
                 'branch_id' => $scope['branch_id'],
             ]);
