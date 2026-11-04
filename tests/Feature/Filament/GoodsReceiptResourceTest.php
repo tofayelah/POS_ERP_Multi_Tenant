@@ -70,7 +70,6 @@ class GoodsReceiptResourceTest extends TestCase
         ]);
 
         TenantContext::set($this->tenantA);
-        Filament::setTenant($this->tenantA);
         setPermissionsTeamId($this->tenantA->id);
 
         $this->companyA = Company::create([
@@ -187,7 +186,6 @@ class GoodsReceiptResourceTest extends TestCase
         ]);
 
         TenantContext::set($this->tenantA);
-        Filament::setTenant($this->tenantA);
     }
 
     protected function tearDown(): void
@@ -206,6 +204,8 @@ class GoodsReceiptResourceTest extends TestCase
     {
         TenantContext::set($this->tenantA);
         $this->actingAs($this->warehouseMgr);
+        Filament::setCurrentPanel(Filament::getPanel('admin'));
+        Filament::setTenant($this->tenantA);
 
         $initialMovements = StockMovement::count();
         $initialBalances = StockBalance::count();

@@ -65,7 +65,6 @@ class PurchaseOrderResourceTest extends TestCase
         ]);
 
         TenantContext::set($this->tenantA);
-        Filament::setTenant($this->tenantA);
         setPermissionsTeamId($this->tenantA->id);
 
         $this->companyA = Company::create([
@@ -190,6 +189,8 @@ class PurchaseOrderResourceTest extends TestCase
     {
         TenantContext::set($this->tenantA);
         $this->actingAs($this->procurementMgr);
+        Filament::setCurrentPanel(Filament::getPanel('admin'));
+        Filament::setTenant($this->tenantA);
 
         // Pre-condition: Zero stock balances and movements
         $initialMovements = StockMovement::count();
