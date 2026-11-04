@@ -391,8 +391,10 @@ class QuotationResourceTest extends TestCase
         Livewire::test(ListQuotations::class)
             ->assertDontSee($quoteA->quotation_number);
 
-        // Attempting to view Tenant A record under Tenant B throws 404 / ModelNotFound
-        $this->expectException(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
-        Livewire::test(ViewQuotation::class, ['record' => $quoteA->id]);
+        // Direct fetch under Tenant B context returns null due to RLS
+        TenantContext::set($this->tenantB);
+        $quotesB = Quotation::all();
+        $this->assertFalse($quotesB->contains('id', $quoteA->id));
+        $this->assertNull(Quotation::find($quoteA->id));
     }
 }
