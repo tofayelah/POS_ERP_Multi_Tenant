@@ -26,7 +26,6 @@ use App\Modules\Sales\DTOs\CreateQuotationDTO;
 use App\Modules\Sales\DTOs\CreateQuotationLineDTO;
 use App\Support\TenantContext;
 use Filament\Facades\Filament;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 use Livewire\Livewire;
@@ -36,8 +35,6 @@ use Tests\TestCase;
 
 class QuotationResourceTest extends TestCase
 {
-    use RefreshDatabase;
-
     protected Tenant $tenantA;
 
     protected Tenant $tenantB;
