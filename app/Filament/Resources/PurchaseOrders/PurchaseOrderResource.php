@@ -164,43 +164,51 @@ class PurchaseOrderResource extends Resource
                             ->numeric()
                             ->default('1.0000')
                             ->required()
-                            ->live(),
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(function ($set, $get) {
+                                $qty = (float) ($get('ordered_quantity') ?? 0);
+                                $price = (float) ($get('unit_price') ?? 0);
+                                $tax = (float) ($get('tax_amount') ?? 0);
+                                $sub = $qty * $price;
+                                $set('subtotal', number_format($sub, 4, '.', ''));
+                                $set('total_amount', number_format($sub + $tax, 4, '.', ''));
+                            }),
 
                         TextInput::make('unit_price')
                             ->label('Unit Price / একক দর (৳)')
                             ->numeric()
                             ->default('0.0000')
                             ->required()
-                            ->live(),
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(function ($set, $get) {
+                                $qty = (float) ($get('ordered_quantity') ?? 0);
+                                $price = (float) ($get('unit_price') ?? 0);
+                                $tax = (float) ($get('tax_amount') ?? 0);
+                                $sub = $qty * $price;
+                                $set('subtotal', number_format($sub, 4, '.', ''));
+                                $set('total_amount', number_format($sub + $tax, 4, '.', ''));
+                            }),
 
                         TextInput::make('tax_amount')
                             ->label('VAT / মূসক (৳)')
                             ->numeric()
                             ->default('0.0000')
-                            ->live(),
-
-                        TextInput::make('subtotal')
-                            ->label('Subtotal / উপমোট (৳)')
-                            ->disabled()
-                            ->dehydrated(false)
-                            ->state(function ($get): string {
-                                $qty = (float) ($get('ordered_quantity') ?? 0);
-                                $price = (float) ($get('unit_price') ?? 0);
-
-                                return number_format($qty * $price, 4, '.', '');
-                            }),
-
-                        TextInput::make('total_amount')
-                            ->label('Total / সর্বমোট (৳)')
-                            ->disabled()
-                            ->dehydrated(false)
-                            ->state(function ($get): string {
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(function ($set, $get) {
                                 $qty = (float) ($get('ordered_quantity') ?? 0);
                                 $price = (float) ($get('unit_price') ?? 0);
                                 $tax = (float) ($get('tax_amount') ?? 0);
-
-                                return number_format(($qty * $price) + $tax, 4, '.', '');
+                                $sub = $qty * $price;
+                                $set('total_amount', number_format($sub + $tax, 4, '.', ''));
                             }),
+
+                        TextInput::make('subtotal')
+                            ->label('Subtotal / উপমোট (৳)')
+                            ->readOnly(),
+
+                        TextInput::make('total_amount')
+                            ->label('Total / সর্বমোট (৳)')
+                            ->readOnly(),
                     ])
                     ->columns(4)
                     ->columnSpanFull()
