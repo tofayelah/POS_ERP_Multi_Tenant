@@ -16,6 +16,7 @@ use App\Models\PurchaseOrder;
 use App\Models\Supplier;
 use App\Models\SupplierBill;
 use App\Models\Tenant;
+use App\Models\User;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\ViewAction;
@@ -286,12 +287,12 @@ class SupplierBillResource extends Resource
                         ->color('success')
                         ->visible(fn (SupplierBill $record): bool => $record->status === 'draft')
                         ->action(function (SupplierBill $record, array $data) {
-                            $widget = new ThreeWayMatchingWidget();
+                            $widget = new ThreeWayMatchingWidget;
                             $widget->record = $record;
                             $reconciliation = $widget->getReconciliationData();
 
                             if ($reconciliation['has_exceptions']) {
-                                /** @var \App\Models\User $user */
+                                /** @var User $user */
                                 $user = Auth::user();
 
                                 // Check if user has permission to override
@@ -358,11 +359,11 @@ class SupplierBillResource extends Resource
                                 ->send();
                         })
                         ->form(function (SupplierBill $record) {
-                            /** @var \App\Models\User|null $user */
+                            /** @var User|null $user */
                             $user = Auth::user();
                             $canOverride = $user && ($user->hasRole('Financial Controller') || $user->hasRole('Tenant Admin') || $user->hasRole('Tenant Owner'));
 
-                            $widget = new ThreeWayMatchingWidget();
+                            $widget = new ThreeWayMatchingWidget;
                             $widget->record = $record;
                             $reconciliation = $widget->getReconciliationData();
 

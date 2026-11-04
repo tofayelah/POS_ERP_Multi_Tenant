@@ -12,6 +12,7 @@ use Filament\Actions\EditAction;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 
 class ViewQuotation extends ViewRecord
 {
@@ -58,7 +59,7 @@ class ViewQuotation extends ViewRecord
                         quotationId: $record->id,
                         orderDate: now()->toDateString(),
                         expectedDeliveryDate: now()->addDays(7)->toDateString(),
-                        createdBy: Auth::id() ?? (string) \Illuminate\Support\Str::uuid(),
+                        createdBy: Auth::id() ?? (string) Str::uuid(),
                         lines: $lines
                     );
 

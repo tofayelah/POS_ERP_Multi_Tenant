@@ -3,13 +3,13 @@
 namespace App\Filament\Resources\GoodsReceipts\Pages;
 
 use App\Filament\Resources\GoodsReceipts\GoodsReceiptResource;
-use App\Models\GoodsReceipt;
 use App\Modules\Procurement\Contracts\ProcurementDocumentChainContract;
 use App\Modules\Procurement\DTOs\CreateGoodsReceiptDTO;
 use App\Modules\Procurement\DTOs\CreateGoodsReceiptLineDTO;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 
 class CreateGoodsReceipt extends CreateRecord
 {
@@ -37,7 +37,7 @@ class CreateGoodsReceipt extends CreateRecord
             supplierId: $data['supplier_id'],
             purchaseOrderId: $data['purchase_order_id'] ?? null,
             receiptDate: $data['receipt_date'],
-            createdBy: Auth::id() ?? (string) \Illuminate\Support\Str::uuid(),
+            createdBy: Auth::id() ?? (string) Str::uuid(),
             challanNumber: $data['challan_number'] ?? null,
             lines: $lines
         );

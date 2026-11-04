@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\SupplierBills\Pages;
 
+use App\Core\Tenancy\TenantContext;
 use App\Filament\Resources\SupplierBills\SupplierBillResource;
 use App\Models\SupplierBill;
 use App\Models\SupplierBillLine;
@@ -21,7 +22,7 @@ class CreateSupplierBill extends CreateRecord
     protected function handleRecordCreation(array $data): Model
     {
         return DB::transaction(function () use ($data) {
-            $tenantId = \App\Core\Tenancy\TenantContext::id();
+            $tenantId = TenantContext::id();
 
             $fiscalYear = (string) Carbon::parse($data['bill_date'])->year;
             $billNumber = 'BILL-'.$fiscalYear.'-'.strtoupper(Str::random(6));

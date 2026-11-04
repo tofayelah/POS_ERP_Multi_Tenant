@@ -3,13 +3,13 @@
 namespace App\Filament\Resources\Quotations\Pages;
 
 use App\Filament\Resources\Quotations\QuotationResource;
-use App\Models\Quotation;
 use App\Modules\Sales\Contracts\SalesDocumentChainContract;
 use App\Modules\Sales\DTOs\CreateQuotationDTO;
 use App\Modules\Sales\DTOs\CreateQuotationLineDTO;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 
 class CreateQuotation extends CreateRecord
 {
@@ -35,7 +35,7 @@ class CreateQuotation extends CreateRecord
             customerId: $data['customer_id'],
             quotationDate: $data['quotation_date'],
             validUntil: $data['valid_until'],
-            createdBy: Auth::id() ?? (string) \Illuminate\Support\Str::uuid(),
+            createdBy: Auth::id() ?? (string) Str::uuid(),
             lines: $lines
         );
 

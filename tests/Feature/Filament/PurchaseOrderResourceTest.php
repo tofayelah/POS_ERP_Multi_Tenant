@@ -4,7 +4,6 @@ namespace Tests\Feature\Filament;
 
 use App\Core\Tenancy\TenantContext;
 use App\Filament\Resources\PurchaseOrders\Pages\CreatePurchaseOrder;
-use App\Filament\Resources\PurchaseOrders\Pages\ListPurchaseOrders;
 use App\Filament\Resources\PurchaseOrders\PurchaseOrderResource;
 use App\Models\Branch;
 use App\Models\Company;

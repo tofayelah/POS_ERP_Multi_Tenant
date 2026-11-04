@@ -32,6 +32,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 
 class QuotationResource extends Resource
 {
@@ -312,7 +313,7 @@ class QuotationResource extends Resource
                                 quotationId: $record->id,
                                 orderDate: now()->toDateString(),
                                 expectedDeliveryDate: now()->addDays(7)->toDateString(),
-                                createdBy: Auth::id() ?? (string) \Illuminate\Support\Str::uuid(),
+                                createdBy: Auth::id() ?? (string) Str::uuid(),
                                 lines: $lines
                             );
 

@@ -3,13 +3,13 @@
 namespace App\Filament\Resources\PurchaseOrders\Pages;
 
 use App\Filament\Resources\PurchaseOrders\PurchaseOrderResource;
-use App\Models\PurchaseOrder;
 use App\Modules\Procurement\Contracts\ProcurementDocumentChainContract;
 use App\Modules\Procurement\DTOs\CreatePurchaseOrderDTO;
 use App\Modules\Procurement\DTOs\CreatePurchaseOrderLineDTO;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 
 class CreatePurchaseOrder extends CreateRecord
 {
@@ -34,7 +34,7 @@ class CreatePurchaseOrder extends CreateRecord
             supplierId: $data['supplier_id'],
             orderDate: $data['order_date'],
             expectedDeliveryDate: $data['expected_delivery_date'] ?? null,
-            createdBy: Auth::id() ?? (string) \Illuminate\Support\Str::uuid(),
+            createdBy: Auth::id() ?? (string) Str::uuid(),
             lines: $lines
         );
 
