@@ -152,7 +152,7 @@ class PurchaseOrderResource extends Resource
                             ->afterStateUpdated(function ($state, $set) {
                                 if ($state) {
                                     $variant = ProductVariant::find($state);
-                                    if ($variant) {
+                                    if ($variant instanceof ProductVariant) {
                                         $set('unit_price', (string) $variant->cost_price);
                                     }
                                 }
