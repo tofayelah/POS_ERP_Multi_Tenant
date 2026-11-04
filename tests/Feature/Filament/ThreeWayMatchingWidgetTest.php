@@ -674,7 +674,7 @@ class ThreeWayMatchingWidgetTest extends TestCase
         $this->assertEquals($initialAuditCount + 1, AuditLog::count());
         $audit = AuditLog::where('record_id', $bill->id)->latest()->first();
         $this->assertNotNull($audit);
-        $this->assertEquals('THREE_WAY_MATCH_OVERRIDE', $audit->action);
+        $this->assertEquals('MATCH_OVERRIDE', $audit->action);
         $this->assertEquals($this->financialController->id, $audit->actor_id);
         $this->assertStringContainsString('emergency fuel surcharge', $audit->new_values['reason']);
         $this->assertNotEmpty($audit->payload_hash);

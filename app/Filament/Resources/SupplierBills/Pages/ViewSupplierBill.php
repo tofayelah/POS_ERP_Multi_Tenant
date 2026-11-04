@@ -69,7 +69,7 @@ class ViewSupplierBill extends ViewRecord
                             'tenant_id' => $record->tenant_id,
                             'table_name' => 'supplier_bills',
                             'record_id' => $record->id,
-                            'action' => 'THREE_WAY_MATCH_OVERRIDE',
+                            'action' => 'MATCH_OVERRIDE',
                             'actor_id' => $user->id,
                             'actor_type' => get_class($user),
                             'new_values' => [
@@ -112,11 +112,15 @@ class ViewSupplierBill extends ViewRecord
                         ->send();
                 })
                 ->form(function (SupplierBill $record) {
+                    /** @var \App\Models\User|null $user */
+                    $user = Auth::user();
+                    $canOverride = $user && ($user->hasRole('Financial Controller') || $user->hasRole('Tenant Admin') || $user->hasRole('Tenant Owner'));
+
                     $widget = new ThreeWayMatchingWidget();
                     $widget->record = $record;
                     $reconciliation = $widget->getReconciliationData();
 
-                    if ($reconciliation['has_exceptions']) {
+                    if ($reconciliation['has_exceptions'] && $canOverride) {
                         return [
                             Textarea::make('override_reason')
                                 ->label('Managerial Override Justification / বিশেষ অনুমোদনের কারণ')
