@@ -20,7 +20,9 @@ class ViewSupplierBill extends ViewRecord
 
     protected function mutateFormDataBeforeFill(array $data): array
     {
-        $data['lines'] = $this->record->lines->toArray();
+        /** @var SupplierBill $record */
+        $record = $this->getRecord();
+        $data['lines'] = $record->lines->toArray();
 
         return $data;
     }
@@ -46,11 +48,15 @@ class ViewSupplierBill extends ViewRecord
                     $reconciliation = $widget->getReconciliationData();
 
                     if ($reconciliation['has_exceptions']) {
-                        /** @var User $user */
+                        /** @var User|null $user */
                         $user = Auth::user();
 
+                        if (! $user) {
+                            return;
+                        }
+
                         // Check if user has permission to override
-                        $canOverride = $user && ($user->hasRole('Financial Controller') || $user->hasRole('Tenant Admin') || $user->hasRole('Tenant Owner'));
+                        $canOverride = $user->hasRole('Financial Controller') || $user->hasRole('Tenant Admin') || $user->hasRole('Tenant Owner');
 
                         if (! $canOverride) {
                             Notification::make()
@@ -78,7 +84,7 @@ class ViewSupplierBill extends ViewRecord
                                 'exceptions' => $reconciliation['exceptions'],
                                 'net_ppv' => $reconciliation['net_ppv'],
                             ],
-                            'payload_hash' => hash('sha256', json_encode([
+                            'payload_hash' => hash('sha256', (string) json_encode([
                                 'bill_id' => $record->id,
                                 'reason' => $reason,
                                 'actor_id' => $user->id,
@@ -102,7 +108,7 @@ class ViewSupplierBill extends ViewRecord
 
                     // Clean approval with zero exceptions
                     $record->status = 'approved';
-                    $record->approved_by = Auth::id();
+                    $record->approved_by = (string) Auth::id();
                     $record->approved_at = now();
                     $record->save();
 

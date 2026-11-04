@@ -37,7 +37,7 @@ class CreateGoodsReceipt extends CreateRecord
             supplierId: $data['supplier_id'],
             purchaseOrderId: $data['purchase_order_id'] ?? null,
             receiptDate: $data['receipt_date'],
-            createdBy: Auth::id() ?? (string) Str::uuid(),
+            createdBy: (string) (Auth::id() ?? Str::uuid()),
             challanNumber: $data['challan_number'] ?? null,
             lines: $lines
         );

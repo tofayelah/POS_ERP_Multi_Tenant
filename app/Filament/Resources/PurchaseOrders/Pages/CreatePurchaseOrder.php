@@ -34,7 +34,7 @@ class CreatePurchaseOrder extends CreateRecord
             supplierId: $data['supplier_id'],
             orderDate: $data['order_date'],
             expectedDeliveryDate: $data['expected_delivery_date'] ?? null,
-            createdBy: Auth::id() ?? (string) Str::uuid(),
+            createdBy: (string) (Auth::id() ?? Str::uuid()),
             lines: $lines
         );
 

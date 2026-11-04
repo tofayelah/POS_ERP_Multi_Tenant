@@ -35,7 +35,7 @@ class CreateQuotation extends CreateRecord
             customerId: $data['customer_id'],
             quotationDate: $data['quotation_date'],
             validUntil: $data['valid_until'],
-            createdBy: Auth::id() ?? (string) Str::uuid(),
+            createdBy: (string) (Auth::id() ?? Str::uuid()),
             lines: $lines
         );
 

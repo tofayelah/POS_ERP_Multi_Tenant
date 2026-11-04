@@ -154,7 +154,7 @@ class GoodsReceiptResource extends Resource
                     ->afterStateUpdated(function ($state, $set) {
                         if ($state) {
                             $po = PurchaseOrder::with('lines.variant')->find($state);
-                            if ($po) {
+                            if ($po instanceof PurchaseOrder) {
                                 $set('supplier_id', $po->supplier_id);
                                 $set('branch_id', $po->branch_id);
 
@@ -232,7 +232,7 @@ class GoodsReceiptResource extends Resource
                             ->afterStateUpdated(function ($state, $set) {
                                 if ($state) {
                                     $variant = ProductVariant::find($state);
-                                    if ($variant) {
+                                    if ($variant instanceof ProductVariant) {
                                         $set('unit_cost', (string) $variant->cost_price);
                                     }
                                 }

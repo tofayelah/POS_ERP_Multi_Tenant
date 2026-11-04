@@ -16,7 +16,9 @@ class ViewPurchaseOrder extends ViewRecord
 
     protected function mutateFormDataBeforeFill(array $data): array
     {
-        $data['lines'] = $this->record->lines->toArray();
+        /** @var PurchaseOrder $record */
+        $record = $this->getRecord();
+        $data['lines'] = $record->lines->toArray();
 
         return $data;
     }

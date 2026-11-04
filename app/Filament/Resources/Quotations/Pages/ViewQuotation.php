@@ -20,7 +20,9 @@ class ViewQuotation extends ViewRecord
 
     protected function mutateFormDataBeforeFill(array $data): array
     {
-        $data['lines'] = $this->record->lines->toArray();
+        /** @var Quotation $record */
+        $record = $this->getRecord();
+        $data['lines'] = $record->lines->toArray();
 
         return $data;
     }
@@ -59,7 +61,7 @@ class ViewQuotation extends ViewRecord
                         quotationId: $record->id,
                         orderDate: now()->toDateString(),
                         expectedDeliveryDate: now()->addDays(7)->toDateString(),
-                        createdBy: Auth::id() ?? (string) Str::uuid(),
+                        createdBy: (string) (Auth::id() ?? Str::uuid()),
                         lines: $lines
                     );
 

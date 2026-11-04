@@ -292,11 +292,15 @@ class SupplierBillResource extends Resource
                             $reconciliation = $widget->getReconciliationData();
 
                             if ($reconciliation['has_exceptions']) {
-                                /** @var User $user */
+                                /** @var User|null $user */
                                 $user = Auth::user();
 
+                                if (! $user) {
+                                    return;
+                                }
+
                                 // Check if user has permission to override
-                                $canOverride = $user && ($user->hasRole('Financial Controller') || $user->hasRole('Tenant Admin') || $user->hasRole('Tenant Owner'));
+                                $canOverride = $user->hasRole('Financial Controller') || $user->hasRole('Tenant Admin') || $user->hasRole('Tenant Owner');
 
                                 if (! $canOverride) {
                                     Notification::make()
@@ -324,7 +328,7 @@ class SupplierBillResource extends Resource
                                         'exceptions' => $reconciliation['exceptions'],
                                         'net_ppv' => $reconciliation['net_ppv'],
                                     ],
-                                    'payload_hash' => hash('sha256', json_encode([
+                                    'payload_hash' => hash('sha256', (string) json_encode([
                                         'bill_id' => $record->id,
                                         'reason' => $reason,
                                         'actor_id' => $user->id,
@@ -348,7 +352,7 @@ class SupplierBillResource extends Resource
 
                             // Clean approval with zero exceptions
                             $record->status = 'approved';
-                            $record->approved_by = Auth::id();
+                            $record->approved_by = (string) Auth::id();
                             $record->approved_at = now();
                             $record->save();
 

@@ -7,5 +7,3 @@ parameters:
         - bootstrap/app.php
         - config/
     level: 8
-    ignoreErrors:
-        - '#Trait App\\Policies\\Concerns\\EnforcesLocationScope is used zero times#'

@@ -157,7 +157,7 @@ class QuotationResource extends Resource
                             ->afterStateUpdated(function ($state, $set) {
                                 if ($state) {
                                     $variant = ProductVariant::find($state);
-                                    if ($variant) {
+                                    if ($variant instanceof ProductVariant) {
                                         $set('unit_price', (string) $variant->mrp);
                                     }
                                 }
@@ -313,7 +313,7 @@ class QuotationResource extends Resource
                                 quotationId: $record->id,
                                 orderDate: now()->toDateString(),
                                 expectedDeliveryDate: now()->addDays(7)->toDateString(),
-                                createdBy: Auth::id() ?? (string) Str::uuid(),
+                                createdBy: (string) (Auth::id() ?? Str::uuid()),
                                 lines: $lines
                             );
 
