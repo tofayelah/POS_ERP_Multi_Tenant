@@ -122,7 +122,6 @@ class PurchaseOrderResource extends Resource
                     ->dehydrated(false),
 
                 Repeater::make('lines')
-                    ->relationship('lines')
                     ->schema([
                         Select::make('product_id')
                             ->label('Product / পণ্য')

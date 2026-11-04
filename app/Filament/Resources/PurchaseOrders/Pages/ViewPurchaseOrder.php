@@ -14,6 +14,13 @@ class ViewPurchaseOrder extends ViewRecord
 {
     protected static string $resource = PurchaseOrderResource::class;
 
+    protected function mutateFormDataBeforeFill(array $data): array
+    {
+        $data['lines'] = $this->record->lines->toArray();
+
+        return $data;
+    }
+
     protected function getHeaderActions(): array
     {
         return [

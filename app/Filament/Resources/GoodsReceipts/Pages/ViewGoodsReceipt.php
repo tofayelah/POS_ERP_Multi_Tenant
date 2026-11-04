@@ -13,6 +13,13 @@ class ViewGoodsReceipt extends ViewRecord
 {
     protected static string $resource = GoodsReceiptResource::class;
 
+    protected function mutateFormDataBeforeFill(array $data): array
+    {
+        $data['lines'] = $this->record->lines->toArray();
+
+        return $data;
+    }
+
     protected function getHeaderActions(): array
     {
         return [

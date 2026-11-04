@@ -201,7 +201,6 @@ class GoodsReceiptResource extends Resource
                     ->dehydrated(false),
 
                 Repeater::make('lines')
-                    ->relationship('lines')
                     ->schema([
                         Hidden::make('purchase_order_line_id'),
 
