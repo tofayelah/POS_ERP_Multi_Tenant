@@ -8,12 +8,11 @@ use App\Filament\Resources\SupplierQuotations\Pages\ViewSupplierQuotation;
 use App\Filament\Resources\SupplierQuotations\SupplierQuotationResource;
 use App\Models\Branch;
 use App\Models\Company;
-use App\Models\GlAccount;
-use App\Models\GlJournalEntry;
-use App\Models\PhysicalStockBalance;
+use App\Models\JournalEntry;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\PurchaseOrder;
+use App\Models\StockBalance;
 use App\Models\StockMovement;
 use App\Models\Supplier;
 use App\Models\SupplierQuotation;
@@ -174,9 +173,9 @@ class SupplierQuotationResourceTest extends TestCase
     {
         TenantContext::set($this->tenant);
 
-        $initialStockCount = PhysicalStockBalance::count();
+        $initialStockCount = StockBalance::count();
         $initialMovementCount = StockMovement::count();
-        $initialJournalCount = GlJournalEntry::count();
+        $initialJournalCount = JournalEntry::count();
 
         $this->actingAs($this->user);
         Filament::setCurrentPanel(Filament::getPanel('admin'));
@@ -213,9 +212,9 @@ class SupplierQuotationResourceTest extends TestCase
         $this->assertCount(1, $quote->lines);
 
         // Assert Stock & GL Invariant
-        $this->assertEquals($initialStockCount, PhysicalStockBalance::count(), 'Supplier quotation creation must not create physical stock balances');
+        $this->assertEquals($initialStockCount, StockBalance::count(), 'Supplier quotation creation must not create physical stock balances');
         $this->assertEquals($initialMovementCount, StockMovement::count(), 'Supplier quotation creation must not create stock movements');
-        $this->assertEquals($initialJournalCount, GlJournalEntry::count(), 'Supplier quotation creation must not post GL journals');
+        $this->assertEquals($initialJournalCount, JournalEntry::count(), 'Supplier quotation creation must not post GL journals');
     }
 
     public function test_supplier_quotation_conversion_to_purchase_order_action(): void
@@ -314,5 +313,89 @@ class SupplierQuotationResourceTest extends TestCase
         // Query under Tenant B context must return zero rows for Tenant A
         $this->assertNull(SupplierQuotation::find($quoteA->id));
         $this->assertEquals(0, SupplierQuotation::where('id', $quoteA->id)->count());
+    }
+
+    public function test_supplier_quotation_comparison_widget_evaluates_multiple_bids(): void
+    {
+        TenantContext::set($this->tenant);
+
+        // Quote A
+        $quoteA = SupplierQuotation::create([
+            'id' => (string) Str::uuid(),
+            'tenant_id' => $this->tenant->id,
+            'company_id' => $this->company->id,
+            'branch_id' => $this->branch->id,
+            'supplier_id' => $this->supplierA->id,
+            'rfq_number' => 'RFQ-COMPARE-01',
+            'supplier_quote_reference' => 'QA-01',
+            'quote_date' => Carbon::today()->toDateString(),
+            'valid_until' => Carbon::today()->addDays(30)->toDateString(),
+            'subtotal' => '8000.0000',
+            'tax_amount' => '0.0000',
+            'grand_total' => '8000.0000',
+            'status' => 'evaluated',
+            'created_by' => $this->user->id,
+        ]);
+
+        SupplierQuotationLine::create([
+            'id' => (string) Str::uuid(),
+            'tenant_id' => $this->tenant->id,
+            'company_id' => $this->company->id,
+            'supplier_quotation_id' => $quoteA->id,
+            'product_id' => $this->product->id,
+            'variant_id' => $this->variant->id,
+            'requested_quantity' => '10.0000',
+            'quoted_unit_price' => '800.0000',
+            'tax_rate' => '0.0000',
+            'tax_amount' => '0.0000',
+            'line_total' => '8000.0000',
+            'lead_time_days' => 5,
+        ]);
+
+        // Quote B
+        $quoteB = SupplierQuotation::create([
+            'id' => (string) Str::uuid(),
+            'tenant_id' => $this->tenant->id,
+            'company_id' => $this->company->id,
+            'branch_id' => $this->branch->id,
+            'supplier_id' => $this->supplierB->id,
+            'rfq_number' => 'RFQ-COMPARE-01',
+            'supplier_quote_reference' => 'QB-01',
+            'quote_date' => Carbon::today()->toDateString(),
+            'valid_until' => Carbon::today()->addDays(30)->toDateString(),
+            'subtotal' => '8500.0000',
+            'tax_amount' => '0.0000',
+            'grand_total' => '8500.0000',
+            'status' => 'evaluated',
+            'created_by' => $this->user->id,
+        ]);
+
+        SupplierQuotationLine::create([
+            'id' => (string) Str::uuid(),
+            'tenant_id' => $this->tenant->id,
+            'company_id' => $this->company->id,
+            'supplier_quotation_id' => $quoteB->id,
+            'product_id' => $this->product->id,
+            'variant_id' => $this->variant->id,
+            'requested_quantity' => '10.0000',
+            'quoted_unit_price' => '850.0000',
+            'tax_rate' => '0.0000',
+            'tax_amount' => '0.0000',
+            'line_total' => '8500.0000',
+            'lead_time_days' => 3,
+        ]);
+
+        $widget = new \App\Filament\Widgets\SupplierQuotationComparisonWidget;
+        $widget->record = $quoteA;
+        $comp = $widget->getComparisonData();
+
+        $this->assertTrue($comp['has_bids']);
+        $this->assertEquals('RFQ-COMPARE-01', $comp['rfq_number']);
+        $this->assertCount(2, $comp['bids']);
+        $this->assertCount(1, $comp['variant_comparison']);
+
+        $variantComp = $comp['variant_comparison'][0];
+        $this->assertEquals('800.0000', $variantComp['lowest_price']);
+        $this->assertEquals($quoteA->id, $variantComp['lowest_supplier_id']);
     }
 }
