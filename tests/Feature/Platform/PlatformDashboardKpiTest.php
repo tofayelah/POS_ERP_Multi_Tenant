@@ -25,7 +25,7 @@ class PlatformDashboardKpiTest extends TestCase
             [
                 'id' => (string) Str::uuid(),
                 'name' => 'Super Admin KPI Test',
-                'password' => bcrypt('Password123!'),
+                'password' => 'Password123!',
                 'role' => 'super_admin',
             ]
         );

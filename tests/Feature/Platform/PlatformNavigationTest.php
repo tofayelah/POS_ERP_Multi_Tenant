@@ -26,7 +26,7 @@ class PlatformNavigationTest extends TestCase
             [
                 'id' => (string) Str::uuid(),
                 'name' => 'Super Admin Test',
-                'password' => bcrypt('Password123!'),
+                'password' => 'Password123!',
                 'role' => 'super_admin',
             ]
         );
