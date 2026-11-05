@@ -44,9 +44,14 @@ class LandedCostAllocationService implements LandedCostAllocationContract
             $voucherNumber = $dto->voucherNumber;
             if (! $voucherNumber) {
                 if ($this->numberSeries) {
-                    $voucherNumber = $this->numberSeries->getNextNumber($dto->companyId, 'LANDED_COST_VOUCHER');
+                    try {
+                        $fiscalYear = date('Y', strtotime($dto->voucherDate));
+                        $voucherNumber = $this->numberSeries->getNextNumber($dto->companyId, $dto->branchId, 'LCV', $fiscalYear);
+                    } catch (\Throwable) {
+                        $voucherNumber = 'LCV-'.date('Ym').'-'.strtoupper(Str::random(6));
+                    }
                 } else {
-                    $voucherNumber = 'LCV-'.date('Ym').'-'.strtoupper(Str::random(4));
+                    $voucherNumber = 'LCV-'.date('Ym').'-'.strtoupper(Str::random(6));
                 }
             }
 
