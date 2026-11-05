@@ -59,6 +59,19 @@ class PlatformAuditService
 
         $createdAt = Carbon::now();
 
+        // Resolve active audit key version and secret
+        $keyVersion = (int) config('platform.audit.key_version', 1);
+        $key = (string) (config('platform.audit.hmac_secret') ?? '');
+
+        if ($key === '' && $keyVersion > 0) {
+            throw new \RuntimeException('Platform Audit Security Failure: PLATFORM_AUDIT_HMAC_SECRET is not configured. Audit logging requires a dedicated, non-empty secret.');
+        }
+
+        // Fallback to app.key only if keyVersion is explicitly 0 (legacy Phase 1 mode)
+        if ($key === '' && $keyVersion === 0) {
+            $key = (string) config('app.key');
+        }
+
         // Calculate cryptographic SHA-256 HMAC payload hash
         $serialized = json_encode([
             'action' => $action,
@@ -72,7 +85,6 @@ class PlatformAuditService
             'created_at' => $createdAt->toIso8601String(),
         ], JSON_THROW_ON_ERROR);
 
-        $key = (string) (config('app.key') ?? 'kcerp-platform-audit-hmac-key');
         $payloadHash = hash_hmac('sha256', $serialized, $key);
 
         $clientIp = request()->ip();
@@ -95,6 +107,7 @@ class PlatformAuditService
             'status' => $status,
             'error_message' => $errorMessage,
             'payload_hash' => $payloadHash,
+            'key_version' => $keyVersion,
             'created_at' => $createdAt,
         ]);
     }
@@ -200,5 +213,61 @@ class PlatformAuditService
         }
 
         return $data;
+    }
+
+    /**
+     * Verify cryptographic HMAC signature of an audit log entry.
+     */
+    public function verify(PlatformAuditLog $log): bool
+    {
+        $key = $this->resolveVerificationKey($log->key_version);
+
+        if ($key === '') {
+            return false;
+        }
+
+        $createdAtString = $log->created_at instanceof Carbon
+            ? $log->created_at->toIso8601String()
+            : Carbon::parse($log->created_at)->toIso8601String();
+
+        $serialized = json_encode([
+            'action' => $log->action,
+            'actor_id' => $log->platform_user_id,
+            'resource_type' => $log->resource_type,
+            'resource_id' => $log->resource_id,
+            'old' => $log->old_values,
+            'new' => $log->new_values,
+            'reason' => $log->reason,
+            'status' => $log->status,
+            'created_at' => $createdAtString,
+        ], JSON_THROW_ON_ERROR);
+
+        $expectedHash = hash_hmac('sha256', $serialized, $key);
+
+        return hash_equals($expectedHash, (string) $log->payload_hash);
+    }
+
+    /**
+     * Resolve the HMAC key for a given key version.
+     */
+    public function resolveVerificationKey(int $keyVersion): string
+    {
+        // Version 0: Legacy Phase 1 records signed with Laravel APP_KEY
+        if ($keyVersion === 0) {
+            return (string) config('app.key');
+        }
+
+        $currentVersion = (int) config('platform.audit.key_version', 1);
+
+        // Current active version
+        if ($keyVersion === $currentVersion) {
+            return (string) (config('platform.audit.hmac_secret') ?? '');
+        }
+
+        // Historical rotated keys
+        /** @var array<int, string> $historicalKeys */
+        $historicalKeys = config('platform.audit.historical_keys', []);
+
+        return (string) ($historicalKeys[$keyVersion] ?? '');
     }
 }

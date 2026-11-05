@@ -43,5 +43,8 @@
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
+        <env name="PLATFORM_AUDIT_HMAC_SECRET" value="phpunit-test-dedicated-audit-secret-key-64-characters-fixed-key"/>
+        <env name="PLATFORM_AUDIT_KEY_VERSION" value="1"/>
+        <env name="POS_BRIDGE_HEALTH_URL" value="http://127.0.0.1:9191/health"/>
     </php>
 </phpunit>

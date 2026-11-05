@@ -21,6 +21,9 @@ class PlatformNavigationTest extends TestCase
     {
         parent::setUp();
 
+        \Illuminate\Support\Facades\Config::set('platform.audit.hmac_secret', 'test-dedicated-audit-secret-key-64-characters-for-testing-purposes');
+        \Illuminate\Support\Facades\Config::set('platform.audit.key_version', 1);
+
         $this->superAdmin = PlatformUser::firstOrCreate(
             ['email' => 'admin.test@kcerp.local'],
             [
