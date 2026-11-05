@@ -255,7 +255,7 @@ class PlatformTelemetryService
                 $activeSubsCount++;
                 $price = BigDecimal::of((string) $sub->plan->price_bdt);
                 if ($sub->plan->billing_interval === 'annual') {
-                    $mrr = $mrr->plus($price->dividedBy(BigDecimal::of(12), 2, RoundingMode::HALF_UP));
+                    $mrr = $mrr->plus($price->dividedBy(BigDecimal::of(12), 2, RoundingMode::HalfUp));
                 } else {
                     $mrr = $mrr->plus($price);
                 }
@@ -270,7 +270,7 @@ class PlatformTelemetryService
                     $hasBillingData = true;
                     $price = BigDecimal::of((string) $plan->price_bdt);
                     if ($plan->billing_interval === 'annual') {
-                        $mrr = $mrr->plus($price->dividedBy(BigDecimal::of(12), 2, RoundingMode::HALF_UP));
+                        $mrr = $mrr->plus($price->dividedBy(BigDecimal::of(12), 2, RoundingMode::HalfUp));
                     } else {
                         $mrr = $mrr->plus($price);
                     }

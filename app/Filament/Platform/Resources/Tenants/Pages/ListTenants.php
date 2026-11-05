@@ -5,8 +5,8 @@ namespace App\Filament\Platform\Resources\Tenants\Pages;
 use App\Filament\Platform\Resources\Tenants\TenantResource;
 use App\Models\Tenant;
 use Filament\Actions\CreateAction;
-use Filament\Resources\Components\Tab;
 use Filament\Resources\Pages\ListRecords;
+use Filament\Schemas\Components\Tabs\Tab;
 use Illuminate\Database\Eloquent\Builder;
 
 class ListTenants extends ListRecords

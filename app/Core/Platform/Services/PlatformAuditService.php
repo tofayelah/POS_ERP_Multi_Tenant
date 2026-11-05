@@ -75,8 +75,8 @@ class PlatformAuditService
         $key = (string) (config('app.key') ?? 'kcerp-platform-audit-hmac-key');
         $payloadHash = hash_hmac('sha256', $serialized, $key);
 
-        $clientIp = request()?->ip();
-        $userAgent = request()?->userAgent();
+        $clientIp = request()->ip();
+        $userAgent = request()->userAgent();
 
         return PlatformAuditLog::create([
             'id' => (string) Str::uuid(),

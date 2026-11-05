@@ -43,14 +43,14 @@ class PlatformStatsOverviewWidget extends StatsOverviewWidget
 
         // Real 7-day tenant registration trend (zero fabrication)
         $sevenDaysAgo = Carbon::now()->subDays(6)->startOfDay();
-        /** @var array<int, int> $tenantHistory */
+        /** @var array<float> $tenantHistory */
         $tenantHistory = Tenant::query()
             ->where('created_at', '>=', $sevenDaysAgo)
             ->selectRaw('DATE(created_at) as date, count(*) as count')
             ->groupBy('date')
             ->orderBy('date')
             ->pluck('count')
-            ->map(fn (mixed $c): int => (int) $c)
+            ->map(fn (mixed $c): float => (float) $c)
             ->toArray();
 
         // 2. Real Financial Metrics (Zero hardcoded fallback)
