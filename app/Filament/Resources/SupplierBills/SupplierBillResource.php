@@ -107,6 +107,12 @@ class SupplierBillResource extends Resource
                     ->disabled()
                     ->dehydrated(false),
 
+                TextInput::make('vendor_invoice_number')
+                    ->label('Vendor Invoice # / সরবরাহকারীর চালান নং')
+                    ->placeholder('e.g. INV-98741')
+                    ->maxLength(100)
+                    ->required(),
+
                 DatePicker::make('bill_date')
                     ->label('Bill Date / বিলের তারিখ')
                     ->default(now()->toDateString())
@@ -222,6 +228,11 @@ class SupplierBillResource extends Resource
             ->columns([
                 TextColumn::make('bill_number')
                     ->label('Bill Number')
+                    ->searchable()
+                    ->sortable(),
+
+                TextColumn::make('vendor_invoice_number')
+                    ->label('Vendor Inv #')
                     ->searchable()
                     ->sortable(),
 

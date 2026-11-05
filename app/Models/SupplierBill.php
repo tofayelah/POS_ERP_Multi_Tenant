@@ -17,6 +17,7 @@ use Illuminate\Support\Carbon;
  * @property string|null $purchase_order_id
  * @property string|null $goods_receipt_id
  * @property string $bill_number
+ * @property string $vendor_invoice_number
  * @property Carbon $bill_date
  * @property Carbon $due_date
  * @property string $subtotal
@@ -55,6 +56,7 @@ class SupplierBill extends Model
         'purchase_order_id',
         'goods_receipt_id',
         'bill_number',
+        'vendor_invoice_number',
         'bill_date',
         'due_date',
         'subtotal',
