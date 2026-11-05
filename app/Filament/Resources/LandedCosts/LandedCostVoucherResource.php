@@ -216,7 +216,7 @@ class LandedCostVoucherResource extends Resource
                     ->action(function (LandedCostVoucher $record) {
                         /** @var LandedCostAllocationContract $service */
                         $service = app(LandedCostAllocationContract::class);
-                        $userId = Auth::id() ?? $record->created_by ?? 'system';
+                        $userId = (string) (Auth::id() ?? $record->created_by ?? 'system');
 
                         $service->postVoucher($record->id, $userId);
 

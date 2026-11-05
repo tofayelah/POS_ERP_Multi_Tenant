@@ -44,7 +44,7 @@ class LandedCostAllocationService implements LandedCostAllocationContract
             if (! $voucherNumber) {
                 if ($this->numberSeries) {
                     try {
-                        $fiscalYear = date('Y', strtotime($dto->voucherDate));
+                        $fiscalYear = Carbon::parse($dto->voucherDate)->format('Y');
                         $voucherNumber = $this->numberSeries->getNextNumber($dto->companyId, $dto->branchId, 'LCV', $fiscalYear);
                     } catch (\Throwable) {
                         $voucherNumber = 'LCV-'.date('Ym').'-'.strtoupper(Str::random(6));
@@ -132,6 +132,7 @@ class LandedCostAllocationService implements LandedCostAllocationContract
 
                 // Compute pro-rata allocation per line
                 $allocatedSum = BigDecimal::zero();
+                /** @var array<string, array{grn_line: GoodsReceiptLine, allocated_amount: BigDecimal, additional_unit_cost: BigDecimal}> $allocationsToCreate */
                 $allocationsToCreate = [];
                 $maxBaseLineId = null;
                 $maxBaseVal = BigDecimal::zero();
@@ -160,7 +161,7 @@ class LandedCostAllocationService implements LandedCostAllocationContract
 
                 // Adjust any rounding discrepancy on the line with the largest base
                 $discrepancy = $totalCost->minus($allocatedSum);
-                if (! $discrepancy->isZero() && $maxBaseLineId !== null) {
+                if (! $discrepancy->isZero() && $maxBaseLineId !== null && isset($allocationsToCreate[$maxBaseLineId])) {
                     $adjShare = $allocationsToCreate[$maxBaseLineId]['allocated_amount']->plus($discrepancy);
                     $qty = BigDecimal::of($allocationsToCreate[$maxBaseLineId]['grn_line']->received_quantity);
                     $adjUnit = $qty->isPositive()
@@ -247,7 +248,7 @@ class LandedCostAllocationService implements LandedCostAllocationContract
                 $grnLine = GoodsReceiptLine::find($allocation->goods_receipt_line_id);
                 $receivedQty = $grnLine ? BigDecimal::of($grnLine->received_quantity) : $onHand;
 
-                if ($onHand->isPositive() && $receivedQty->isPositive()) {
+                if ($balance !== null && $onHand->isPositive() && $receivedQty->isPositive()) {
                     if ($onHand->isGreaterThanOrEqualTo($receivedQty)) {
                         // 100% of received units still in stock: full capitalization into inventory WAC
                         $adjInventory = $allocAmount;
