@@ -6,10 +6,12 @@ use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use Filament\Navigation\NavigationGroup;
 use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
+use Filament\Support\Enums\MaxWidth;
 use Filament\Widgets\AccountWidget;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
@@ -30,7 +32,26 @@ class PlatformPanelProvider extends PanelProvider
             ->brandName('KC ERP Control Plane')
             ->colors([
                 'primary' => Color::Amber,
+                'gray' => Color::Slate,
             ])
+            ->maxContentWidth(MaxWidth::Full)
+            ->sidebarCollapsibleOnDesktop()
+            ->sidebarWidth('17rem')
+            ->navigationGroups([
+                NavigationGroup::make('SAAS MANAGEMENT')
+                    ->icon('heroicon-o-building-office-2'),
+                NavigationGroup::make('COMMERCIAL')
+                    ->icon('heroicon-o-credit-card'),
+                NavigationGroup::make('PLATFORM OPERATIONS')
+                    ->icon('heroicon-o-cpu-chip'),
+                NavigationGroup::make('SECURITY & GOVERNANCE')
+                    ->icon('heroicon-o-shield-check'),
+                NavigationGroup::make('CUSTOMER SUCCESS')
+                    ->icon('heroicon-o-user-group'),
+                NavigationGroup::make('SYSTEM SETTINGS')
+                    ->icon('heroicon-o-cog-6-tooth'),
+            ])
+            ->globalSearchKeyBindings(['command+k', 'ctrl+k'])
             ->discoverResources(in: app_path('Filament/Platform/Resources'), for: 'App\\Filament\\Platform\\Resources')
             ->discoverPages(in: app_path('Filament/Platform/Pages'), for: 'App\\Filament\\Platform\\Pages')
             ->pages([

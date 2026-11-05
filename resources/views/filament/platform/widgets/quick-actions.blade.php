@@ -1,73 +1,100 @@
 <x-filament-widgets::widget>
     <x-filament::section>
         <x-slot name="heading">
-            <div style="display: flex; align-items: center; gap: 0.625rem;">
-                <span style="display: inline-flex; align-items: center; justify-content: center; width: 2rem; height: 2rem; border-radius: 0.5rem; background: rgba(245, 158, 11, 0.15); color: #f59e0b;">
-                    <x-filament::icon icon="heroicon-o-bolt" style="width: 1.25rem; height: 1.25rem;" />
+            <div class="flex items-center gap-2.5">
+                <span class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-amber-500/15 text-amber-500">
+                    <x-filament::icon icon="heroicon-o-bolt" class="w-5 h-5" />
                 </span>
-                <span style="font-size: 1.15rem; font-weight: 700; letter-spacing: -0.01em;">
+                <span class="text-lg font-bold tracking-tight text-white">
                     Platform Quick Actions & Store Launchpad
                 </span>
             </div>
         </x-slot>
         <x-slot name="description">
-            <span style="color: #9ca3af; font-size: 0.875rem;">
-                One-click access to retail store ERP instances, cashier POS terminals, tenant provisioning, and billing controls.
+            <span class="text-sm text-slate-400">
+                Direct access to active store ERP instances, edge POS registers, tenant onboarding, and platform controls.
             </span>
         </x-slot>
 
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 1rem; margin-top: 1rem;">
-            <!-- Card 1: Acme Retail BD (Pilot) -->
-            <x-filament::section :compact="true" style="height: 100%;">
-                <div style="display: flex; flex-direction: column; height: 100%; justify-content: space-between; min-height: 190px;">
-                    <div>
-                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.85rem;">
-                            <span style="display: inline-flex; align-items: center; justify-content: center; width: 2.75rem; height: 2.75rem; border-radius: 0.75rem; background: rgba(245, 158, 11, 0.15); color: #f59e0b;">
-                                <x-filament::icon icon="heroicon-o-building-storefront" style="width: 1.5rem; height: 1.5rem;" />
-                            </span>
-                            <x-filament::badge color="success">Pilot Store</x-filament::badge>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mt-4">
+            {{-- Dynamic Active Tenant Store Cards --}}
+            @forelse ($activeTenants as $tenant)
+                <x-filament::section :compact="true" class="h-full border border-white/5 bg-slate-900/60">
+                    <div class="flex flex-col h-full justify-between min-h-[190px]">
+                        <div>
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-amber-500/15 text-amber-400">
+                                    <x-filament::icon icon="heroicon-o-building-storefront" class="w-5 h-5" />
+                                </span>
+                                <x-filament::badge color="success">Active ERP</x-filament::badge>
+                            </div>
+                            <h3 class="text-base font-bold text-white mb-1 truncate" title="{{ $tenant->name }}">
+                                {{ $tenant->name }}
+                            </h3>
+                            <p class="text-xs leading-relaxed text-slate-400 mb-4">
+                                Portal: <span class="font-mono text-sky-400 font-semibold">{{ $tenant->subdomain }}.kcerp.com</span>
+                                <br>
+                                Plan: <span class="text-slate-300 font-medium capitalize">{{ $tenant->subscription_plan ?? 'Standard' }}</span>
+                            </p>
                         </div>
-                        <h3 style="font-size: 1.05rem; font-weight: 700; color: #ffffff; margin-bottom: 0.35rem;">
-                            Acme Retail BD
-                        </h3>
-                        <p style="font-size: 0.825rem; line-height: 1.45; color: #9ca3af; margin-bottom: 1.25rem;">
-                            Flagship 3-branch pilot (Dhanmondi, Gulshan, Uttara) with live double-entry GL & Mushak 6.3 VAT.
-                        </p>
+                        <div class="mt-auto pt-2">
+                            <x-filament::button
+                                tag="a"
+                                :href="url('/admin/' . $tenant->subdomain)"
+                                target="_blank"
+                                icon="heroicon-m-arrow-top-right-on-square"
+                                icon-position="after"
+                                color="warning"
+                                class="w-full justify-center font-semibold shadow-sm"
+                            >
+                                Open Store ERP
+                            </x-filament::button>
+                        </div>
                     </div>
-                    <div style="margin-top: auto;">
-                        <x-filament::button
-                            tag="a"
-                            :href="url('/admin/acme')"
-                            target="_blank"
-                            icon="heroicon-m-arrow-top-right-on-square"
-                            icon-position="after"
-                            color="warning"
-                            style="width: 100%; justify-content: center; font-weight: 600;"
-                        >
-                            Open Store ERP
-                        </x-filament::button>
+                </x-filament::section>
+            @empty
+                <x-filament::section :compact="true" class="h-full border border-dashed border-amber-500/30 bg-slate-900/40">
+                    <div class="flex flex-col h-full justify-between min-h-[190px] text-center p-2">
+                        <div class="my-auto">
+                            <span class="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-amber-500/15 text-amber-500 mb-2">
+                                <x-filament::icon icon="heroicon-o-plus-circle" class="w-6 h-6" />
+                            </span>
+                            <h3 class="text-sm font-bold text-white mb-1">No Active Tenants</h3>
+                            <p class="text-xs text-slate-400">Onboard your first retail chain to launch an ERP instance.</p>
+                        </div>
+                        <div class="mt-auto pt-3">
+                            <x-filament::button
+                                tag="a"
+                                :href="url('/platform/tenants/create')"
+                                icon="heroicon-m-plus"
+                                color="warning"
+                                class="w-full justify-center font-semibold"
+                            >
+                                Onboard Tenant
+                            </x-filament::button>
+                        </div>
                     </div>
-                </div>
-            </x-filament::section>
+                </x-filament::section>
+            @endforelse
 
-            <!-- Card 2: Offline POS Cashier -->
-            <x-filament::section :compact="true" style="height: 100%;">
-                <div style="display: flex; flex-direction: column; height: 100%; justify-content: space-between; min-height: 190px;">
+            {{-- Offline POS Cashier Terminal Card --}}
+            <x-filament::section :compact="true" class="h-full border border-white/5 bg-slate-900/60">
+                <div class="flex flex-col h-full justify-between min-h-[190px]">
                     <div>
-                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.85rem;">
-                            <span style="display: inline-flex; align-items: center; justify-content: center; width: 2.75rem; height: 2.75rem; border-radius: 0.75rem; background: rgba(2, 132, 199, 0.15); color: #38bdf8;">
-                                <x-filament::icon icon="heroicon-o-computer-desktop" style="width: 1.5rem; height: 1.5rem;" />
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-sky-500/15 text-sky-400">
+                                <x-filament::icon icon="heroicon-o-computer-desktop" class="w-5 h-5" />
                             </span>
                             <x-filament::badge color="info">Offline PWA</x-filament::badge>
                         </div>
-                        <h3 style="font-size: 1.05rem; font-weight: 700; color: #ffffff; margin-bottom: 0.35rem;">
-                            POS Cashier Terminal
+                        <h3 class="text-base font-bold text-white mb-1">
+                            POS Terminal Shell
                         </h3>
-                        <p style="font-size: 0.825rem; line-height: 1.45; color: #9ca3af; margin-bottom: 1.25rem;">
-                            Dexie IndexedDB offline cashier register with barcode scanner and Go hardware bridge integration.
+                        <p class="text-xs leading-relaxed text-slate-400 mb-4">
+                            Dexie IndexedDB offline cashier register with hardware bridge barcode & printer integration.
                         </p>
                     </div>
-                    <div style="margin-top: auto;">
+                    <div class="mt-auto pt-2">
                         <x-filament::button
                             tag="a"
                             :href="url('/pos')"
@@ -75,72 +102,39 @@
                             icon="heroicon-m-arrow-top-right-on-square"
                             icon-position="after"
                             color="info"
-                            style="width: 100%; justify-content: center; font-weight: 600;"
+                            class="w-full justify-center font-semibold shadow-sm"
                         >
-                            Launch POS Terminal
+                            Launch POS Register
                         </x-filament::button>
                     </div>
                 </div>
             </x-filament::section>
 
-            <!-- Card 3: Staging Retail Mart -->
-            <x-filament::section :compact="true" style="height: 100%;">
-                <div style="display: flex; flex-direction: column; height: 100%; justify-content: space-between; min-height: 190px;">
+            {{-- Onboard / Manage Tenants Card --}}
+            <x-filament::section :compact="true" class="h-full border border-white/5 bg-slate-900/60">
+                <div class="flex flex-col h-full justify-between min-h-[190px]">
                     <div>
-                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.85rem;">
-                            <span style="display: inline-flex; align-items: center; justify-content: center; width: 2.75rem; height: 2.75rem; border-radius: 0.75rem; background: rgba(147, 51, 234, 0.15); color: #c084fc;">
-                                <x-filament::icon icon="heroicon-o-building-office-2" style="width: 1.5rem; height: 1.5rem;" />
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-emerald-500/15 text-emerald-400">
+                                <x-filament::icon icon="heroicon-o-user-group" class="w-5 h-5" />
                             </span>
-                            <x-filament::badge color="primary">Staging Testbed</x-filament::badge>
+                            <x-filament::badge color="success">Organizations</x-filament::badge>
                         </div>
-                        <h3 style="font-size: 1.05rem; font-weight: 700; color: #ffffff; margin-bottom: 0.35rem;">
-                            Staging Retail Mart
+                        <h3 class="text-base font-bold text-white mb-1">
+                            Manage Retail Chains
                         </h3>
-                        <p style="font-size: 0.825rem; line-height: 1.45; color: #9ca3af; margin-bottom: 1.25rem;">
-                            Secondary pilot testbed with Dhanmondi Superstore and Staging Flagship branches for rehearsals.
+                        <p class="text-xs leading-relaxed text-slate-400 mb-4">
+                            Onboard new retail chains, configure subdomains, inspect RLS boundaries, and manage lifecycles.
                         </p>
                     </div>
-                    <div style="margin-top: auto;">
-                        <x-filament::button
-                            tag="a"
-                            :href="url('/admin/staging')"
-                            target="_blank"
-                            icon="heroicon-m-arrow-top-right-on-square"
-                            icon-position="after"
-                            color="primary"
-                            style="width: 100%; justify-content: center; font-weight: 600;"
-                        >
-                            Open Staging ERP
-                        </x-filament::button>
-                    </div>
-                </div>
-            </x-filament::section>
-
-            <!-- Card 4: Manage Retail Tenants -->
-            <x-filament::section :compact="true" style="height: 100%;">
-                <div style="display: flex; flex-direction: column; height: 100%; justify-content: space-between; min-height: 190px;">
-                    <div>
-                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.85rem;">
-                            <span style="display: inline-flex; align-items: center; justify-content: center; width: 2.75rem; height: 2.75rem; border-radius: 0.75rem; background: rgba(16, 185, 129, 0.15); color: #34d399;">
-                                <x-filament::icon icon="heroicon-o-user-group" style="width: 1.5rem; height: 1.5rem;" />
-                            </span>
-                            <x-filament::badge color="success">Multi-Tenant</x-filament::badge>
-                        </div>
-                        <h3 style="font-size: 1.05rem; font-weight: 700; color: #ffffff; margin-bottom: 0.35rem;">
-                            Retail Organizations
-                        </h3>
-                        <p style="font-size: 0.825rem; line-height: 1.45; color: #9ca3af; margin-bottom: 1.25rem;">
-                            Onboard new retail chains, configure subdomains, inspect RLS boundaries, and manage tenant lifecycles.
-                        </p>
-                    </div>
-                    <div style="margin-top: auto;">
+                    <div class="mt-auto pt-2">
                         <x-filament::button
                             tag="a"
                             :href="url('/platform/tenants')"
                             icon="heroicon-m-arrow-right"
                             icon-position="after"
                             color="gray"
-                            style="width: 100%; justify-content: center; font-weight: 600;"
+                            class="w-full justify-center font-semibold shadow-sm"
                         >
                             Manage Tenants
                         </x-filament::button>
@@ -148,66 +142,33 @@
                 </div>
             </x-filament::section>
 
-            <!-- Card 5: Plans & Tiers -->
-            <x-filament::section :compact="true" style="height: 100%;">
-                <div style="display: flex; flex-direction: column; height: 100%; justify-content: space-between; min-height: 190px;">
+            {{-- Configure Plans Card --}}
+            <x-filament::section :compact="true" class="h-full border border-white/5 bg-slate-900/60">
+                <div class="flex flex-col h-full justify-between min-h-[190px]">
                     <div>
-                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.85rem;">
-                            <span style="display: inline-flex; align-items: center; justify-content: center; width: 2.75rem; height: 2.75rem; border-radius: 0.75rem; background: rgba(234, 88, 12, 0.15); color: #fb923c;">
-                                <x-filament::icon icon="heroicon-o-credit-card" style="width: 1.5rem; height: 1.5rem;" />
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-orange-500/15 text-orange-400">
+                                <x-filament::icon icon="heroicon-o-credit-card" class="w-5 h-5" />
                             </span>
-                            <x-filament::badge color="warning">SaaS Billing</x-filament::badge>
+                            <x-filament::badge color="warning">Tiers & Limits</x-filament::badge>
                         </div>
-                        <h3 style="font-size: 1.05rem; font-weight: 700; color: #ffffff; margin-bottom: 0.35rem;">
-                            Plans & Tier Limits
+                        <h3 class="text-base font-bold text-white mb-1">
+                            Plans & Quotas
                         </h3>
-                        <p style="font-size: 0.825rem; line-height: 1.45; color: #9ca3af; margin-bottom: 1.25rem;">
-                            Starter (৳2,500), Standard (৳5,000), and Enterprise (৳15,000) tiers with terminal & branch quotas.
+                        <p class="text-xs leading-relaxed text-slate-400 mb-4">
+                            Configure SaaS subscription tiers, branch and POS terminal quotas, pricing, and module entitlements.
                         </p>
                     </div>
-                    <div style="margin-top: auto;">
+                    <div class="mt-auto pt-2">
                         <x-filament::button
                             tag="a"
                             :href="url('/platform/plans')"
                             icon="heroicon-m-arrow-right"
                             icon-position="after"
                             color="gray"
-                            style="width: 100%; justify-content: center; font-weight: 600;"
+                            class="w-full justify-center font-semibold shadow-sm"
                         >
                             Configure Plans
-                        </x-filament::button>
-                    </div>
-                </div>
-            </x-filament::section>
-
-            <!-- Card 6: Watchdog & Invariant Health -->
-            <x-filament::section :compact="true" style="height: 100%;">
-                <div style="display: flex; flex-direction: column; height: 100%; justify-content: space-between; min-height: 190px;">
-                    <div>
-                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.85rem;">
-                            <span style="display: inline-flex; align-items: center; justify-content: center; width: 2.75rem; height: 2.75rem; border-radius: 0.75rem; background: rgba(16, 185, 129, 0.15); color: #34d399;">
-                                <x-filament::icon icon="heroicon-o-shield-check" style="width: 1.5rem; height: 1.5rem;" />
-                            </span>
-                            <x-filament::badge color="success">Watchdog 100%</x-filament::badge>
-                        </div>
-                        <h3 style="font-size: 1.05rem; font-weight: 700; color: #ffffff; margin-bottom: 0.35rem;">
-                            Daily Invariant Watchdog
-                        </h3>
-                        <p style="font-size: 0.825rem; line-height: 1.45; color: #9ca3af; margin-bottom: 1.25rem;">
-                            Automated reconciliation of GL cash accounts, inventory movements, Mushak 6.2 VAT, and audit chains.
-                        </p>
-                    </div>
-                    <div style="margin-top: auto;">
-                        <x-filament::button
-                            tag="a"
-                            :href="url('/ready')"
-                            target="_blank"
-                            icon="heroicon-m-arrow-top-right-on-square"
-                            icon-position="after"
-                            color="success"
-                            style="width: 100%; justify-content: center; font-weight: 600;"
-                        >
-                            System Health Status
                         </x-filament::button>
                     </div>
                 </div>

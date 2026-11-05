@@ -2,12 +2,14 @@
 
 namespace App\Filament\Platform\Widgets;
 
+use App\Core\Platform\Services\PlatformTelemetryService;
 use App\Models\Branch;
-use App\Models\Plan;
+use App\Models\PosShift;
 use App\Models\PosTerminal;
 use App\Models\Tenant;
 use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
+use Illuminate\Support\Carbon;
 
 class PlatformStatsOverviewWidget extends StatsOverviewWidget
 {
@@ -33,48 +35,69 @@ class PlatformStatsOverviewWidget extends StatsOverviewWidget
      */
     protected function getStats(): array
     {
+        $telemetry = app(PlatformTelemetryService::class);
+
         $totalTenants = Tenant::count();
         $activeTenants = Tenant::where('status', 'active')->count();
+        $inArrearsTenants = Tenant::where('status', 'in_arrears')->count();
 
-        // Calculate platform MRR across all active tenants
-        $plans = Plan::all()->keyBy('code');
-        $mrr = 0.0;
-        foreach (Tenant::where('status', 'active')->get() as $tenant) {
-            $plan = $plans->get((string) $tenant->subscription_plan);
-            if ($plan !== null) {
-                $mrr += (float) $plan->price_bdt;
-            }
-        }
-        if ($mrr === 0.0 && $totalTenants > 0) {
-            $mrr = 42500.0;
-        }
+        // Real 7-day tenant registration trend (zero fabrication)
+        $sevenDaysAgo = Carbon::now()->subDays(6)->startOfDay();
+        /** @var array<int, int> $tenantHistory */
+        $tenantHistory = Tenant::query()
+            ->where('created_at', '>=', $sevenDaysAgo)
+            ->selectRaw('DATE(created_at) as date, count(*) as count')
+            ->groupBy('date')
+            ->orderBy('date')
+            ->pluck('count')
+            ->map(fn (mixed $c): int => (int) $c)
+            ->toArray();
 
+        // 2. Real Financial Metrics (Zero hardcoded fallback)
+        $financials = $telemetry->getFinancialMetrics();
+
+        // 3. Physical Outlets and Edge Terminals Fleet
         $branchesCount = Branch::count();
         $terminalsCount = PosTerminal::count();
+        $openShiftsCount = PosShift::where('status', 'open')->count();
+
+        // 4. Live PostgreSQL RLS Catalog Inspection
+        $rls = $telemetry->getRlsCompliance();
+        $rlsStatus = $rls['status'] === 'ok';
+
+        $tenantStat = Stat::make('Retail Organizations', (string) $totalTenants)
+            ->description("{$activeTenants} Active" . ($inArrearsTenants > 0 ? " • {$inArrearsTenants} In Arrears" : ' • 0 In Arrears'))
+            ->descriptionIcon('heroicon-m-building-office-2')
+            ->color($inArrearsTenants > 0 ? 'warning' : 'success');
+
+        if (count($tenantHistory) >= 2) {
+            $tenantStat->chart($tenantHistory);
+        }
+
+        $mrrStat = Stat::make('Platform MRR', $financials['formatted_mrr'])
+            ->description(
+                $financials['has_data']
+                    ? "{$financials['formatted_arr']} ARR • {$financials['active_subscriptions_count']} Active Chains"
+                    : 'No active paid subscriptions • ৳ 0 ARR'
+            )
+            ->descriptionIcon('heroicon-m-banknotes')
+            ->color($financials['has_data'] ? 'primary' : 'gray');
+
+        $fleetStat = Stat::make('Outlets & Edge POS', "{$branchesCount} Stores")
+            ->description("{$terminalsCount} Terminals • {$openShiftsCount} Open Cashier Shifts")
+            ->descriptionIcon('heroicon-m-computer-desktop')
+            ->color('info');
+
+        $rlsStat = Stat::make('PostgreSQL 17 RLS', "{$rls['forced_tables']}/{$rls['total_tables']} Forced")
+            ->description($rlsStatus ? '100% tenant tables enforce fail-closed RLS' : 'CRITICAL: Tables without forced RLS detected!')
+            ->descriptionIcon($rlsStatus ? 'heroicon-m-shield-check' : 'heroicon-m-exclamation-triangle')
+            ->color($rlsStatus ? 'success' : 'danger');
 
         return [
-            Stat::make('Total Retail Tenants', (string) $totalTenants)
-                ->description("{$activeTenants} Active • RLS & DB Boundaries Enforced")
-                ->descriptionIcon('heroicon-m-check-badge')
-                ->color('success')
-                ->chart([1, 2, 3, 4, 5, max(6, $totalTenants)]),
-
-            Stat::make('Platform MRR', '৳ '.number_format($mrr, 0))
-                ->description("Recurring revenue across {$activeTenants} active chains")
-                ->descriptionIcon('heroicon-m-banknotes')
-                ->color('primary')
-                ->chart([25000, 30000, 35000, 40000, (int) $mrr]),
-
-            Stat::make('Retail Outlets & POS', "{$branchesCount} Outlets")
-                ->description("{$terminalsCount} Registered Edge POS Terminals")
-                ->descriptionIcon('heroicon-m-computer-desktop')
-                ->color('info')
-                ->chart([10, 20, 30, 45, max(51, $terminalsCount)]),
-
-            Stat::make('Daily Invariant Audits', '100% Passed')
-                ->description('GL Trial Balance, VAT & Stock movements verified')
-                ->descriptionIcon('heroicon-m-shield-check')
-                ->color('success'),
+            $tenantStat,
+            $mrrStat,
+            $fleetStat,
+            $rlsStat,
         ];
     }
 }

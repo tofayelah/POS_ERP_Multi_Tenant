@@ -3,9 +3,11 @@
 namespace App\Filament\Platform\Widgets;
 
 use App\Filament\Platform\Resources\Tenants\TenantResource;
+use App\Models\Plan;
 use App\Models\Tenant;
 use Filament\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget;
 use Illuminate\Database\Eloquent\Builder;
@@ -63,6 +65,22 @@ class PlatformTenantsTableWidget extends TableWidget
                     ->dateTime('M d, Y')
                     ->sortable(),
             ])
+            ->filters([
+                SelectFilter::make('status')
+                    ->label('Status')
+                    ->options([
+                        'active' => 'Active',
+                        'in_arrears' => 'In Arrears',
+                        'suspended' => 'Suspended',
+                    ]),
+
+                SelectFilter::make('subscription_plan')
+                    ->label('Plan Tier')
+                    ->options(fn (): array => Plan::query()->pluck('name', 'code')->toArray()),
+            ])
+            ->emptyStateHeading('No registered retail organizations')
+            ->emptyStateDescription('Onboard a new organization to establish a store ERP portal.')
+            ->emptyStateIcon('heroicon-o-building-storefront')
             ->actions([
                 Action::make('open_admin')
                     ->label('Open Store ERP')

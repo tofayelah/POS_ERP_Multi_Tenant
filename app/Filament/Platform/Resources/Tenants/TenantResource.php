@@ -17,6 +17,7 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 
 class TenantResource extends Resource
@@ -26,6 +27,23 @@ class TenantResource extends Resource
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-building-office-2';
 
     protected static ?string $navigationLabel = 'Tenants';
+
+    protected static ?string $navigationGroup = 'SAAS MANAGEMENT';
+
+    protected static ?int $navigationSort = 1;
+
+    public static function getNavigationBadge(): ?string
+    {
+        $active = Tenant::where('status', 'active')->count();
+        $total = Tenant::count();
+
+        return "{$active}/{$total}";
+    }
+
+    public static function getNavigationBadgeColor(): ?string
+    {
+        return 'primary';
+    }
 
     public static function form(Schema $schema): Schema
     {
@@ -138,6 +156,23 @@ class TenantResource extends Resource
                     ->dateTime('M d, Y H:i')
                     ->sortable(),
             ])
+            ->filters([
+                SelectFilter::make('status')
+                    ->label('Tenant Status')
+                    ->options([
+                        'active' => 'Active',
+                        'in_arrears' => 'In Arrears',
+                        'suspended' => 'Suspended',
+                        'offboarded' => 'Offboarded',
+                    ]),
+
+                SelectFilter::make('subscription_plan')
+                    ->label('Subscription Tier')
+                    ->options(fn (): array => Plan::query()->pluck('name', 'code')->toArray()),
+            ])
+            ->emptyStateHeading('No retail organizations registered')
+            ->emptyStateDescription('Onboard a new multi-tenant organization to get started.')
+            ->emptyStateIcon('heroicon-o-building-storefront')
             ->actions([
                 EditAction::make(),
 
@@ -162,6 +197,7 @@ class TenantResource extends Resource
                     ])
                     ->action(function (Tenant $record, array $data): void {
                         app(TenantLifecycleServiceContract::class)->suspend($record, (string) $data['reason']);
+                        app(\App\Core\Platform\Services\PlatformAuditService::class)->logTenantSuspension($record, (string) $data['reason']);
                         Notification::make()
                             ->title('Tenant Suspended')
                             ->body("{$record->name} is now suspended.")
@@ -179,6 +215,7 @@ class TenantResource extends Resource
                     ->modalDescription('Reinstate tenant and restore full POS & back-office access.')
                     ->action(function (Tenant $record): void {
                         app(TenantLifecycleServiceContract::class)->reinstate($record);
+                        app(\App\Core\Platform\Services\PlatformAuditService::class)->logTenantReinstatement($record);
                         Notification::make()
                             ->title('Tenant Reinstated')
                             ->body("{$record->name} has been restored to active status.")

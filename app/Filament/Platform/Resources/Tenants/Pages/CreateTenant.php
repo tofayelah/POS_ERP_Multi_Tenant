@@ -41,6 +41,8 @@ class CreateTenant extends CreateRecord
         /** @var Tenant $tenant */
         $tenant = $result['tenant'];
 
+        app(\App\Core\Platform\Services\PlatformAuditService::class)->logTenantCreation($tenant, $data);
+
         return $tenant;
     }
 }

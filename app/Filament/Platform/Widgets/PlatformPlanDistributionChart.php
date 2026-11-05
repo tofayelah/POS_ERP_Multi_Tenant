@@ -2,6 +2,7 @@
 
 namespace App\Filament\Platform\Widgets;
 
+use App\Models\Plan;
 use App\Models\Tenant;
 use Filament\Widgets\ChartWidget;
 
@@ -54,34 +55,55 @@ class PlatformPlanDistributionChart extends ChartWidget
      */
     protected function getData(): array
     {
-        $starterCount = Tenant::where('subscription_plan', 'starter')->count();
-        $standardCount = Tenant::where('subscription_plan', 'standard')->count();
-        $enterpriseCount = Tenant::where('subscription_plan', 'enterprise')->count();
+        $palette = [
+            '#f59e0b', // Amber
+            '#0284c7', // Sky
+            '#10b981', // Emerald
+            '#a855f7', // Purple
+            '#f43f5e', // Rose
+            '#ea580c', // Orange
+        ];
 
-        // If counts are zero (e.g. fresh DB), provide sensible defaults
-        if ($starterCount === 0 && $standardCount === 0 && $enterpriseCount === 0) {
-            $starterCount = 3;
-            $standardCount = 1;
-            $enterpriseCount = 2;
+        $plans = Plan::all();
+        $counts = [];
+        $labels = [];
+        $colors = [];
+        $total = 0;
+
+        foreach ($plans as $index => $plan) {
+            $count = Tenant::where('subscription_plan', $plan->code)
+                ->where('status', 'active')
+                ->count();
+
+            $total += $count;
+            $counts[] = $count;
+            $labels[] = "{$plan->name} ({$count})";
+            $colors[] = $palette[$index % count($palette)];
+        }
+
+        // Honest empty state when no active subscriptions exist
+        if ($total === 0) {
+            return [
+                'datasets' => [
+                    [
+                        'label' => 'Tenants',
+                        'data' => [0],
+                        'backgroundColor' => ['#334155'], // Slate 700
+                    ],
+                ],
+                'labels' => ['No Active Subscriptions (0)'],
+            ];
         }
 
         return [
             'datasets' => [
                 [
                     'label' => 'Tenants',
-                    'data' => [$starterCount, $standardCount, $enterpriseCount],
-                    'backgroundColor' => [
-                        '#f59e0b', // Starter (Amber)
-                        '#0284c7', // Standard (Sky)
-                        '#10b981', // Enterprise (Emerald)
-                    ],
+                    'data' => $counts,
+                    'backgroundColor' => $colors,
                 ],
             ],
-            'labels' => [
-                "Starter Plan ({$starterCount})",
-                "Standard Plan ({$standardCount})",
-                "Enterprise Plan ({$enterpriseCount})",
-            ],
+            'labels' => $labels,
         ];
     }
 }

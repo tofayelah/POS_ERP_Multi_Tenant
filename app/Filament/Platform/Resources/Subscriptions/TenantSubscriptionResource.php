@@ -27,6 +27,22 @@ class TenantSubscriptionResource extends Resource
 
     protected static ?string $navigationLabel = 'Subscriptions';
 
+    protected static ?string $navigationGroup = 'COMMERCIAL';
+
+    protected static ?int $navigationSort = 2;
+
+    public static function getNavigationBadge(): ?string
+    {
+        $inArrears = TenantSubscription::where('status', 'in_arrears')->count();
+
+        return $inArrears > 0 ? (string) $inArrears : null;
+    }
+
+    public static function getNavigationBadgeColor(): ?string
+    {
+        return 'warning';
+    }
+
     public static function form(Schema $schema): Schema
     {
         return $schema
