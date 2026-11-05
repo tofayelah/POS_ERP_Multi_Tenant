@@ -12,6 +12,7 @@ use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 
 class ViewSupplierBill extends ViewRecord
@@ -55,8 +56,8 @@ class ViewSupplierBill extends ViewRecord
                             return;
                         }
 
-                        // Check if user has permission to override
-                        $canOverride = $user->hasRole('Financial Controller') || $user->hasRole('Tenant Admin') || $user->hasRole('Tenant Owner');
+                        // Check if user has permission to override via policy
+                        $canOverride = Gate::forUser($user)->allows('override', $record);
 
                         if (! $canOverride) {
                             Notification::make()

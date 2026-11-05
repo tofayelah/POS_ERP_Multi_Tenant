@@ -34,6 +34,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 
 class SupplierBillResource extends Resource
@@ -299,8 +300,8 @@ class SupplierBillResource extends Resource
                                     return;
                                 }
 
-                                // Check if user has permission to override
-                                $canOverride = $user->hasRole('Financial Controller') || $user->hasRole('Tenant Admin') || $user->hasRole('Tenant Owner');
+                                // Check if user has permission to override via policy
+                                $canOverride = Gate::forUser($user)->allows('override', $record);
 
                                 if (! $canOverride) {
                                     Notification::make()
