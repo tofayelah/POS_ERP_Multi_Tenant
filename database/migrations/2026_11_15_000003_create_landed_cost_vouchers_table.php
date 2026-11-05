@@ -37,13 +37,13 @@ return new class extends TenantMigration
                 ->on('branches')
                 ->onDelete('restrict');
 
-            $table->foreign(['tenant_id', 'created_by'], 'fk_lcv_creator')
-                ->references(['tenant_id', 'id'])
+            $table->foreign('created_by', 'fk_lcv_creator')
+                ->references('id')
                 ->on('users')
                 ->onDelete('set null');
 
-            $table->foreign(['tenant_id', 'posted_by'], 'fk_lcv_poster')
-                ->references(['tenant_id', 'id'])
+            $table->foreign('posted_by', 'fk_lcv_poster')
+                ->references('id')
                 ->on('users')
                 ->onDelete('set null');
 
