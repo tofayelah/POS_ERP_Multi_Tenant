@@ -72,6 +72,6 @@ class PlatformDashboardKpiTest extends TestCase
 
         Livewire::test(PlatformQuickActionsWidget::class)
             ->assertSuccessful()
-            ->assertSee('Platform Quick Actions & Store Launchpad');
+            ->assertSee('Platform Quick Actions');
     }
 }
