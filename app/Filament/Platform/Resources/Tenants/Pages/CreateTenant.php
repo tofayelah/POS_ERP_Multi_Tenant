@@ -2,6 +2,7 @@
 
 namespace App\Filament\Platform\Resources\Tenants\Pages;
 
+use App\Core\Platform\Services\PlatformAuditService;
 use App\Filament\Platform\Resources\Tenants\TenantResource;
 use App\Models\Tenant;
 use App\Modules\Billing\Contracts\OnboardingWizardServiceContract;
@@ -41,7 +42,7 @@ class CreateTenant extends CreateRecord
         /** @var Tenant $tenant */
         $tenant = $result['tenant'];
 
-        app(\App\Core\Platform\Services\PlatformAuditService::class)->logTenantCreation($tenant, $data);
+        app(PlatformAuditService::class)->logTenantCreation($tenant, $data);
 
         return $tenant;
     }

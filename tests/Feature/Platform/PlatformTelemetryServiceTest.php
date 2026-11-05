@@ -3,8 +3,6 @@
 namespace Tests\Feature\Platform;
 
 use App\Core\Platform\Services\PlatformTelemetryService;
-use App\Models\Plan;
-use App\Models\Tenant;
 use Tests\TestCase;
 
 class PlatformTelemetryServiceTest extends TestCase
@@ -14,7 +12,7 @@ class PlatformTelemetryServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->service = new PlatformTelemetryService();
+        $this->service = new PlatformTelemetryService;
     }
 
     public function test_postgres_probe_returns_ok_and_latency(): void

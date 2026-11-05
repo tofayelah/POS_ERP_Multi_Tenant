@@ -31,8 +31,8 @@ class PlatformAuditService
     /**
      * Record an administrative audit log entry.
      *
-     * @param array<string, mixed>|null $oldValues
-     * @param array<string, mixed>|null $newValues
+     * @param  array<string, mixed>|null  $oldValues
+     * @param  array<string, mixed>|null  $newValues
      */
     public function record(
         string $action,
@@ -135,7 +135,7 @@ class PlatformAuditService
     /**
      * Log tenant provisioning.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     public function logTenantCreation(Tenant $tenant, array $data, ?PlatformUser $actor = null): PlatformAuditLog
     {
@@ -167,8 +167,8 @@ class PlatformAuditService
     /**
      * Log plan update.
      *
-     * @param array<string, mixed> $oldValues
-     * @param array<string, mixed> $newValues
+     * @param  array<string, mixed>  $oldValues
+     * @param  array<string, mixed>  $newValues
      */
     public function logPlanUpdate(Plan $plan, array $oldValues, array $newValues, ?PlatformUser $actor = null): PlatformAuditLog
     {
@@ -186,7 +186,7 @@ class PlatformAuditService
     /**
      * Recursively mask sensitive keys in data payloads.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      * @return array<string, mixed>
      */
     public function maskSensitiveData(array $data): array

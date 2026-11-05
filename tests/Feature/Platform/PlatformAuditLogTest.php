@@ -30,7 +30,7 @@ class PlatformAuditLogTest extends TestCase
             ]
         );
 
-        $this->auditService = new PlatformAuditService();
+        $this->auditService = new PlatformAuditService;
     }
 
     public function test_audit_service_records_action_with_actor_and_payload_hash(): void

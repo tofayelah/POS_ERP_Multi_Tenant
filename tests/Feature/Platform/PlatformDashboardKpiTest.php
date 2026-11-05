@@ -7,7 +7,6 @@ use App\Filament\Platform\Widgets\PlatformQuickActionsWidget;
 use App\Filament\Platform\Widgets\PlatformStatsOverviewWidget;
 use App\Filament\Platform\Widgets\PlatformSystemHealthWidget;
 use App\Models\PlatformUser;
-use App\Models\Tenant;
 use Filament\Facades\Filament;
 use Illuminate\Support\Str;
 use Livewire\Livewire;

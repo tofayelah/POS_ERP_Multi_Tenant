@@ -66,7 +66,7 @@ class PlatformStatsOverviewWidget extends StatsOverviewWidget
         $rlsStatus = $rls['status'] === 'ok';
 
         $tenantStat = Stat::make('Retail Organizations', (string) $totalTenants)
-            ->description("{$activeTenants} Active" . ($inArrearsTenants > 0 ? " • {$inArrearsTenants} In Arrears" : ' • 0 In Arrears'))
+            ->description("{$activeTenants} Active".($inArrearsTenants > 0 ? " • {$inArrearsTenants} In Arrears" : ' • 0 In Arrears'))
             ->descriptionIcon('heroicon-m-building-office-2')
             ->color($inArrearsTenants > 0 ? 'warning' : 'success');
 

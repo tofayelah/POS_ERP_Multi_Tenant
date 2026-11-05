@@ -2,6 +2,7 @@
 
 namespace App\Filament\Platform\Resources\Tenants;
 
+use App\Core\Platform\Services\PlatformAuditService;
 use App\Filament\Platform\Resources\Tenants\Pages\CreateTenant;
 use App\Filament\Platform\Resources\Tenants\Pages\EditTenant;
 use App\Filament\Platform\Resources\Tenants\Pages\ListTenants;
@@ -197,7 +198,7 @@ class TenantResource extends Resource
                     ])
                     ->action(function (Tenant $record, array $data): void {
                         app(TenantLifecycleServiceContract::class)->suspend($record, (string) $data['reason']);
-                        app(\App\Core\Platform\Services\PlatformAuditService::class)->logTenantSuspension($record, (string) $data['reason']);
+                        app(PlatformAuditService::class)->logTenantSuspension($record, (string) $data['reason']);
                         Notification::make()
                             ->title('Tenant Suspended')
                             ->body("{$record->name} is now suspended.")
@@ -215,7 +216,7 @@ class TenantResource extends Resource
                     ->modalDescription('Reinstate tenant and restore full POS & back-office access.')
                     ->action(function (Tenant $record): void {
                         app(TenantLifecycleServiceContract::class)->reinstate($record);
-                        app(\App\Core\Platform\Services\PlatformAuditService::class)->logTenantReinstatement($record);
+                        app(PlatformAuditService::class)->logTenantReinstatement($record);
                         Notification::make()
                             ->title('Tenant Reinstated')
                             ->body("{$record->name} has been restored to active status.")

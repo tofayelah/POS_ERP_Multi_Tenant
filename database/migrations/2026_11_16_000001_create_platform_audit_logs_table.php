@@ -61,10 +61,10 @@ return new class extends Migration
      */
     public function down(): void
     {
-        DB::connection('pgsql_owner')->unprepared("
+        DB::connection('pgsql_owner')->unprepared('
             DROP TRIGGER IF EXISTS trg_platform_audit_logs_immutability ON platform_audit_logs;
             DROP FUNCTION IF EXISTS trg_fn_enforce_platform_audit_log_immutability();
-        ");
+        ');
 
         Schema::connection('pgsql_owner')->dropIfExists('platform_audit_logs');
     }
