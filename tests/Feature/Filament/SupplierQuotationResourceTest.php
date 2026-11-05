@@ -6,6 +6,7 @@ use App\Core\Tenancy\TenantContext;
 use App\Filament\Resources\SupplierQuotations\Pages\CreateSupplierQuotation;
 use App\Filament\Resources\SupplierQuotations\Pages\ViewSupplierQuotation;
 use App\Filament\Resources\SupplierQuotations\SupplierQuotationResource;
+use App\Filament\Widgets\SupplierQuotationComparisonWidget;
 use App\Models\Branch;
 use App\Models\Company;
 use App\Models\JournalEntry;
@@ -385,7 +386,7 @@ class SupplierQuotationResourceTest extends TestCase
             'lead_time_days' => 3,
         ]);
 
-        $widget = new \App\Filament\Widgets\SupplierQuotationComparisonWidget;
+        $widget = new SupplierQuotationComparisonWidget;
         $widget->record = $quoteA;
         $comp = $widget->getComparisonData();
 

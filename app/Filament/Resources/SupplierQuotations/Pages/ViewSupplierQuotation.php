@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\SupplierQuotations\Pages;
 
 use App\Filament\Resources\SupplierQuotations\SupplierQuotationResource;
+use App\Filament\Widgets\SupplierQuotationComparisonWidget;
 use App\Models\SupplierQuotation;
 use App\Modules\Procurement\Contracts\ProcurementDocumentChainContract;
 use Filament\Actions\Action;
@@ -19,7 +20,7 @@ class ViewSupplierQuotation extends ViewRecord
     protected function getHeaderWidgets(): array
     {
         return [
-            \App\Filament\Widgets\SupplierQuotationComparisonWidget::class,
+            SupplierQuotationComparisonWidget::class,
         ];
     }
 
