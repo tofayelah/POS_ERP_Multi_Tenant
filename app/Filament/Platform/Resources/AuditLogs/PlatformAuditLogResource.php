@@ -22,7 +22,7 @@ class PlatformAuditLogResource extends Resource
 
     protected static ?string $navigationLabel = 'Platform Audit Logs';
 
-    protected static ?string $navigationGroup = 'SECURITY & GOVERNANCE';
+    protected static \UnitEnum|string|null $navigationGroup = 'SECURITY & GOVERNANCE';
 
     protected static ?int $navigationSort = 1;
 

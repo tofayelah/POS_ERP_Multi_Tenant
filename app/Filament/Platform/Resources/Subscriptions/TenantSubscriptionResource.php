@@ -27,7 +27,7 @@ class TenantSubscriptionResource extends Resource
 
     protected static ?string $navigationLabel = 'Subscriptions';
 
-    protected static ?string $navigationGroup = 'COMMERCIAL';
+    protected static \UnitEnum|string|null $navigationGroup = 'COMMERCIAL';
 
     protected static ?int $navigationSort = 2;
 
