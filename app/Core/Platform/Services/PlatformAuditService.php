@@ -226,9 +226,7 @@ class PlatformAuditService
             return false;
         }
 
-        $createdAtString = $log->created_at instanceof Carbon
-            ? $log->created_at->toIso8601String()
-            : Carbon::parse($log->created_at)->toIso8601String();
+        $createdAtString = $log->created_at->toIso8601String();
 
         $serialized = json_encode([
             'action' => $log->action,
