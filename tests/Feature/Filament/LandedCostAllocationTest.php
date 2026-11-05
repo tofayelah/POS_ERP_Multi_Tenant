@@ -104,7 +104,7 @@ class LandedCostAllocationTest extends TestCase
             'tenant_id' => $this->tenant->id,
             'name' => 'Procurement Officer',
             'email' => 'officer-'.Str::random(6).'@kcerp.com',
-            'password' => bcrypt('Secret123!'),
+            'password' => 'Secret123!',
         ]);
 
         $this->supplier = Supplier::create([
