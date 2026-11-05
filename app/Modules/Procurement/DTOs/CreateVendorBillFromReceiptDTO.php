@@ -12,5 +12,6 @@ readonly class CreateVendorBillFromReceiptDTO
         public string $dueDate,
         public string $createdBy,
         public ?string $periodId = null,
+        public ?string $vendorInvoiceNumber = null,
     ) {}
 }

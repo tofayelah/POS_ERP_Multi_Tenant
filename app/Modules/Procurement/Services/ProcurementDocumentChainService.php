@@ -329,6 +329,7 @@ class ProcurementDocumentChainService implements ProcurementDocumentChainContrac
                 'purchase_order_id' => $grn->purchase_order_id,
                 'goods_receipt_id' => $grn->id,
                 'bill_number' => $billNumber,
+                'vendor_invoice_number' => $dto->vendorInvoiceNumber ?? $billNumber,
                 'bill_date' => $dto->billDate,
                 'due_date' => $dto->dueDate,
                 'subtotal' => (string) $subtotalSum->toScale(4, RoundingMode::HalfUp),

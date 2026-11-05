@@ -68,6 +68,7 @@ class CreateSupplierBill extends CreateRecord
                 'purchase_order_id' => $data['purchase_order_id'] ?? null,
                 'goods_receipt_id' => $data['goods_receipt_id'] ?? null,
                 'bill_number' => $billNumber,
+                'vendor_invoice_number' => $data['vendor_invoice_number'] ?? $billNumber,
                 'bill_date' => $data['bill_date'],
                 'due_date' => $data['due_date'],
                 'subtotal' => (string) $subtotalSum->toScale(4, RoundingMode::HalfUp),
