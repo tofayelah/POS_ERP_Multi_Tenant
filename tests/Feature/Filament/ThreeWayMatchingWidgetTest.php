@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Filament;
 
+use App\Core\Audit\Workers\BuildAuditHashChainWorker;
 use App\Core\Tenancy\TenantContext;
 use App\Filament\Resources\SupplierBills\Pages\ViewSupplierBill;
 use App\Filament\Widgets\ThreeWayMatchingWidget;
@@ -681,7 +682,7 @@ class ThreeWayMatchingWidgetTest extends TestCase
         $this->assertNotEmpty($audit->payload_hash);
 
         // Prove that the audit hash chain worker processes and verifies the override log
-        $worker = app(\App\Core\Audit\Workers\BuildAuditHashChainWorker::class);
+        $worker = app(BuildAuditHashChainWorker::class);
         $processed = $worker->processTenant($this->tenant->id);
         $this->assertGreaterThanOrEqual(1, $processed);
 
