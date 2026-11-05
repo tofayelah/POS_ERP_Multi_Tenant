@@ -579,4 +579,60 @@ class LandedCostAllocationTest extends TestCase
         $clrLine = $journal->lines->where('account_id', $this->clearingAccount->id)->firstOrFail();
         $this->assertEquals('500.0000', $clrLine->credit_amount);
     }
+
+    public function test_tenant_isolation_on_landed_cost_vouchers(): void
+    {
+        // Create voucher in Tenant A
+        $grn = GoodsReceipt::create([
+            'tenant_id' => $this->tenant->id,
+            'company_id' => $this->company->id,
+            'branch_id' => $this->branch->id,
+            'warehouse_id' => $this->warehouse->id,
+            'supplier_id' => $this->supplier->id,
+            'grn_number' => 'GRN-2026-ISO-01',
+            'receipt_date' => now()->toDateString(),
+            'status' => 'confirmed',
+            'created_by' => $this->user->id,
+        ]);
+
+        GoodsReceiptLine::create([
+            'tenant_id' => $this->tenant->id,
+            'company_id' => $this->company->id,
+            'goods_receipt_id' => $grn->id,
+            'product_id' => $this->variantA->product_id,
+            'variant_id' => $this->variantA->id,
+            'received_quantity' => '10.0000',
+            'billed_quantity' => '0.0000',
+            'unit_cost' => '100.0000',
+        ]);
+
+        $voucher = $this->allocationService->createVoucher(new CreateLandedCostVoucherDTO(
+            companyId: $this->company->id,
+            branchId: $this->branch->id,
+            voucherDate: now()->toDateString(),
+            allocationMethod: 'by_value',
+            goodsReceiptIds: [$grn->id],
+            lines: [
+                new CreateLandedCostVoucherLineDTO(
+                    expenseType: 'freight',
+                    description: 'Freight for Tenant A',
+                    amount: '100.0000'
+                ),
+            ],
+            createdBy: $this->user->id
+        ));
+
+        // Switch to Tenant B
+        $tenantB = Tenant::create([
+            'id' => (string) Str::uuid(),
+            'name' => 'Competitor Tenant B',
+            'subdomain' => 'comp-'.Str::random(6),
+            'status' => 'active',
+        ]);
+        TenantContext::set($tenantB);
+
+        // Tenant B must not see Tenant A's voucher via Eloquent (Forced RLS)
+        $this->assertNull(LandedCostVoucher::find($voucher->id));
+        $this->assertCount(0, LandedCostVoucher::where('id', $voucher->id)->get());
+    }
 }
