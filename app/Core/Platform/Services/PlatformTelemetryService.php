@@ -175,29 +175,60 @@ class PlatformTelemetryService
     }
 
     /**
-     * Probe Go POS Hardware Bridge daemon on localhost:8181.
+     * Probe Go POS Hardware Bridge daemon on verified local endpoint (default 127.0.0.1:9191/health).
      *
      * @return array{status: string, latency_ms: float, details: string, checked_at: string}
      */
     public function getGoBridgeProbe(): array
     {
+        $url = (string) config('platform.pos_bridge.health_url', 'http://127.0.0.1:9191/health');
+        $timeout = (float) config('platform.pos_bridge.timeout_seconds', 1.0);
+
         try {
             $start = microtime(true);
-            $response = Http::timeout(1)->get('http://127.0.0.1:8181/health');
+            $response = Http::timeout($timeout)->get($url);
             $latency = round((microtime(true) - $start) * 1000, 2);
-            $isOk = $response->successful();
+
+            if (! $response->successful()) {
+                return [
+                    'status' => 'degraded',
+                    'latency_ms' => $latency,
+                    'details' => 'HTTP '.$response->status().' (daemon error)',
+                    'checked_at' => Carbon::now()->toIso8601String(),
+                ];
+            }
+
+            /** @var mixed $json */
+            $json = $response->json();
+            if (! is_array($json) || ($json['status'] ?? null) !== 'ok') {
+                return [
+                    'status' => 'degraded',
+                    'latency_ms' => $latency,
+                    'details' => 'Malformed health response',
+                    'checked_at' => Carbon::now()->toIso8601String(),
+                ];
+            }
+
+            $version = isset($json['version']) && is_string($json['version']) ? $json['version'] : '1.0.0';
 
             return [
-                'status' => $isOk ? 'ok' : 'degraded',
+                'status' => 'ok',
                 'latency_ms' => $latency,
-                'details' => $isOk ? "127.0.0.1:8181 online ({$latency}ms)" : 'HTTP '.$response->status(),
+                'details' => "127.0.0.1:9191 online v{$version} ({$latency}ms)",
                 'checked_at' => Carbon::now()->toIso8601String(),
             ];
-        } catch (Throwable) {
+        } catch (\Illuminate\Http\Client\ConnectionException) {
             return [
                 'status' => 'offline',
                 'latency_ms' => 0.0,
-                'details' => '127.0.0.1:8181 offline (daemon stopped)',
+                'details' => '127.0.0.1:9191 offline (connection refused / daemon stopped)',
+                'checked_at' => Carbon::now()->toIso8601String(),
+            ];
+        } catch (Throwable $e) {
+            return [
+                'status' => 'offline',
+                'latency_ms' => 0.0,
+                'details' => '127.0.0.1:9191 offline (daemon stopped)',
                 'checked_at' => Carbon::now()->toIso8601String(),
             ];
         }

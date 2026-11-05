@@ -3,6 +3,9 @@
 namespace Tests\Feature\Platform;
 
 use App\Core\Platform\Services\PlatformTelemetryService;
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class PlatformTelemetryServiceTest extends TestCase
@@ -65,5 +68,66 @@ class PlatformTelemetryServiceTest extends TestCase
             $this->assertGreaterThan(0.0, $metrics['mrr']);
             $this->assertSame($metrics['mrr'] * 12, $metrics['arr']);
         }
+    }
+
+    public function test_go_bridge_probe_returns_ok_and_version_on_successful_health_response(): void
+    {
+        Config::set('platform.pos_bridge.health_url', 'http://127.0.0.1:9191/health');
+
+        Http::fake([
+            'http://127.0.0.1:9191/health' => Http::response([
+                'status' => 'ok',
+                'version' => '1.0.0',
+            ], 200),
+        ]);
+
+        $probe = $this->service->getGoBridgeProbe();
+
+        $this->assertSame('ok', $probe['status']);
+        $this->assertStringContainsString('127.0.0.1:9191 online v1.0.0', $probe['details']);
+    }
+
+    public function test_go_bridge_probe_reports_offline_on_connection_refusal(): void
+    {
+        Config::set('platform.pos_bridge.health_url', 'http://127.0.0.1:9191/health');
+
+        Http::fake([
+            'http://127.0.0.1:9191/health' => function () {
+                throw new ConnectionException('Connection refused');
+            },
+        ]);
+
+        $probe = $this->service->getGoBridgeProbe();
+
+        $this->assertSame('offline', $probe['status']);
+        $this->assertStringContainsString('offline (connection refused', $probe['details']);
+    }
+
+    public function test_go_bridge_probe_reports_degraded_on_http_server_error(): void
+    {
+        Config::set('platform.pos_bridge.health_url', 'http://127.0.0.1:9191/health');
+
+        Http::fake([
+            'http://127.0.0.1:9191/health' => Http::response(['error' => 'internal_error'], 500),
+        ]);
+
+        $probe = $this->service->getGoBridgeProbe();
+
+        $this->assertSame('degraded', $probe['status']);
+        $this->assertStringContainsString('HTTP 500 (daemon error)', $probe['details']);
+    }
+
+    public function test_go_bridge_probe_reports_degraded_on_malformed_json_response(): void
+    {
+        Config::set('platform.pos_bridge.health_url', 'http://127.0.0.1:9191/health');
+
+        Http::fake([
+            'http://127.0.0.1:9191/health' => Http::response('<html>Error Gateway</html>', 200),
+        ]);
+
+        $probe = $this->service->getGoBridgeProbe();
+
+        $this->assertSame('degraded', $probe['status']);
+        $this->assertStringContainsString('Malformed health response', $probe['details']);
     }
 }
