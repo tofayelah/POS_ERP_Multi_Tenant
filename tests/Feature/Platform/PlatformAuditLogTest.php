@@ -135,7 +135,7 @@ class PlatformAuditLogTest extends TestCase
         $this->expectException(QueryException::class);
         $this->expectExceptionMessage('Platform Audit Security Violation: platform_audit_logs records are strictly immutable and cannot be updated.');
 
-        DB::table('platform_audit_logs')
+        DB::connection('pgsql_owner')->table('platform_audit_logs')
             ->where('id', $log->id)
             ->update(['action' => 'hacked.action']);
     }
@@ -153,9 +153,45 @@ class PlatformAuditLogTest extends TestCase
         $this->expectException(QueryException::class);
         $this->expectExceptionMessage('Platform Audit Security Violation: platform_audit_logs records cannot be deleted from the audit ledger.');
 
-        DB::table('platform_audit_logs')
+        DB::connection('pgsql_owner')->table('platform_audit_logs')
             ->where('id', $log->id)
             ->delete();
+    }
+
+    public function test_app_rw_runtime_role_cannot_update_or_delete_audit_logs(): void
+    {
+        $log = $this->auditService->record(
+            action: 'privilege.revocation.test',
+            resource: Tenant::class,
+            resourceId: (string) Str::uuid(),
+            actor: $this->superAdmin
+        );
+
+        try {
+            DB::connection('pgsql')->table('platform_audit_logs')
+                ->where('id', $log->id)
+                ->update(['action' => 'unauthorized.update']);
+            $this->fail('Expected app_rw update to be rejected by PostgreSQL permission check.');
+        } catch (QueryException $e) {
+            $this->assertStringContainsString('permission denied', $e->getMessage());
+        }
+
+        try {
+            DB::connection('pgsql')->table('platform_audit_logs')
+                ->where('id', $log->id)
+                ->delete();
+            $this->fail('Expected app_rw delete to be rejected by PostgreSQL permission check.');
+        } catch (QueryException $e) {
+            $this->assertStringContainsString('permission denied', $e->getMessage());
+        }
+    }
+
+    public function test_app_rw_runtime_role_cannot_truncate_audit_logs(): void
+    {
+        $this->expectException(QueryException::class);
+        $this->expectExceptionMessage('permission denied');
+
+        DB::connection('pgsql')->statement('TRUNCATE TABLE platform_audit_logs');
     }
 
     public function test_platform_audit_log_truncate_is_rejected_by_statement_trigger(): void
