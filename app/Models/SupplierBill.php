@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Str;
 
 /**
  * @property string $id
@@ -46,6 +47,15 @@ class SupplierBill extends Model
     protected $keyType = 'string';
 
     public $incrementing = false;
+
+    protected static function booted(): void
+    {
+        static::creating(function (SupplierBill $bill): void {
+            if (empty($bill->vendor_invoice_number)) {
+                $bill->vendor_invoice_number = $bill->bill_number ?: (string) Str::uuid();
+            }
+        });
+    }
 
     protected $fillable = [
         'id',
