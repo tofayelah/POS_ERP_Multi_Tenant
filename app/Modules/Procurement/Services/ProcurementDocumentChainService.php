@@ -551,11 +551,12 @@ class ProcurementDocumentChainService implements ProcurementDocumentChainContrac
                 throw new InvalidArgumentException('TenantContext required.');
             }
 
-            /** @var SupplierQuotation|null $quote */
             $quote = SupplierQuotation::where('tenant_id', $tenantId)
                 ->where('id', $supplierQuotationId)
                 ->lockForUpdate()
                 ->firstOrFail();
+
+            assert($quote instanceof SupplierQuotation);
 
             if ($quote->status === 'converted_to_po' && $quote->converted_po_id) {
                 throw new RuntimeException('Supplier quotation has already been converted to a purchase order.');

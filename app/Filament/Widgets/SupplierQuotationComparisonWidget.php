@@ -51,8 +51,8 @@ class SupplierQuotationComparisonWidget extends Widget
         foreach ($quotations as $quote) {
             $bids[] = [
                 'id' => $quote->id,
-                'supplier_name' => $quote->supplier?->name ?? 'Unknown Supplier',
-                'quote_reference' => $quote->supplier_quote_reference ?? 'N/A',
+                'supplier_name' => $quote->supplier !== null ? $quote->supplier->name : 'Unknown Supplier',
+                'quote_reference' => $quote->supplier_quote_reference !== null ? $quote->supplier_quote_reference : 'N/A',
                 'quote_date' => $quote->quote_date->toDateString(),
                 'grand_total' => $quote->grand_total,
                 'status' => $quote->status,
@@ -63,8 +63,8 @@ class SupplierQuotationComparisonWidget extends Widget
                 $variantId = $line->variant_id;
                 if (! isset($variantMap[$variantId])) {
                     $variantMap[$variantId] = [
-                        'variant_name' => $line->variant?->name_en ?? 'Unknown Variant',
-                        'sku' => $line->variant?->sku ?? 'N/A',
+                        'variant_name' => $line->variant !== null ? $line->variant->name_en : 'Unknown Variant',
+                        'sku' => $line->variant !== null ? $line->variant->sku : 'N/A',
                         'quotes' => [],
                         'lowest_price' => null,
                         'lowest_supplier_id' => null,
