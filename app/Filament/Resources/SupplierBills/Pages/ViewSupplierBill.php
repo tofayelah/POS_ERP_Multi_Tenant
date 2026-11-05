@@ -89,7 +89,7 @@ class ViewSupplierBill extends ViewRecord
                                 'reason' => $reason,
                                 'actor_id' => $user->id,
                             ])),
-                            'status' => 'pending',
+                            'status' => 'pending_hash',
                         ]);
 
                         $record->status = 'approved';

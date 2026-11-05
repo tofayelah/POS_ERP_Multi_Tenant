@@ -333,7 +333,7 @@ class SupplierBillResource extends Resource
                                         'reason' => $reason,
                                         'actor_id' => $user->id,
                                     ])),
-                                    'status' => 'pending',
+                                    'status' => 'pending_hash',
                                 ]);
 
                                 $record->status = 'approved';

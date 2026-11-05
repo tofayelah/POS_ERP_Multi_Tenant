@@ -679,5 +679,15 @@ class ThreeWayMatchingWidgetTest extends TestCase
         $this->assertEquals($this->financialController->id, $audit->actor_id);
         $this->assertStringContainsString('emergency fuel surcharge', $audit->new_values['reason']);
         $this->assertNotEmpty($audit->payload_hash);
+
+        // Prove that the audit hash chain worker processes and verifies the override log
+        $worker = app(\App\Core\Audit\Workers\BuildAuditHashChainWorker::class);
+        $processed = $worker->processTenant($this->tenant->id);
+        $this->assertGreaterThanOrEqual(1, $processed);
+
+        $audit->refresh();
+        $this->assertEquals('verified', $audit->status);
+        $this->assertNotNull($audit->chain_position);
+        $this->assertNotEmpty($audit->current_hash);
     }
 }

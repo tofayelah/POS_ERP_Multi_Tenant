@@ -40,7 +40,11 @@ class QuotationResource extends Resource
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-document-text';
 
-    protected static ?string $navigationLabel = 'Quotations / বিক্রয় উদ্ধৃতি';
+    protected static ?string $navigationLabel = 'Sales Quotations / বিক্রয় উদ্ধৃতি';
+
+    protected static ?string $modelLabel = 'Sales Quotation';
+
+    protected static ?string $pluralModelLabel = 'Sales Quotations';
 
     protected static \UnitEnum|string|null $navigationGroup = 'CRM & Sales';
 
