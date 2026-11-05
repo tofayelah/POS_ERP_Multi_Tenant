@@ -9,7 +9,7 @@ use App\Filament\Platform\Resources\Tenants\TenantResource;
 use App\Models\PlatformUser;
 use Filament\Facades\Filament;
 use Filament\Navigation\NavigationGroup;
-use Filament\Support\Enums\MaxWidth;
+use Filament\Support\Enums\Width;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -40,7 +40,7 @@ class PlatformNavigationTest extends TestCase
         $this->assertSame('platform', $panel->getId());
         $this->assertSame('platform', $panel->getPath());
         $this->assertSame('platform', $panel->getAuthGuard());
-        $this->assertSame(MaxWidth::Full, $panel->getMaxContentWidth());
+        $this->assertSame(Width::Full, $panel->getMaxContentWidth());
         $this->assertTrue($panel->isSidebarCollapsibleOnDesktop());
 
         $groups = $panel->getNavigationGroups();
