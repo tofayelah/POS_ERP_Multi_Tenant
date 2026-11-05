@@ -5,6 +5,7 @@ namespace App\Modules\Inventory\Providers;
 use App\Core\Providers\AbstractModuleServiceProvider;
 use App\Modules\Inventory\Contracts\CostingServiceContract;
 use App\Modules\Inventory\Contracts\InventoryGlReconciliationContract;
+use App\Modules\Inventory\Contracts\LandedCostAllocationContract;
 use App\Modules\Inventory\Contracts\LandedCostServiceContract;
 use App\Modules\Inventory\Contracts\OfflineOversellServiceContract;
 use App\Modules\Inventory\Contracts\StockCountServiceContract;
@@ -13,6 +14,7 @@ use App\Modules\Inventory\Contracts\StockReservationServiceContract;
 use App\Modules\Inventory\Contracts\StockTransferServiceContract;
 use App\Modules\Inventory\Services\CostingService;
 use App\Modules\Inventory\Services\InventoryGlReconciliationService;
+use App\Modules\Inventory\Services\LandedCostAllocationService;
 use App\Modules\Inventory\Services\LandedCostService;
 use App\Modules\Inventory\Services\OfflineOversellService;
 use App\Modules\Inventory\Services\StockCountService;
@@ -32,6 +34,7 @@ class InventoryServiceProvider extends AbstractModuleServiceProvider
         $this->app->singleton(StockCountServiceContract::class, StockCountService::class);
         $this->app->singleton(StockTransferServiceContract::class, StockTransferService::class);
         $this->app->singleton(LandedCostServiceContract::class, LandedCostService::class);
+        $this->app->singleton(LandedCostAllocationContract::class, LandedCostAllocationService::class);
         $this->app->singleton(OfflineOversellServiceContract::class, OfflineOversellService::class);
         $this->app->singleton(InventoryGlReconciliationContract::class, InventoryGlReconciliationService::class);
     }

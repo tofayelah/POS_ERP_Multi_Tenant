@@ -4,12 +4,14 @@ namespace App\Providers;
 
 use App\Core\Tenancy\TenantContext;
 use App\Models\GoodsReceipt;
+use App\Models\LandedCostVoucher;
 use App\Models\PurchaseOrder;
 use App\Models\Quotation;
 use App\Models\SupplierBill;
 use App\Models\SupplierQuotation;
 use App\Models\Tenant;
 use App\Policies\GoodsReceiptPolicy;
+use App\Policies\LandedCostVoucherPolicy;
 use App\Policies\PurchaseOrderPolicy;
 use App\Policies\QuotationPolicy;
 use App\Policies\SupplierBillPolicy;
@@ -63,5 +65,6 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Quotation::class, QuotationPolicy::class);
         Gate::policy(SupplierBill::class, SupplierBillPolicy::class);
         Gate::policy(SupplierQuotation::class, SupplierQuotationPolicy::class);
+        Gate::policy(LandedCostVoucher::class, LandedCostVoucherPolicy::class);
     }
 }
