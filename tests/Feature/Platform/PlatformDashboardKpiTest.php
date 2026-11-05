@@ -8,6 +8,7 @@ use App\Filament\Platform\Widgets\PlatformStatsOverviewWidget;
 use App\Filament\Platform\Widgets\PlatformSystemHealthWidget;
 use App\Models\PlatformUser;
 use Filament\Facades\Filament;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Str;
 use Livewire\Livewire;
 use Tests\TestCase;
@@ -20,8 +21,8 @@ class PlatformDashboardKpiTest extends TestCase
     {
         parent::setUp();
 
-        \Illuminate\Support\Facades\Config::set('platform.audit.hmac_secret', 'test-dedicated-audit-secret-key-64-characters-for-testing-purposes');
-        \Illuminate\Support\Facades\Config::set('platform.audit.key_version', 1);
+        Config::set('platform.audit.hmac_secret', 'test-dedicated-audit-secret-key-64-characters-for-testing-purposes');
+        Config::set('platform.audit.key_version', 1);
 
         $this->superAdmin = PlatformUser::firstOrCreate(
             ['email' => 'admin.kpi@kcerp.local'],

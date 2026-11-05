@@ -10,6 +10,7 @@ use App\Models\PlatformUser;
 use Filament\Facades\Filament;
 use Filament\Navigation\NavigationGroup;
 use Filament\Support\Enums\Width;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -21,8 +22,8 @@ class PlatformNavigationTest extends TestCase
     {
         parent::setUp();
 
-        \Illuminate\Support\Facades\Config::set('platform.audit.hmac_secret', 'test-dedicated-audit-secret-key-64-characters-for-testing-purposes');
-        \Illuminate\Support\Facades\Config::set('platform.audit.key_version', 1);
+        Config::set('platform.audit.hmac_secret', 'test-dedicated-audit-secret-key-64-characters-for-testing-purposes');
+        Config::set('platform.audit.key_version', 1);
 
         $this->superAdmin = PlatformUser::firstOrCreate(
             ['email' => 'admin.test@kcerp.local'],

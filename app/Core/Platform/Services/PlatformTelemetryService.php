@@ -7,6 +7,7 @@ use App\Models\Tenant;
 use App\Models\TenantSubscription;
 use Brick\Math\BigDecimal;
 use Brick\Math\RoundingMode;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -217,7 +218,7 @@ class PlatformTelemetryService
                 'details' => "127.0.0.1:9191 online v{$version} ({$latency}ms)",
                 'checked_at' => Carbon::now()->toIso8601String(),
             ];
-        } catch (\Illuminate\Http\Client\ConnectionException) {
+        } catch (ConnectionException) {
             return [
                 'status' => 'offline',
                 'latency_ms' => 0.0,
