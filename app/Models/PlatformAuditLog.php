@@ -25,6 +25,7 @@ use RuntimeException;
  * @property string $status
  * @property string|null $error_message
  * @property string $payload_hash
+ * @property int $key_version
  * @property Carbon $created_at
  * @property-read PlatformUser|null $platformUser
  */
@@ -57,6 +58,7 @@ class PlatformAuditLog extends Model
         'status',
         'error_message',
         'payload_hash',
+        'key_version',
         'created_at',
     ];
 
@@ -68,6 +70,7 @@ class PlatformAuditLog extends Model
         return [
             'old_values' => 'array',
             'new_values' => 'array',
+            'key_version' => 'integer',
             'created_at' => 'datetime',
         ];
     }
