@@ -6,7 +6,6 @@ use App\Core\Tenancy\TenantContext;
 use App\Core\ValueObjects\Money;
 use App\Models\AccountingPeriod;
 use App\Models\ChartOfAccount;
-use App\Models\GoodsReceipt;
 use App\Models\GoodsReceiptLine;
 use App\Models\LandedCostVoucher;
 use App\Models\LandedCostVoucherAllocation;

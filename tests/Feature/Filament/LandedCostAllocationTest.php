@@ -271,7 +271,7 @@ class LandedCostAllocationTest extends TestCase
         ]);
 
         // Record inbound movements for stock balance
-        DB::transaction(function () use ($grn, $grnLineA, $grnLineB) {
+        DB::transaction(function () use ($grn) {
             $this->movementService->recordMovement(new StockMovementDTO(
                 companyId: $this->company->id,
                 warehouseId: $this->warehouse->id,
