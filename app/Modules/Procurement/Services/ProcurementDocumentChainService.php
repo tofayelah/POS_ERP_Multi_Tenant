@@ -12,6 +12,8 @@ use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderLine;
 use App\Models\SupplierBill;
 use App\Models\SupplierBillLine;
+use App\Models\SupplierQuotation;
+use App\Models\SupplierQuotationLine;
 use App\Modules\Accounting\Contracts\AccountingPostingServiceContract;
 use App\Modules\Accounting\Contracts\NumberSeriesContract;
 use App\Modules\Accounting\DTOs\JournalEntryDTO;
@@ -22,6 +24,7 @@ use App\Modules\Inventory\DTOs\StockMovementDTO;
 use App\Modules\Procurement\Contracts\ProcurementDocumentChainContract;
 use App\Modules\Procurement\DTOs\CreateGoodsReceiptDTO;
 use App\Modules\Procurement\DTOs\CreatePurchaseOrderDTO;
+use App\Modules\Procurement\DTOs\CreateSupplierQuotationDTO;
 use App\Modules\Procurement\DTOs\CreateVendorBillFromReceiptDTO;
 use App\Modules\Procurement\Exceptions\BilledQuantityExceedsReceiptException;
 use App\Modules\Procurement\Exceptions\ReceivedQuantityExceedsOrderException;
@@ -465,6 +468,150 @@ class ProcurementDocumentChainService implements ProcurementDocumentChainContrac
             $po->save();
 
             return $po;
+        });
+    }
+
+    public function createSupplierQuotation(CreateSupplierQuotationDTO $dto): SupplierQuotation
+    {
+        return DB::transaction(function () use ($dto) {
+            $tenantId = TenantContext::id();
+            if (! $tenantId) {
+                throw new InvalidArgumentException('TenantContext required.');
+            }
+
+            $subtotalSum = BigDecimal::zero();
+            $taxSum = BigDecimal::zero();
+            $lineData = [];
+
+            foreach ($dto->lines as $line) {
+                $qty = BigDecimal::of($line->requestedQuantity);
+                $price = BigDecimal::of($line->quotedUnitPrice);
+                $discount = BigDecimal::of($line->discountAmount);
+                $taxRate = BigDecimal::of($line->taxRate);
+
+                $lineSub = $qty->multipliedBy($price)->minus($discount);
+                $lineTax = $lineSub->multipliedBy($taxRate);
+                $lineTot = $lineSub->plus($lineTax);
+
+                $subtotalSum = $subtotalSum->plus($lineSub);
+                $taxSum = $taxSum->plus($lineTax);
+
+                $lineData[] = [
+                    'id' => (string) Str::uuid(),
+                    'tenant_id' => $tenantId,
+                    'company_id' => $dto->companyId,
+                    'product_id' => $line->productId,
+                    'variant_id' => $line->variantId,
+                    'requested_quantity' => (string) $qty->toScale(4, RoundingMode::HalfUp),
+                    'quoted_unit_price' => (string) $price->toScale(4, RoundingMode::HalfUp),
+                    'discount_amount' => (string) $discount->toScale(4, RoundingMode::HalfUp),
+                    'tax_rate' => (string) $taxRate->toScale(4, RoundingMode::HalfUp),
+                    'tax_amount' => (string) $lineTax->toScale(4, RoundingMode::HalfUp),
+                    'line_total' => (string) $lineTot->toScale(4, RoundingMode::HalfUp),
+                    'lead_time_days' => $line->leadTimeDays,
+                    'is_selected' => $line->isSelected,
+                ];
+            }
+
+            $grandTotal = $subtotalSum->plus($taxSum);
+
+            $quotation = SupplierQuotation::create([
+                'id' => (string) Str::uuid(),
+                'tenant_id' => $tenantId,
+                'company_id' => $dto->companyId,
+                'branch_id' => $dto->branchId,
+                'supplier_id' => $dto->supplierId,
+                'rfq_number' => $dto->rfqNumber,
+                'supplier_quote_reference' => $dto->supplierQuoteReference,
+                'quote_date' => $dto->quoteDate,
+                'valid_until' => $dto->validUntil,
+                'currency' => $dto->currency,
+                'exchange_rate' => $dto->exchangeRate,
+                'subtotal' => (string) $subtotalSum->toScale(4, RoundingMode::HalfUp),
+                'tax_amount' => (string) $taxSum->toScale(4, RoundingMode::HalfUp),
+                'grand_total' => (string) $grandTotal->toScale(4, RoundingMode::HalfUp),
+                'status' => 'draft',
+                'created_by' => $dto->createdBy,
+            ]);
+
+            foreach ($lineData as $ld) {
+                $ld['supplier_quotation_id'] = $quotation->id;
+                SupplierQuotationLine::create($ld);
+            }
+
+            return $quotation->load('lines');
+        });
+    }
+
+    public function convertSupplierQuotationToPurchaseOrder(string $supplierQuotationId, string $userId): PurchaseOrder
+    {
+        return DB::transaction(function () use ($supplierQuotationId, $userId) {
+            $tenantId = TenantContext::id();
+            if (! $tenantId) {
+                throw new InvalidArgumentException('TenantContext required.');
+            }
+
+            /** @var SupplierQuotation|null $quote */
+            $quote = SupplierQuotation::where('tenant_id', $tenantId)
+                ->where('id', $supplierQuotationId)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if ($quote->status === 'converted_to_po' && $quote->converted_po_id) {
+                throw new RuntimeException('Supplier quotation has already been converted to a purchase order.');
+            }
+
+            $fiscalYear = (string) Carbon::parse($quote->quote_date)->year;
+            $orderNumber = $this->numberSeries->getNextNumber($quote->company_id, $quote->branch_id, 'PO', $fiscalYear);
+
+            $maxLeadTime = 0;
+            foreach ($quote->lines as $qLine) {
+                if ($qLine->lead_time_days > $maxLeadTime) {
+                    $maxLeadTime = $qLine->lead_time_days;
+                }
+            }
+
+            $expectedDeliveryDate = Carbon::parse($quote->quote_date)->addDays(max(1, $maxLeadTime))->toDateString();
+
+            $po = PurchaseOrder::create([
+                'id' => (string) Str::uuid(),
+                'tenant_id' => $tenantId,
+                'company_id' => $quote->company_id,
+                'branch_id' => $quote->branch_id,
+                'supplier_id' => $quote->supplier_id,
+                'order_number' => $orderNumber,
+                'order_date' => $quote->quote_date,
+                'expected_delivery_date' => $expectedDeliveryDate,
+                'subtotal' => $quote->subtotal,
+                'tax_amount' => $quote->tax_amount,
+                'grand_total' => $quote->grand_total,
+                'status' => 'draft',
+                'created_by' => $userId,
+            ]);
+
+            foreach ($quote->lines as $qLine) {
+                PurchaseOrderLine::create([
+                    'id' => (string) Str::uuid(),
+                    'tenant_id' => $tenantId,
+                    'company_id' => $quote->company_id,
+                    'purchase_order_id' => $po->id,
+                    'product_id' => $qLine->product_id,
+                    'variant_id' => $qLine->variant_id,
+                    'ordered_quantity' => $qLine->requested_quantity,
+                    'received_quantity' => '0.0000',
+                    'billed_quantity' => '0.0000',
+                    'unit_price' => $qLine->quoted_unit_price,
+                    'subtotal' => $qLine->line_total,
+                    'tax_amount' => $qLine->tax_amount,
+                    'total_amount' => $qLine->line_total,
+                ]);
+            }
+
+            $quote->converted_po_id = $po->id;
+            $quote->status = 'converted_to_po';
+            $quote->save();
+
+            return $po->load('lines');
         });
     }
 }

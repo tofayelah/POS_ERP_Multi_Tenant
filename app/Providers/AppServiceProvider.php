@@ -7,11 +7,13 @@ use App\Models\GoodsReceipt;
 use App\Models\PurchaseOrder;
 use App\Models\Quotation;
 use App\Models\SupplierBill;
+use App\Models\SupplierQuotation;
 use App\Models\Tenant;
 use App\Policies\GoodsReceiptPolicy;
 use App\Policies\PurchaseOrderPolicy;
 use App\Policies\QuotationPolicy;
 use App\Policies\SupplierBillPolicy;
+use App\Policies\SupplierQuotationPolicy;
 use Filament\Events\TenantSet;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -60,5 +62,6 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(GoodsReceipt::class, GoodsReceiptPolicy::class);
         Gate::policy(Quotation::class, QuotationPolicy::class);
         Gate::policy(SupplierBill::class, SupplierBillPolicy::class);
+        Gate::policy(SupplierQuotation::class, SupplierQuotationPolicy::class);
     }
 }
