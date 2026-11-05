@@ -25,8 +25,6 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Get;
-use Filament\Forms\Set;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -203,10 +201,14 @@ class SupplierQuotationResource extends Resource
             ]);
     }
 
-    protected static function updateLineTotal(Get $get, Set $set): void
+    /**
+     * @param  callable  $get
+     * @param  callable  $set
+     */
+    protected static function updateLineTotal(callable $get, callable $set): void
     {
-        $qty = BigDecimal::of($get('requested_quantity') ?: '0.0000');
-        $price = BigDecimal::of($get('quoted_unit_price') ?: '0.0000');
+        $qty = BigDecimal::of((string) ($get('requested_quantity') ?: '0.0000'));
+        $price = BigDecimal::of((string) ($get('quoted_unit_price') ?: '0.0000'));
         $total = $qty->multipliedBy($price);
 
         $set('line_total', (string) $total->toScale(4, RoundingMode::HalfUp));
