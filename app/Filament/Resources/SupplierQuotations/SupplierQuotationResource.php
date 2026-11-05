@@ -201,10 +201,6 @@ class SupplierQuotationResource extends Resource
             ]);
     }
 
-    /**
-     * @param  callable  $get
-     * @param  callable  $set
-     */
     protected static function updateLineTotal(callable $get, callable $set): void
     {
         $qty = BigDecimal::of((string) ($get('requested_quantity') ?: '0.0000'));
